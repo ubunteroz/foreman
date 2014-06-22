@@ -1,0 +1,133 @@
+<%def name="user_menu()" filter="trim">
+    <h1>Users</h1>
+
+    <p><a href='${urls.build("user.view_all")|h}'>View All Users</a></p>
+
+    <h2>Options for My Account</h2>
+
+    <p><a href='${urls.build("user.view", dict(user_id=current_user.id))|h}'>View My Profile</a></p>
+    <p><a href='${urls.build("user.edit", dict(user_id=current_user.id))|h}'>Edit My Basic Details</a></p>
+    <p><a href='${urls.build("user.edit_password", dict(user_id=current_user.id))|h}'>Change My Password</a></p>
+
+    % if check_perms(current_user, 'edit-roles'):
+    <p><a href='${urls.build("user.edit", dict(user_id=current_user.id, tab="edit_roles"))|h}'>Edit My Roles and Permissions</a></p>
+    % endif
+
+    % if user and current_user.id != user.id:
+        <h2>Options for ${user.username.title()|h}'s Account</h2>
+
+        <p><a href='${urls.build("user.view", dict(user_id=user.id))|h}'>View ${user.username.title()|h}'s Profile</a></p>
+        % if check_perms(user, 'edit'):
+        <p><a href='${urls.build("user.edit", dict(user_id=user.id))|h}'>Edit ${user.username.title()|h}'s Basic Details</a></p>
+        % endif
+        % if check_perms(user, 'edit-password'):
+        <p><a href='${urls.build("user.edit_password", dict(user_id=user.id))|h}'>Change ${user.username.title()|h}'s Password</a></p>
+        % endif
+        % if check_perms(user, 'edit-roles'):
+        <p><a href='${urls.build("user.edit", dict(user_id=user.id, tab="edit_roles"))|h}'>Edit ${user.username.title()|h}'s Roles and Permissions</a></p>
+        % endif
+    % endif
+</%def>
+
+<%def name="tasks_menu()" filter="trim">
+    % if check_perms("Case", 'manage'):
+        <h1>Case Management</h1>
+        <p><a href='${urls.build("case.add", dict())|h}'>Add new Case</a></p>
+        <p><a href='${urls.build("case.view_all", dict(view="Created"))|h}'>View Created Cases</a> (${created_cases|h})</p>
+        <p><a href='${urls.build("case.view_all", dict(view="Open"))|h}'>View Open Cases</a> (${open_cases|h})</p>
+    % endif
+
+    % if check_perms("Case", 'examiner'):
+        <h1>Investigations</h1>
+
+        <p><a href='${urls.build("case.view_all", dict(view="Queued"))|h}'>View Unassigned Tasks</a> (${unassigned_tasks|h})</p>
+        <p><a href='${urls.build("case.view_all", dict(view="Open"))|h}'>View Open Cases</a> (${open_cases|h})</p>
+
+        <% inv_flag = 0 %>
+        <h2>Cases I have work to do</h2>
+
+        <h3>To Start</h3>
+        % for case in user_cases:
+            <% tasks = [task for task in case.tasks if current_user in task.investigators and task.status == task_statuses['start']] %>
+            % if len(tasks) > 0:
+            <% inv_flag = inv_flag + 1 %>
+            <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a> (${len(tasks)})
+                % for task in tasks:
+                    <br /><span class="side_indent"><a href='${urls.build("task.view", dict(task_id=task.task_name,case_id=task.case.case_name))|h}'>${task.task_name|h}</a></span>
+                % endfor
+            </p>
+            % endif
+        % endfor
+        % if inv_flag == 0:
+            <p><span class="side_indent">None</span></p>
+        % endif
+
+        <% inv_flag = 0 %>
+        <h3>To Complete Investigation</h3>
+        % for case in user_cases:
+            <% tasks = [task for task in case.tasks if current_user in task.investigators and task.status == task_statuses['progress']] %>
+            % if len(tasks) > 0:
+            <% inv_flag = inv_flag + 1 %>
+            <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a> (${len(tasks)})
+                % for task in tasks:
+                    <br /><span class="side_indent"><a href='${urls.build("task.view", dict(task_id=task.task_name,case_id=task.case.case_name))|h}'>${task.task_name|h}</a></span>
+                % endfor
+            </p>
+            % endif
+        % endfor
+        % if inv_flag == 0:
+            <p><span class="side_indent">None</span></p>
+        % endif
+
+        <% inv_flag = 0 %>
+        <h3>To Deliver</h3>
+        % for case in user_cases:
+            <% tasks = [task for task in case.tasks if current_user in task.investigators and task.status == task_statuses['deliver']] %>
+            % if len(tasks) > 0:
+            <% inv_flag = inv_flag + 1 %>
+            <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a> (${len(tasks)})
+                % for task in tasks:
+                    <br /><span class="side_indent"><a href='${urls.build("task.view", dict(task_id=task.task_name,case_id=task.case.case_name))|h}'>${task.task_name|h}</a></span>
+                % endfor
+            </p>
+            % endif
+        % endfor
+        % if inv_flag == 0:
+            <p><span class="side_indent">None</span></p>
+        % endif
+
+        <% inv_flag = 0 %>
+        <h3> To QA</h3>
+         % for case in user_qa_cases:
+            <% tasks = [task for task in case.tasks if current_user in task.QAs and task.status in qaRoles] %>
+            % if len(tasks) > 0:
+            <% inv_flag = inv_flag + 1 %>
+            <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a> (${len(tasks)})
+                % for task in tasks:
+                    <br /><span class="side_indent"><a href='${urls.build("task.view", dict(task_id=task.task_name,case_id=task.case.case_name))|h}'>${task.task_name|h}</a></span>
+                % endfor
+            </p>
+            % endif
+        % endfor
+        % if inv_flag == 0:
+            <p><span class="side_indent">None</span></p>
+        % endif
+
+        <% inv_flag = 0 %>
+        <h2>Cases I have in QA</h2>
+        % for case in user_cases:
+            <% tasks = [task for task in case.tasks if current_user in task.investigators and task.status in qaRoles] %>
+            % if len(tasks) > 0:
+            <% inv_flag = inv_flag + 1 %>
+            <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a> (${len(tasks)})
+                % for task in tasks:
+                    <br /><span class="side_indent"><a href='${urls.build("task.view", dict(task_id=task.task_name,case_id=task.case.case_name))|h}'>${task.task_name|h}</a></span>
+                % endfor
+            </p>
+            % endif
+        % endfor
+        % if inv_flag == 0:
+            <p><span class="side_indent">None</span></p>
+        % endif
+    % endif
+</%def>

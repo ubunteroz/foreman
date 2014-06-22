@@ -1,0 +1,156 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+<%namespace file="/utils/forms.html" name="forms" />
+
+<%def name="javascripts()" filter="trim">
+    <link rel="StyleSheet" href="${urls.build('css', dict(file='jquery-ui-1.10.4.custom.css'))|h}" type="text/css" />
+    <script src="${urls.build('javascript', dict(file='jquery-1.10.2.js'))|h}"></script>
+    <script src="${urls.build('javascript', dict(file='jquery-ui-1.10.4.custom.min.js'))|h}"></script>
+    <script>
+        $(function() {
+        $( "#tabs" ).tabs();
+        $( "#tabs" ).tabs({ active: ${active_tab}});
+        });
+    </script>
+</%def>
+
+
+<div id="sidebar">
+    ${sidebars.tasks_menu()}
+</div>
+<div id="mainbar">
+    <h1>Edit ${evidence.reference|h}</h1>
+    <p><a href="${urls.build('evidence.view', dict(evidence_id=evidence.reference, case_id=evidence.case.case_name))|h}">Back to Evidence</a> |
+       <a href="${urls.build('case.view', dict(case_id=evidence.case.case_name))|h}">Back to Case</a></p>
+
+    <div id="tabs">
+        <ul>
+        <li><a href="#tabs-1">Edit Evidence Details</a></li>
+        <li><a href="#tabs-2">Edit Photographs</a></li>
+            % if evidence.qr_code:
+        <li><a href="#tabs-3">Edit QR Code</a></li>
+            % else:
+        <li><a href="#tabs-3">Add QR Code</a></li>
+            % endif
+        </ul>
+
+        <div id="tabs-1" class="forensics_work_contents">
+
+            <h2>Evidence History</h2>
+
+            <table>
+                <tr>
+                    <th>Date</th>
+                    <th>User</th>
+                    <th>Changes</th>
+                </tr>
+                % for history in evidence_history:
+                    % if isinstance(history['change_log'], basestring) or not ('QR Code' in history['change_log'].keys() or 'QR Code Text' in history['change_log'].keys()):
+                        <tr>
+                            <td>${history['date']|h}</td>
+                            <td><a href='${urls.build("user.view", dict(user_id=history['user'].id))|h}'>${history['user'].fullname|h}</a></td>
+                            <td>
+                                % if not isinstance(history['change_log'], basestring):
+                                    % for entry, change in history['change_log'].iteritems():
+                                        The ${entry|h} changed from ${change[0]|h} to ${change[1]|h} <br/>
+                                    % endfor
+                                % else:
+                                    ${history['change_log']|h}
+                                % endif
+                            </td>
+                        </tr>
+                    % endif
+                % endfor
+            </table>
+
+            <h2>Edit Evidence Details</h2>
+            <form method="post" action="${urls.build('evidence.edit', dict(evidence_id=evidence.reference, case_id=evidence.case.case_name, form='edit_evidence'))|h}">
+                ${forms.formTextField("Reference", "reference", "reference", "form_label", "input_long", first=True, value=evidence.reference)}
+                ${forms.formTextField("Bag Number", "bag_num", "bag_num", "form_label", "input_long", value=evidence.evidence_bag_number)}
+                ${forms.formSelectBox("Evidence Type", "type", "type", "form_label", "input_long", evidence_type_options, please_select=True, value=evidence.type)}
+                ${forms.formTextField("Location Seized From", "location", "location", "form_label", "input_long", value=evidence.location)}
+                ${forms.formTextField("Originator", "originator", "originator", "form_label", "input_long", value=evidence.originator)}
+                ${forms.formTextArea("Comments", "comments", "comments", "form_label", "addeditcase", value=evidence.comment)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+            </form>
+        </div>
+        <div id="tabs-2" class="forensics_work_contents">
+
+
+
+            <h2>Current Photographs:</h2>
+
+            % if evidence.photographs:
+                <% import os %>
+                % for file in os.listdir(photo_location):
+                    <img src="${urls.build('evidence_photos', dict(file=str(evidence.id) + '//' + file))|h}" height="200px"/>
+                % endfor
+            % endif
+
+            <h2>Edit Photographs</h2>
+
+            <form method="post" enctype="multipart/form-data" action="${urls.build('evidence.edit', dict(evidence_id=evidence.reference, case_id=evidence.case.case_name, form='edit_image'))|h}">
+                ${forms.formTextField("Upload new photograph", "photo_1", "photo_1", "form_label", "input_long", first=True, input_type="file")}
+                ${forms.formTextField("Upload new photograph", "photo_2", "photo_2", "form_label", "input_long", input_type="file")}
+                ${forms.formTextField("Upload new photograph", "photo_3", "photo_3", "form_label", "input_long", input_type="file")}
+                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+            </form>
+
+        </div>
+        <div id="tabs-3" class="forensics_work_contents">
+
+            % if qr_evidence_history:
+            <h2>QR Code History</h2>
+
+            <table>
+                <tr>
+                    <th>Date</th>
+                    <th>User</th>
+                    <th>Changes</th>
+                </tr>
+
+                    % for history in evidence_history:
+                    % if not isinstance(history['change_log'], basestring) and ('QR Code' in history['change_log'].keys() or 'QR Code Text' in history['change_log'].keys()):
+                    <tr>
+                       <td>${history['date']|h}</td>
+                       <td><a href='${urls.build("user.view", dict(user_id=history['user'].id))|h}'>${history['user'].fullname|h}</a></td>
+                       <td>
+                        % for entry, change in history['change_log'].iteritems():
+                                % if entry == "QR Code":
+                                The ${entry|h} changed from ${change[0]|h} to ${change[1]|h}
+                                % else:
+                                The ${entry|h} changed from: <br/> ${change[0]|h} <br/>To:<br/> ${change[1]|h}
+                                % endif
+                        % endfor
+                        </td>
+                    </tr>
+                    % endif
+                    % endfor
+
+            </table>
+            % endif
+
+            % if evidence.qr_code:
+            <h2>Edit or Remove QR Code</h2>
+            % else:
+            <h2>Add QR Code</h2>
+            % endif
+
+            % if evidence.qr_code:
+            <img src="${urls.build('evidence_qr_code', dict(file=str(evidence.id) + '.png'))|h}" width="200px"/>
+            % endif
+
+            <form method="post" action="${urls.build('evidence.edit', dict(evidence_id=evidence.reference, case_id=evidence.case.case_name, form='edit_qr'))|h}">
+                ${forms.formCheckBoxes("Generate QR Code", "qr_code", "qr_code", "qr_code", "form_label", "radio_input_short", checked=evidence.qr_code, first=True)}
+                % if evidence.qr_code:
+                    ${forms.formTextArea("QR code text", "qr_code_text", "qr_code_text", "form_label", "addeditcase", value=evidence.qr_code_text)}
+                    <p style="clear:both; text-align:center"><input type="submit" value="Edit QR Code" /></p>
+                % else:
+                    ${forms.formTextArea("QR code text (default text)", "qr_code_text", "qr_code_text", "form_label", "addeditcase", value=default_qr_code_text)}
+                    <p style="clear:both; text-align:center"><input type="submit" value="Add QR Code" /></p>
+                % endif
+
+            </form>
+
+        </div>
+</div>

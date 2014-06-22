@@ -1,0 +1,29 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+
+<%def name="javascripts()" filter="trim">
+    <script>
+        function goBack(){
+            window.history.back()
+        }
+    </script>
+</%def>
+
+
+<div id="sidebar">
+   ${sidebars.tasks_menu()}
+</div>
+
+<div id="mainbar">
+
+    % if change == False:
+    <h1>Confirm all tasks for case ${case.case_name|h} status change to  ${status|h}</h1>
+    <div class="confirmclosurebox">
+        <p>Are you sure you want to set all tasks for case ${case.case_name|h} status to ${status|h}?</p>
+        <p><a href="?confirm=true&status=${status|h}">Yes</a> | <a href="#" onclick="goBack()">No</a></p>
+    </div>
+    % else:
+    <h1>All tasks for case ${case.case_name|h} status has been set to ${status|h}.</h1>
+    <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>View Case</a></p>
+    % endif
+</div>

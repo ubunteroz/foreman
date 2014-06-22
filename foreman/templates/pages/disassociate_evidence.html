@@ -1,0 +1,30 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+
+<%def name="javascripts()" filter="trim">
+    <script>
+        function goBack(){
+            window.history.back()
+        }
+    </script>
+</%def>
+
+
+<div id="sidebar">
+    ${sidebars.evidence_menu()}
+</div>
+<div id="mainbar">
+
+    % if closed == False:
+    <h1>Confirm Removal of Evidence ${evidence.reference|h}</h1>
+    <div class="confirmclosurebox">
+        <p>Are you sure you want to remove ${evidence.reference|h} from Case ${evidence.case.case_name|h}?
+            This action will disassociate the evidence from the case. You can associate the evidence with another case or remove
+        the evidence from Foreman completely once this is done.</p>
+        <p><a href="?confirm=true">Yes</a> | <a href="#" onclick="goBack()">No</a></p>
+    </div>
+    % else:
+    <h1>Evidence ${evidence.reference|h} has been removed. </h1>
+    <p><a href="${urls.build('evidence.view_all')|h}">Associate with another case or remove completely here</a>. <a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>View Case</a>
+    % endif
+</div>

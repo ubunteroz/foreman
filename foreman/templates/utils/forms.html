@@ -1,0 +1,114 @@
+
+<%def name="errormessage(error_dict)" filter="trim">
+    <div class="error">
+        <% error = 'error' %>
+        <% pronoun = 'it' %>
+        <% num = len(error_dict) %>
+        % if num > 1:
+            <% error = 'errors' %>
+            <% pronoun = 'them' %>
+        % endif
+        You have ${num|h} ${error} in your input form. Please correct ${pronoun}.
+    </div>
+</%def>
+
+## if the form field was in error, this makes the field class="required"
+<%def name="isError(field)" filter="trim">
+	% if errors and field in errors:
+		required
+	% endif
+</%def>
+
+## gets the name of the error
+<%def name="getError(name)" filter="trim">
+	% if errors and name in errors.keys():
+		<div class="error">${errors[name]}</div>
+	% endif
+</%def>
+
+
+<%def name="formTextField(label, name, id, labelclass, inputclass, input_type='text', first=False, default='', value='')" filter="trim">
+    % if first != True:
+    <p style="clear:both; position:relative">
+    % else:
+    <p>
+    % endif
+		<label for="${name|h}" class="${labelclass|h}">${label}</label>
+    % if value == None:
+        <% value = "" %>
+    % endif
+		<input type="${input_type}" class="${inputclass|h} ${isError(name)}" value="${value|h}" placeholder="${default|h}" name="${name|h}" id="${id|h}" />
+		${getError(name)|h}
+    </p>
+</%def>
+
+
+<%def name="formSelectBox(label, name, id, labelclass, inputclass, options, first=False, value=None, please_select=False)" filter="trim">
+    % if first != True:
+    <p style="clear:both; position:relative">
+    % else:
+    <p>
+    % endif
+		<label for="${name|h}" class="${labelclass|h}">${label}</label>
+		<select class="${inputclass|h} ${isError(name)}" name="${name|h}" id="${id|h}">
+            % if please_select == True:
+            <option value="null">Please select</option>
+            % endif
+            % for val, option in options:
+                % if value == option:
+                    <option value="${val|h}" selected>${option|h}</option>
+                % else:
+                    <option value="${val|h}">${option|h}</option>
+                % endif
+            % endfor
+        </select>
+		${getError(name)|h}
+    </p>
+</%def>
+
+<%def name="formTextArea(label, name, id, labelclass, inputclass, value='', first=False)" filter="trim">
+    % if first != True:
+    <p style="clear:both; position:relative">
+    % else:
+    <p>
+    % endif
+		<label for="${name|h}" class="${labelclass|h}">${label}</label>
+        <textarea class="${inputclass|h} ${isError(name)}" name="${name|h}" id="${id|h}">${value|h}</textarea>
+		${getError(name)|h}
+    </p>
+</%def>
+
+<%def name="formRadioButtons(label, options, name, id, labelclass, inputclass, radiodivclass, first=False)" filter="trim">
+    % if first != True:
+    <p style="clear:both; position:relative">
+    % else:
+    <p>
+    % endif
+		<label for="${name|h}" class="${labelclass|h}">${label}</label></p>
+        <div class="${radiodivclass|h}">
+        % for opt, desc in options:
+            <p>
+                <input class="${inputclass|h}" type="radio" id="${name|h}_${opt|h}" name="${name|h}" value="${opt|h}" />
+		        ${desc|h}
+            </p>
+        % endfor
+        </div>
+        ${getError(name)|h}
+
+</%def>
+
+<%def name="formCheckBoxes(label, opt, name, id, labelclass, inputclass, checked=False, first=False)" filter="trim">
+    % if first != True:
+    <p style="clear:both; position:relative">
+    % else:
+    <p>
+    % endif
+		<label for="${name|h}" class="${labelclass|h}">${label}</label></p>
+        % if checked:
+            <input class="${inputclass|h}" type="checkbox" id="${opt|h}" name="${name|h}" value="${opt|h}" checked />
+        % else:
+            <input class="${inputclass|h}" type="checkbox" id="${opt|h}" name="${name|h}" value="${opt|h}" />
+        % endif
+        ${getError(name)|h}
+    </p>
+</%def>

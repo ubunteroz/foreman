@@ -1,0 +1,54 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+
+<%def name="javascripts()" filter="trim">
+
+</%def>
+
+
+<div id="sidebar">
+    ${sidebars.user_menu()}
+</div>
+<div id="mainbar">
+    <h1>Users</h1>
+
+
+    <table>
+        <tr>
+            <th>Username</th>
+            <th>Fullname</th>
+            <th>Edit Profile</th>
+            % if check_perms("User", 'add'):
+            <th>Validated</th>
+            % endif
+        </tr>
+        % for user in users:
+            % if user.validated is True or check_perms("User", 'add'):
+        <tr>
+            <td><a href='${urls.build("user.view", dict(user_id=user.id))|h}'>${user.username|h}</a></td>
+            <td>${user.fullname|h}</td>
+            <td>
+            % if check_perms(user, 'edit'):
+            <a href='${urls.build("user.edit", dict(user_id=user.id))|h}'>Edit</a>
+            % endif
+            </td>
+            % if check_perms("User", 'add'):
+            <td>
+                % if user.validated is False:
+                <a href='${urls.build("general.admin", dict(active_tab=4))|h}'>${user.validated|h}</a>
+                % else:
+                ${user.validated|h}
+                % endif
+            </td>
+            % endif
+        </tr>
+            % endif
+        % endfor
+    </table>
+
+    % if check_perms("User", 'add'):
+    <h1>Add a new User</h1>
+
+    <p><a href='${urls.build("user.add", dict())|h}'>Add a user</a></p>
+    % endif
+</div>

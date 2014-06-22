@@ -1,0 +1,462 @@
+body{
+    margin: 0px;
+    padding: 0px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 300;
+}
+
+#header{
+    height: 130px;
+}
+
+#top_menu{
+    background-color: #FFD801;
+    padding: 5px;
+    border-bottom: solid black 3px;
+    margin-bottom:10px;
+    font-size: 10pt;
+    height: 20px;
+}
+
+#top_menu_left{
+    float:left;
+}
+
+#top_menu_right{
+    float:right;
+}
+
+#top_menu_right a, #top_menu_left a{
+    color: black;
+}
+
+#top_menu_right a:hover, #top_menu_left a:hover{
+    text-decoration: None;
+}
+
+#logo_img{
+    float:left;
+    clear:both;
+}
+
+#logo_text{
+    font-weight: 400;
+    font-size: 15pt;
+    float:left;
+    line-height:100px;
+    height: 50px;
+    vertical-align: bottom;
+}
+
+#sidebar{
+    float: left;
+	width: 250px;
+	background: url('tinystripes.png');
+	padding: 5px;
+	margin: 0px 10px 20px 0px;
+	min-height:400px;
+	border: solid #EEEEEE 1px;
+	border-radius: 5px;
+}
+
+#sidebar a{
+    color: black;
+}
+
+#sidebar a:hover{
+    color: #FFD801;
+    text-decoration: None;
+}
+
+#footer_middle a{
+    color: white;
+}
+
+#footer_middle a:hover{
+    color: white;
+    text-decoration: None;
+}
+
+#mainbar a{
+    color: black;
+}
+
+#mainbar a:hover{
+    color: grey;
+    text-decoration: None;
+}
+
+#mainbar a.highlight{
+    color: red;
+}
+
+#mainbar a.highlight:hover{
+    color: red;
+    text-decoration: None;
+}
+
+span.side_indent{
+    padding-left:30px;
+}
+
+#mainbar{
+    float: left;
+    width: calc(100% - 300px);
+    margin-bottom: 20px
+}
+
+#mainbar_noside{
+    float: left;
+    margin: 0px 0px 0px 50px;
+    width: 90%;
+    margin-bottom: 20px;
+}
+
+#middle{
+	width: 100%;
+	position: relative;
+	margin-bottom: 25px;
+	padding-bottom:30px;
+	clear:both;
+}
+
+#wholemiddle{
+    margin-bottom: 25px;
+	padding: 0px 10px 30px 10px;
+}
+
+.clear{
+    clear:both;
+}
+
+#footer {
+    padding: 5px;
+    clear:both;
+    margin: 20px auto;
+    width: 95%;
+    border-radius: 5px;
+    background-image: -webkit-gradient(
+        linear,
+        left top,
+        left bottom,
+        color-stop(0, #313131),
+        color-stop(1, #000000)
+    );
+    background-image: -o-linear-gradient(bottom, #313131 0%, #000000 100%);
+    background-image: -moz-linear-gradient(bottom, #313131 0%, #000000 100%);
+    background-image: -webkit-linear-gradient(bottom, #313131 0%, #000000 100%);
+    background-image: -ms-linear-gradient(bottom, #313131 0%, #000000 100%);
+    background-image: linear-gradient(to bottom, #313131 0%, #000000 100%);
+}
+
+#footer_middle{
+    font-size: 9pt;
+    text-align: right;
+    margin: 0px 3px;
+    padding: 5px 10px;
+    color: white;
+}
+
+.pick_a_box{
+    border: solid #FFD801 1px;
+    padding: 10px;
+    width:20%;
+    float: left;
+    margin: 10px;
+    height: 120px;
+    font-weight: 400;
+    font-size: 20pt;
+    text-align:center;
+    border-radius: 15px;
+    position:relative;
+}
+
+a .pick_a_box{
+    text-decoration: None;
+    color: black;
+}
+
+.pick_a_box:hover{
+    background: #FFD801;
+    border: solid black 1px;
+    text-decoration: None;
+}
+
+.not_used{
+    background: grey!important;
+    border: solid black 1px;
+}
+
+div.evidence{
+    border: solid black 1px;
+    padding: 2px;
+    margin: 5px;
+    float:left;
+    width: 200px;
+}
+
+.speechbubble{
+    width: 40px;
+    height:36px;
+    background: url('speechbubble.jpg');
+    background-repeat: no-repeat;
+    position:absolute;
+    top:-20px;
+    left:90%;
+    font-size: 12pt;
+    padding-top: 5px;
+}
+
+h1, h2, h3, h4 {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 400;
+    margin:0px;
+    Padding: 5px 0px;
+}
+
+#mainbar h2{
+    margin-top: 10px;
+}
+
+li {
+    font-size:10pt;
+    padding-bottom:10px;
+}
+
+div#sidebar h1{
+    font-size: 13pt;
+    border-bottom: solid black 2px;
+    background-color: #EEEEEE;
+}
+
+div#sidebar h2{
+    font-size: 11pt;
+    border-bottom: solid black 2px;
+    background-color: #EEEEEE;
+}
+
+div#sidebar h3{
+    font-size: 11pt;
+    background-color: #EEEEEE;
+    margin-top: 3px;
+}
+
+p{
+    font-family: 'Nunito', sans-serif;
+    font-weight: 300;
+    margin:0px;
+    padding: 5px 0px;
+    font-size:10pt;
+}
+
+span.archived, span.highlight{
+    font-weight: bold;
+    color: red;
+}
+
+div.case_background, div.task_background{
+    border: solid 1px black;
+    background-color: #EEEEEE;
+    width: 98%;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+div.qr_code{
+    float:right;
+    border: solid 3px black;
+    position:relative;
+    top: -100px;
+}
+
+table{
+    font-size: 10pt;
+    border-collapse:collapse;
+}
+
+table td, table th{
+    border: solid grey 1px;
+    text-align: left;
+    height: 30px!important;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+table.internal_mail{
+    width: 400px;
+    margin-bottom: 10px;
+}
+
+table.internal_mail th{
+    width: 100px;
+}
+
+table.highlighted{
+    background: grey;
+}
+
+pre.notes{
+    white-space: pre-wrap;       /* css-3 */
+    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+    white-space: -pre-wrap;      /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    word-wrap: break-word;
+}
+
+div.casenotes_div{
+    border: solid 1px black;
+    width: 800px;
+    margin: 10px; 0px;
+}
+
+table.casenotes{
+    width:100%;
+}
+
+table.casenotes td, table.casenotes th{
+    border: none;
+    text-align: left;
+    padding: 5px;
+}
+
+.casenote_highlight{
+    background-color: #f5f5ed;
+}
+
+.case_notes_contents{
+    border: solid 1px #aaa!important;
+    border-radius: 5px;
+}
+
+.forensics_work_contents{
+    border-top: solid 1px #aaa!important;
+}
+
+div.confirmclosurebox, div.confirmassigninv{
+    margin: 0px auto;
+    width: 600px;
+    padding: 10px 10px 10px 60px;
+    border: solid black 3px;
+    background: url('../images/siteimages/icons/orbhelp.png');
+    background-repeat: no-repeat;
+}
+
+div.confirmassigninv{
+    width: 600px;
+}
+
+table.addcase, table.userdetails{
+    border: none;
+}
+
+table.addcase td, table.addcase th, table.userdetails td, table.userdetails th{
+    border: none;
+}
+
+table.userdetails th{
+    width: 100px;
+}
+
+tr.note{
+    background-color: grey;
+}
+
+input, select{
+    border: solid black 1px;
+    float: left;
+    padding: 5px;
+    border-radius: 5px;
+    position: relative;
+    width: 190px;
+}
+
+.input_long{
+    width: 400px;
+}
+
+.radio_input_short{
+    width: 10px;
+}
+
+textarea{
+    border: solid black 1px;
+    float: left;
+    padding: 5px;
+    border-radius: 5px;
+    position: relative;
+    width: 400px;
+    height: 200px;
+}
+
+textarea.addeditcase_notes{
+    width: 700px;
+    height: 400px;
+}
+
+div.radio{
+    position: relative;
+    width: 300px;
+    margin-left: 270px;
+}
+
+div.radio input{
+    text-align: left;
+    width: 20px;
+}
+
+
+label.form_label{
+    width: 250px;
+	float: left;
+	text-align: right;
+	margin-right: 15px;
+	display: block;
+	position: relative;
+}
+
+.required{
+    border: solid red 1px!important;
+}
+
+div.error{
+    font-size: 9pt;
+    background-color: red;
+    float:left;
+    margin: -5px 0px -5px -4px;
+    padding: 5px;
+    height: 18px;
+    position: relative;
+    color: white;
+    font-weight: bold;
+}
+
+div.success{
+    width: 500px;
+    margin: 0px auto;
+    border: solid #FFD801 3px;
+    border-radius: 15px;
+    padding: 10px;
+    font-size: 10pt;
+}
+
+div.success h1{
+    color: #FFD801;
+}
+
+div.no_success{
+    width: 500px;
+    margin: 0px auto;
+    border: solid #990012 3px;
+    border-radius: 15px;
+    padding: 10px;
+    font-size: 10pt;
+}
+
+div.no_success h1{
+    color: #990012;
+}
+
+.evidenceicon{
+    float:left;
+    margin-right: 5px;
+}

@@ -1,0 +1,33 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+<%namespace file="/utils/forms.html" name="forms" />
+
+<%def name="javascripts()" filter="trim">
+</%def>
+
+
+<div id="sidebar">
+    ${sidebars.tasks_menu()}
+</div>
+<div id="mainbar">
+    <h1>Add Evidence to case ${case.case_name|h}: Section 1 of 2</h1>
+    <p><a href="${urls.build('case.view', dict(case_id=case.case_name))|h}">Back to Case</a></p>
+
+    <h2>Add Evidence Details</h2>
+    <form method="post" action="${urls.build('evidence.add', dict(case_id=case.case_name, form='add_evidence'))|h}">
+        ${forms.formTextField("Reference", "reference", "reference", "form_label", "input_long", first=True)}
+        ${forms.formTextField("Bag Number", "bag_num", "bag_num", "form_label", "input_long")}
+        ${forms.formSelectBox("Evidence Type", "type", "type", "form_label", "input_long", evidence_type_options, please_select=True)}
+        ${forms.formTextField("Originator", "originator", "originator", "form_label", "input_long")}
+        ${forms.formTextField("Location Seized From", "location", "location", "form_label", "input_long")}
+        ${forms.formTextArea("Comments", "comments", "comments", "form_label", "addeditcase")}
+        ${forms.formCheckBoxes("Generate QR Code", "qr", "qr", "qr", "form_label", "radio_input_short")}
+
+    <h2>Add Photographs</h2>
+
+        ${forms.formTextField("Upload new photograph", "photo-1", "photo-1", "form_label", "input_long", first=True, input_type="file")}
+        ${forms.formTextField("Upload new photograph", "photo-2", "photo-2", "form_label", "input_long", input_type="file")}
+        ${forms.formTextField("Upload new photograph", "photo-3", "photo-3", "form_label", "input_long", input_type="file")}
+        <p style="clear:both; text-align:center"><input type="submit" value="Next" /></p>
+    </form>
+</div>

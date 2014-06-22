@@ -1,0 +1,30 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/forms.html" name="forms" />
+
+<%def name="javascripts()" filter="trim">
+
+</%def>
+
+
+<div id="wholemiddle">
+
+        % if success is True:
+           <div class="success">
+                <h1>Success</h1>
+                <p>You have successfully registered to use Foreman. Your administrator will need to validate your
+                    registration before you can login. </p>
+            </div>
+        % endif
+
+        <h1>Register</h1>
+        <form method="post" action="${urls.build('general.register')|h}">
+            ${forms.formTextField("Username", "username", "username", "form_label", "addeditcase", first=True)}
+            ${forms.formTextField("Forename", "forename", "forename", "form_label", "addeditcase")}
+            ${forms.formTextField("Middle Name (optional)", "middlename", "middlename", "form_label", "addeditcase")}
+            ${forms.formTextField("Surname", "surname", "surname", "form_label", "addeditcase")}
+            ${forms.formTextField("Password", "password", "password", "form_label", "addeditcase", input_type="password")}
+            ${forms.formTextField("Password (Confirm)", "password_2", "password", "form_label", "addeditcase", input_type="password")}
+            ${forms.formTextField("Email Address", "email", "email", "form_label", "addeditcase")}
+            <p style="clear:both; text-align:center"><input type="submit" value="Register" /></p>
+        </form>
+</div>

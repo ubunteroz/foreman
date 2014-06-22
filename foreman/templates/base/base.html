@@ -1,0 +1,57 @@
+﻿## -*- coding: utf-8 -*-
+
+<html>
+<%def name="javascripts()"></%def>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=windows-1252" />
+    <link href='http://fonts.googleapis.com/css?family=Nunito:400,300' rel='stylesheet' type='text/css'>
+	<link rel="StyleSheet" href="${urls.build("css", dict(file='style.css'))|h}" type="text/css" />
+	<link rel="icon" type="image/png" href="${urls.build("images", dict(file='site/favicon.png'))|h}" />
+	<title></title>
+    ${self.javascripts()}
+</head>
+
+<body>
+<div id="body">
+    <div id="header">
+        <div id="top_menu">
+            <div id="top_menu_left">
+                <a href='${urls.build("general.index")|h}'>Home</a> |
+                <a href='${urls.build("case.view_all")|h}'>Cases</a> |
+                <a href='${urls.build("task.view_all")|h}'>Tasks</a> |
+                <a href='${urls.build("task.view_qas")|h}'>QAs</a> |
+                <a href='${urls.build("user.view_all")|h}'>Users</a> |
+                <a href='${urls.build("evidence.view_all")|h}'>Evidence</a>
+                % if check_perms("Case", 'admin'):
+                | <a href='${urls.build("general.admin")|h}'>Administration</a>
+                % endif
+            </div>
+            <div id="top_menu_right">
+                % if current_user is not None:
+                <a href='${urls.build("user.view", dict(user_id=current_user.id))|h}'>${current_user.fullname|h}</a> is logged in |
+                <a href='${urls.build("general.logout")|h}'>Log out</a> |
+                <a href='${urls.build("user.edit", dict(user_id=current_user.id))|h}'>Edit Profile</a>
+                % else:
+                <a href='${urls.build("general.login")|h}'>Login</a> |
+                <a href='${urls.build("general.register")|h}'>Register</a>
+                % endif
+            </div>
+        </div>
+
+        <div id="logo_img"><img src="/images/siteimages/logo.png" /></div>
+        <div id="logo_text">Forensic Management Software</div>
+    </div>
+
+    <div id="middle">
+
+            ${self.body()}
+    </div>
+    <div style="clear:both"/>
+    <div id="footer">
+        <div id="footer_middle">Foreman - Forensic Management Software. Copyright 2014. <a href="https://bitbucket.org/lowmanio/foreman/issues/new">Support</a>
+            | <a href="https://bitbucket.org/lowmanio/foreman/wiki/Home">Documentation</a>
+            | <a href="mailto:admin@foreman-forensics.org">Contact</a></div>
+    </div>
+</div>
+</body>
+</html>

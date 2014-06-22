@@ -1,0 +1,72 @@
+<%def name="highlight(task, inv)" filter="trim">
+    % if getattr(task, inv) is not None and getattr(task, inv).id == current_user.id:
+         class="highlighted"
+    % endif
+</%def>
+
+<%def name="task_table(case, edit=False)" filter="trim">
+    % if len(case.tasks) > 0:
+        <table>
+        <tr>
+            <th>Task Name</th>
+            <th>Task Created</th>
+            <th>Task Type</th>
+            <th>Status</th>
+            <th>Principle Forensic Investigator</th>
+            <th>Secondary Forensic Investigator</th>
+            <th>Principle QA Investigator</th>
+            <th>Secondary QA Investigator</th>
+        </tr>
+    % for task in case.tasks:
+        <tr>
+            % if edit is True:
+                % if task.case.private is True:
+                    <td><a class="highlight" href='${urls.build("task.edit", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a></td>
+                % else:
+                    <td><a href='${urls.build("task.edit", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a></td>
+                % endif
+            % else:
+                % if task.case.private is True:
+                    <td><a class="highlight" href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a></td>
+                % else:
+                    <td><a href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a></td>d
+                % endif
+            % endif
+            <td>${task.date_created|h}</td>
+            <td>${task.task_type.task_type|h}</td>
+            <td>${task.status|h}</td>
+            <td>
+                % if task.principle_investigator != None:
+                <a href='${urls.build("user.view", dict(user_id=task.principle_investigator.id))|h}'>${task.principle_investigator.fullname|h}</a>
+                % else:
+                None
+                % endif
+            </td>
+            <td>
+                % if task.secondary_investigator != None:
+                <a href='${urls.build("user.view", dict(user_id=task.secondary_investigator.id))|h}'>${task.secondary_investigator.fullname|h}</a>
+                % else:
+                None
+                % endif
+            </td>
+            <td>
+                 % if task.principle_QA != None:
+                <a href='${urls.build("user.view", dict(user_id=task.principle_QA.id))|h}'>${task.principle_QA.fullname|h}</a>
+                % else:
+                None
+                % endif
+            </td>
+            <td>
+                % if task.secondary_QA != None:
+                <a href='${urls.build("user.view", dict(user_id=task.secondary_QA.id))|h}'>${task.secondary_QA.fullname|h}</a>
+                % else:
+                None
+                % endif
+            </td>
+        </tr>
+    % endfor
+    </table>
+    % else:
+        <p>None.</p>
+    % endif
+</%def>

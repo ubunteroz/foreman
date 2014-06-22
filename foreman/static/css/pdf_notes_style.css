@@ -1,0 +1,31 @@
+body{
+    font-family: 'Nunito', sans-serif;
+    font-weight: 300;
+}
+
+h1, h2, h3, h4 {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 400;
+    margin:0px;
+    Padding: 5px 0px;
+}
+
+p{
+    font-family: 'Nunito', sans-serif;
+    font-weight: 300;
+    margin:0px;
+    padding: 5px 0px;
+    font-size:10pt;
+}
+
+@page {
+        size: letter portrait;
+        @frame header_frame {           /* Static frame */
+            -pdf-frame-content: header_content;
+            left: 50pt; width: 512pt; top: 50pt; height: 40pt;
+        }
+        @frame footer_frame {           /* Static frame */
+            -pdf-frame-content: footer_content;
+            left: 50pt; width: 512pt; top: 772pt; height: 20pt;
+        }
+    }

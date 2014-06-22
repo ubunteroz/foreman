@@ -1,0 +1,29 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/forms.html" name="forms" />
+
+<%def name="javascripts()" filter="trim">
+
+</%def>
+
+
+<div id="wholemiddle">
+        % if validated is False:
+            <div class="no_success">
+                <h1>Unvalidated</h1>
+                <p>Your administrator has not yet confirmed your registration. You will not be able to login
+                    until this occurs. Please contact your administrator for help. </p>
+            </div>
+        % endif
+
+
+        <h1>Login</h1>
+        <form method="post" action="${urls.build('general.login')|h}">
+            ${forms.formTextField("Username", "username", "username", "form_label", "addeditcase", first=True)}
+            ${forms.formTextField("Password", "password", "password", "form_label", "addeditcase", input_type="password")}
+            <p style="clear:both; text-align:center"><input type="submit" value="Login" /></p>
+        </form>
+
+        <div style="clear:both;" />
+        <h1>Register</h1>
+        <p><a href="${urls.build('general.register')|h}">Fill out the form</a> to register as a Foreman user.</p>
+</div>

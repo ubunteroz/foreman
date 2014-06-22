@@ -1,0 +1,68 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+        
+<%def name="javascripts()" filter="trim">
+
+</%def>
+
+
+<div id="sidebar">
+    ${sidebars.tasks_menu()}
+</div>
+<div id="mainbar">
+    <h1>Evidence</h1>
+
+    % if evidence:
+
+        <h2>Evidence that needs associating with a case</h2>
+        % for evi in evidence:
+            % if evi.case_id is None:
+            <div class="evidence">
+                <img alt="${evi.type|h} icon" src="${urls.build("images", dict(file='siteimages/evidence_icons/' + evi.type + '.png'))|h}" style="float:left"/>
+                <p>No case associated.
+                <br/><a href='${urls.build("evidence.view_caseless", dict(evidence_id=evi.reference))|h}'>${evi.reference|h}</a></p>
+            </div>
+
+        <div class="clear"/>
+
+            % endif
+        % endfor
+
+        <h2>Timeline of added evidence<h2>
+        <% current_year = None %>
+        <% current_month = None %>
+        <% current_day = None %>
+        % for evi in evidence:
+            % if current_year != evi.current_status.date_of_custody.year:
+                <div style="clear:both" />
+                <h2>${evi.current_status.date_of_custody.year|h}</h2>
+                <% current_year = evi.current_status.date_of_custody.year %>
+            % endif
+            % if current_month != evi.current_status.date_of_custody.month:
+                <div style="clear:both" />
+                <h3>${evi.current_status.date_of_custody.strftime('%B')|h}</h3>
+                <% current_month = evi.current_status.date_of_custody.month %>
+            % endif
+            % if current_day != evi.current_status.date_of_custody.date():
+                <div style="clear:both" />
+                <h4>${evi.current_status.date_of_custody.day|h}</h4>
+                <% current_day = evi.current_status.date_of_custody.date() %>
+                <div style="clear:both" />
+            % endif
+            <div class="evidence">
+                <img alt="${evi.type|h} icon" src="${urls.build("images", dict(file='siteimages/evidence_icons/' + evi.icon + '.png'))|h}" class="evidenceicon"/>
+                % if evi.case_id is not None:
+                <p><a href='${urls.build("case.view", dict(case_id=evi.case.case_name))|h}'>${evi.case.case_name|h}</a>
+                <br /><a href='${urls.build("evidence.view", dict(evidence_id=evi.reference, case_id=evi.case.case_name))|h}'>${evi.reference|h}</a></p>
+                % else:
+                <p>No case associated.
+                <br/><a href='${urls.build("evidence.view_caseless", dict(evidence_id=evi.reference))|h}'>${evi.reference|h}</a></p>
+                % endif
+            </div>
+        % endfor
+
+    % else:
+           <p>No evidence has been added.</p>
+    % endif
+
+</div>

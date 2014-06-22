@@ -1,0 +1,92 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+
+<%def name="javascripts()" filter="trim">
+
+</%def>
+
+<%namespace file="/utils/format.html" name="f" />
+
+<%def name="task_table(tasks)" filter="trim">
+	% if len(tasks) > 0:
+    <table>
+        <tr>
+            <th>Case Name</th>
+            <th>Task Name</th>
+            <th>Task Type</th>
+            <th>Task Created</th>
+            <th>Status</th>
+            <th>Principle Forensic Investigator</th>
+            <th>Secondary Forensic Investigator</th>
+        </tr>
+    % for task in tasks:
+        <tr>
+            % if task.case.private is True:
+                <td><a class="highlight" href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a></td>
+            % else:
+                <td><a href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a></td>
+            % endif
+
+            <td><a href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a></td>
+            <td>${task.task_type.task_type|h}</td>
+            <td>${task.date_created|h}</td>
+            <td>${task.status|h}</td>
+            <td ${f.highlight(task, 'principle_investigator')}>
+                % if task.principle_investigator != None:
+                ${task.principle_investigator.fullname|h}
+                % else:
+                None
+                % endif
+            </td>
+            <td ${f.highlight(task, 'secondary_investigator')}>
+                % if task.secondary_investigator != None:
+                ${task.secondary_investigator.fullname|h}
+                % else:
+                None
+                % endif
+            </td>
+                % if current_user in task.investigators:
+                    % if task.status == task_statuses['start']:
+                    <td><a href='${urls.build("forensics.work", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>Start task</a></td>
+                    % else:
+                    <td><a href='${urls.build("forensics.work", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>Work on task</a></td>
+                    % endif
+                % elif current_user in task.QAs and task.status == task_statuses['qa']:
+                    <td><a href='${urls.build("forensics.qa", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>QA task</a></td>
+                % endif
+
+        </tr>
+    % endfor
+    </table>
+    % else:
+        <p>None.</p>
+    % endif
+</%def>
+
+<div id="sidebar">
+    ${sidebars.tasks_menu()}
+</div>
+<div id="mainbar">
+    <h1>Tasks for ${current_user.fullname|h}</h1>
+
+    % if all_tasks:
+
+    <h2>Outstanding Tasks as principle Forensic Investigator</h2>
+
+    ${self.task_table(user_primary_inv)}
+
+    <h2>Outstanding Tasks as secondary Forensic Investigator</h2>
+
+    ${self.task_table(user_secondary_inv)}
+
+    <h1>All Open Tasks</h1>
+
+    ${self.task_table(all_tasks)}
+
+    % else:
+
+    <p>There are no tasks set up yet.</p>
+
+    % endif
+
+</div>

@@ -1,0 +1,228 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+<%namespace file="/utils/forms.html" name="forms" />
+<%namespace file="/utils/format.html" name="format" />
+
+<%def name="javascripts()" filter="trim">
+    <link rel="StyleSheet" href="${urls.build('css', dict(file='jquery-ui-1.10.4.custom.css'))|h}" type="text/css" />
+    <script src="${urls.build('javascript', dict(file='jquery-1.10.2.js'))|h}"></script>
+    <script src="${urls.build('javascript', dict(file='jquery-ui-1.10.4.custom.min.js'))|h}"></script>
+    <script>
+        $(function() {
+        $( "#tabs" ).tabs();
+        $( "#tabs" ).tabs({ active: ${active_tab}});
+        });
+    </script>
+</%def>
+
+
+<div id="sidebar">
+   ${sidebars.tasks_menu()}
+</div>
+
+<div id="mainbar">
+    <h1>Edit Case ${case.case_name|h}</h1>
+    <p><a href="${urls.build('case.view', dict(case_id=case.case_name))|h}">Back to Case</a> |
+        <a href="${urls.build('task.add', dict(case_id=case.case_name))|h}">Add Tasks</a></p>
+    <div id="tabs">
+        <ul>
+        <li><a href="#tabs-1">Edit Case Details</a></li>
+        <li><a href="#tabs-2">Link With Other Cases</a></li>
+        <li><a href="#tabs-3">Edit Case Managers</a></li>
+        % if len(case.tasks) != 0:
+        <li><a href="#tabs-4">Edit & Reassign Tasks</a></li>
+        % endif
+        </ul>
+
+        <div id="tabs-1" class="forensics_work_contents">
+
+            <h2>Case History</h2>
+
+            <table>
+                <tr>
+                    <th>Date</th>
+                    <th>User</th>
+                    <th>Changes</th>
+                </tr>
+                % for history in case_history:
+                <tr>
+                    <td>${history['date']|h}</td>
+                    <td><a href='${urls.build("user.view", dict(user_id=history['user'].id))|h}'>${history['user'].fullname|h}</a></td>
+                    <td>
+                        % if not isinstance(history['change_log'], basestring):
+                        % for entry, change in history['change_log'].iteritems():
+                            The ${entry|h} changed from ${change[0]|h} to ${change[1]|h} <br/>
+                        % endfor
+                        % else:
+                            ${history['change_log']|h}
+                        % endif
+                    </td>
+                </tr>
+                % endfor
+            </table>
+
+
+
+            <h2>Edit Case Details</h2>
+
+            <form method="post" action="${urls.build('case.edit', dict(case_id=case.case_name, form='edit_case'))|h}">
+                ${forms.formTextField("Case Name", "case_name", "case_name", "form_label", "input_long", first=True, value=case.case_name)}
+                ${forms.formTextField("Case Files Location", "location", "location", "form_label", "input_long", value=case.location)}
+                ${forms.formTextArea("Case Background", "background", "background", "form_label", "addeditcase", value=case.background)}
+                ${forms.formTextField("Reference", "reference", "reference", "form_label", "input_long", value=case.reference)}
+                ${forms.formCheckBoxes("Private", "private", "private", "private", "form_label", "radio_input_short", checked=case.private)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+            </form>
+
+        </div>
+
+        <div id="tabs-2" class="forensics_work_contents">
+
+            <h2>Linked Cases</h2>
+
+            <table>
+                    <tr>
+                        <td width="100px">Case Name</td><td width="150px">Date</td><td width="300px">Reason</td><td width="150px">Link Addition / Removal</td>
+                    </tr>
+                % for link in case.linked:
+                    <tr>
+                        <td>
+                            <a href="${urls.build('case.view', dict(case_id=link.case_linkees.case_name))|h}">${link.case_linkees.case_name|h}</a>
+                        </td>
+                        <td>
+                            ${link.date|h}
+                        </td>
+                        <td>
+                            ${link.reason|h}
+                        </td>
+                        <td>
+                            % if link.removed:
+                            Link removal.
+                            % else:
+                            Link addition.
+                            % endif
+                        </td>
+
+                    </tr>
+                % endfor
+                % if len(case.linked) == 0:
+                    <tr><td colspan="4">No Links</td></tr>
+                % endif
+            </table>
+
+            <h2>Cases that have added a link to ${case.case_name|h}</h2>
+            <table>
+                <tr>
+                    <td width="100px">Case Name</td><td width="150px">Date</td><td width="300px">Reason</td><td width="150px">Link Addition / Removal</td><td width="100px">Bidirectional</td>
+                </tr>
+                % for link in case.linkees:
+                    <tr>
+                        <td>
+                            <a href="${urls.build('case.view', dict(case_id=link.case_linkers.case_name))|h}">${link.case_linkers.case_name|h}</a>
+                        </td>
+                        <td>
+                            ${link.date|h}
+                        </td>
+                        <td>
+                            ${link.reason|h}
+                        </td>
+                        <td>
+                            % if link.removed:
+                            Link removal.
+                            % else:
+                            Link addition.
+                            % endif
+                        </td>
+                        <td>
+                            % if link.bidirectional(case, direction="linkee") is False:
+                                No
+                            % elif link.bidirectional(case, direction="linkee") is True:
+                                Yes
+                            % endif
+                        </td>
+
+                    </tr>
+                % endfor
+                % if len(case.linkees) == 0:
+                    <tr><td colspan="5">No Links</td></tr>
+                % endif
+            </table>
+
+            <h2>Add New Link</h2>
+            <form method="post" action="${urls.build('case.edit', dict(case_id=case.case_name, form='add_link'))|h}">
+                ${forms.formSelectBox("Select Case", "case_links_add", "case_links_add", "form_label", "input_long", case_link_options, first=True, please_select=True)}
+                ${forms.formTextField("Reason for Link", "reason_add", "reason_add", "form_label", "input_long")}
+                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+            </form>
+
+            <br/>
+            <h2>Remove Link</h2>
+            <form method="post" action="${urls.build('case.edit', dict(case_id=case.case_name, form='remove_link'))|h}">
+                ${forms.formSelectBox("Select Case", "case_links", "case_links", "form_label", "input_long", case_link_remove_options, first=True, please_select=True)}
+                ${forms.formTextField("Reason for Link Removal", "reason", "reason", "form_label", "input_long")}
+                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+            </form>
+         </div>
+
+        <div id="tabs-3" class="forensics_work_contents">
+
+            % if case_manager_history:
+            <h2>Case Manager History</h2>
+
+            <table>
+                <tr>
+                    <th>Date</th>
+                    <th>User</th>
+                    <th>Changes</th>
+                </tr>
+                % for history in case_manager_history:
+                <tr>
+                    <td>${history['date']|h}</td>
+                    <td><a href='${urls.build("user.view", dict(user_id=history['user'].id))|h}'>${history['user'].fullname|h}</a></td>
+                    <td>
+                        % for entry, change in history['change_log'].iteritems():
+                            % if change[0] == "ADD":
+                            The ${entry|h} was assigned to ${change[1]|h} <br/>
+                            % elif change[0] == "DEL":
+                            ${change[1]|h} was removed from ${entry|h}<br/>
+                            % else:
+                            The ${entry|h} changed from ${change[0]|h} to ${change[1]|h} <br/>
+                            % endif
+                        % endfor
+                    </td>
+                </tr>
+                % endfor
+            </table>
+            % endif
+
+            <h2>Edit Case Managers</h2>
+            <form method="post" action="${urls.build('case.edit', dict(case_id=case.case_name, form='edit_case_managers'))|h}">
+                ${forms.formSelectBox("Principle Case Manager", "primary_case_manager", "primary_case_manager", "form_label", "input_long", managers, first=True, please_select=True, value=principle_man)}
+                ${forms.formSelectBox("Secondary Case Manager", "secondary_case_manager", "secondary_case_manager", "form_label", "input_long", managers, please_select=True, value=secondary_man)}
+
+                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+            </form>
+         </div>
+
+        % if len(case.tasks) != 0:
+        <div id="tabs-4" class="forensics_work_contents">
+
+            <h2>Current Tasks</h2>
+
+            <p>Click on the task name to edit the task.</p>
+
+            ${format.task_table(case, edit=True)}
+
+            <h2>Remove Task and Assign to Another Case</h2>
+
+            <form method="post" action="${urls.build('case.edit', dict(case_id=case.case_name, form='reassign_tasks'))|h}">
+                ${forms.formSelectBox("Task", "task_reassign", "task_reassign", "form_label", "input_long", reassign_tasks, first=True, please_select=True)}
+                ${forms.formSelectBox("Reassign to Case", "case_reassign", "case_reassign", "form_label", "input_long", reassign_cases, please_select=True)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+            </form>
+
+         </div>
+        % endif
+    </div>
+
+</div>

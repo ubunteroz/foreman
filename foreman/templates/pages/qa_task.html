@@ -1,0 +1,58 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/forms.html" name="forms" />
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+
+<%def name="javascripts()" filter="trim">
+
+</%def>
+
+
+<div id="sidebar">
+    ${sidebars.tasks_menu()}
+</div>
+<div id="mainbar">
+    <h1>QA Task ${task.task_name|h}</h1>
+
+    % if success:
+     <div class="success">
+        <h1>Success!</h1>
+        <p>The task has been QA ${qa_result|h}. The forensic investigators have been alerted.</p>
+        <p><a href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>Back to task summary.</a></p>
+    </div>
+    % else:
+
+    % if len(current_user.messages_received) > 0:
+    <h2>Messages from Investigators regarding this QA</h2>
+
+        % for mail in current_user.messages_received:
+         <table class="internal_mail">
+             <tr>
+            <th>From</th>
+            <td>${mail.sender.fullname|h}</td></tr>
+        <tr>
+            <th>Date Sent</th>
+            <td>${mail.date|h}</td>
+        </tr>
+        <tr>
+            <th>Subject</th>
+            <td>${mail.subject|h}</td>
+        </tr>
+        <tr>
+            <th>Body</th>
+            <td>${mail.body|h}</td>
+        </tr>
+         </table>
+        % endfor
+
+    % endif
+
+    <h2>QA Task</h2>
+    <form method="post" action="${urls.build('forensics.qa', dict(task_id=task.task_name, case_id=task.case.case_name))|h}">
+        ${forms.formTextArea("Notes", "notes", "notes", "form_label", "addeditcase", first=True)}
+        <% options = [('qa_pass', 'QA Pass'),('qa_fail', 'QA Fail')] %>
+        ${forms.formRadioButtons("QA pass/fail", options, "qa_decision", "qa_decision", "form_label", "addeditcase", "radio")}
+        <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+    </form>
+    % endif
+
+</div>

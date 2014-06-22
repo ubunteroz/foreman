@@ -1,0 +1,95 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+
+<%def name="javascripts()" filter="trim">
+</%def>
+
+<%namespace file="/utils/format.html" name="f" />
+
+<div id="sidebar">
+    ${sidebars.tasks_menu()}
+</div>
+<div id="mainbar">
+
+        <h1>${case_status|h} Cases</h1>
+
+         <p>View All Cases<br/>
+            <a href='${urls.build("case.view_all", dict(view="Created"))|h}'>View All Created Cases</a> |
+            <a href='${urls.build("case.view_all", dict(view="Queued"))|h}'>View All Open Cases with Unassigned Tasks</a> |
+            <a href='${urls.build("case.view_all", dict(view="Open"))|h}'>View All Open Cases</a> |
+            <a href='${urls.build("case.view_all", dict(view="Closed"))|h}'>View Closed Cases</a> |
+            <a href='${urls.build("case.view_all", dict(view="Archived"))|h}'>View Archived Cases</a> |
+            <a href='${urls.build("case.view_all", dict(view="All"))|h}'>View All Cases</a>
+            </p>
+
+
+        % if len(cases) > 0 :
+        <table>
+            <tr>
+                <th>Case</th>
+                <th>Case Status</th>
+                <th>Task</th>
+                <th>Task Created</th>
+                <th>Task Type</th>
+                <th>Task Status</th>
+                <th>Principle Forensic Investigator</th>
+                <th>Secondary Forensic Investigator</th>
+            </tr>
+            % for case in cases:
+                % if len(case.tasks) == 0:
+            <tr>
+                <td>
+                    % if case.private is True:
+                        <a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'><span class="highlight">${case.case_name|h}</span></a>
+                    % else:
+                        <a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a>
+                    % endif
+                </td>
+                <td>${case.status|h}</td>
+                <td colspan="7"><a href='${urls.build("task.add", dict(case_id=case.case_name))|h}'>Add Tasks</a></td>
+            </tr>
+                % else:
+                    % for task in case.tasks:
+                        % if (case_status == task_statuses['queued'] and task.status == task_statuses['queued']) or case_status != task_statuses['queued']:
+                        <tr>
+                            <td>
+                                % if case.private is True:
+                                    <a class="highlight" href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a>
+                                % else:
+                                    <a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a>
+                                % endif
+                            </td>
+                            <td>${case.status|h}</td>
+                            <td><a href='${urls.build("task.view", dict(task_id=task.task_name,case_id=case.case_name))|h}'>${task.task_name|h}</a></td>
+                            <td>${task.date_created|h}</td>
+                            <td>${task.task_type.task_type|h}</td>
+                            <td>${task.status|h}</td>
+                            <td ${f.highlight(task, 'principle_investigator')}>
+                                % if task.principle_investigator != None:
+                                <a href="${urls.build('user.view', dict(user_id=task.principle_investigator.id))|h}">${task.principle_investigator.fullname|h}</a>
+                                % else:
+                                None
+                                % endif
+                            </td>
+                            <td ${f.highlight(task, 'secondary_investigator')}>
+                                % if task.secondary_investigator != None:
+                                <a href="${urls.build('user.view', dict(user_id=task.secondary_investigator.id))|h}">${task.secondary_investigator.fullname|h}</a>
+                                % else:
+                                None
+                                % endif
+                            </td>
+
+                        </tr>
+                        % endif
+                    % endfor
+                % endif
+            % endfor
+        </table>
+        % else:
+            % if case_status == "All":
+            <p>There are no cases.</p>
+            % else:
+            <p>There are no ${case_status.lower()|h} cases.</p>
+            % endif
+        % endif
+</div>

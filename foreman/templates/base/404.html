@@ -1,0 +1,18 @@
+﻿<%inherit file="/base/base.html"/>
+
+<%def name="javascripts()" filter="trim">
+
+</%def>
+
+
+<div id="wholemiddle">
+    <h1>404 Error: Page Not Found!</h1>
+
+    <p>
+       % if reason:
+        ${reason|h}
+       % else:
+        Oops!
+       % endif
+    </p>
+</div>

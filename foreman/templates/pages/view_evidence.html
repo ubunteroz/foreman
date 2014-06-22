@@ -1,0 +1,149 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+
+<%def name="javascripts()" filter="trim">
+
+</%def>
+
+
+<div id="sidebar">
+    ${sidebars.tasks_menu()}
+</div>
+<div id="mainbar">
+
+    % if evidence.qr_code:
+    <div class="qr_code">
+        <img src="${urls.build('evidence_qr_code', dict(file=str(evidence.id) + '.png'))|h}" width="200px"/>
+    </div>
+    % endif
+
+    <h1>Evidence ${evidence.reference|h}</h1>
+
+    <h2>Details</h2>
+
+    % if evidence.case_id is not None:
+        % if check_perms(evidence, 'edit'):
+            <p><a href='${urls.build("evidence.edit", dict(case_id=evidence.case.case_name, evidence_id=evidence.reference))|h}'>Edit Evidence</a>
+        % endif
+        % if check_perms(evidence, 'dis-associate'):
+            | <a href='${urls.build("evidence.disassociate", dict(case_id=evidence.case.case_name, evidence_id=evidence.reference))|h}'>Remove Evidence</a></p>
+        % else:
+            </p>
+        % endif
+    % elif evidence.case_id is None:
+        % if check_perms(evidence, 'dis-associate'):
+            <p><a href='${urls.build("evidence.associate", dict(evidence_id=evidence.reference))|h}'>Associate evidence with a case</a>
+        % endif
+        % if check_perms(evidence, 'remove'):
+            | <a href='${urls.build("evidence.remove", dict(evidence_id=evidence.reference))|h}'>Remove evidence completely from Foreman</a></p>
+        % else:
+            </p>
+        % endif
+    % endif
+
+    <table>
+        % if evidence.case_id is not None:
+         <tr>
+            <td>Case</td>
+            <td><a href='${urls.build("case.view", dict(case_id=evidence.case.case_name))|h}'>${evidence.case.case_name|h}</a>
+            % if evidence.case.status == "Archived":
+                    <span class="archived">[${evidence.case.status|h}]</span>
+            % endif
+            </td>
+        </tr>
+        % endif
+        <tr>
+            <td>Date Evidence Added</td>
+            <td>${evidence.date_added|h}</td>
+        </tr>
+         <tr>
+            <td>Evidence Type</td>
+            <td>${evidence.type|h}</td>
+        </tr>
+         <tr>
+            <td>User who added evidence</td>
+            <td><a href='${urls.build("user.view", dict(user_id=evidence.user.id))|h}'>${evidence.user.fullname|h}</a></td>
+        </tr>
+         <tr>
+            <td>Originator</td>
+            <td>${evidence.originator|h}</td>
+        </tr>
+         <tr>
+            <td>Bag Number</td>
+            <td>${evidence.evidence_bag_number|h}</td>
+        </tr>
+         <tr>
+            <td>Storage Location</td>
+            <td>${evidence.location|h}</td>
+        </tr>
+         <tr>
+            <td>Current status</td>
+            <td>
+                % if evidence.current_status.check_in == True:
+                In storage
+                % else:
+                Checked out by ${evidence.current_status.user.fullname|h}
+                % endif
+            </td>
+        </tr>
+        <tr>
+            <td>Comments</td>
+            <td>${evidence.comment|h}</td>
+        </tr>
+    </table>
+
+    <h2>Chain of Custody</h2>
+
+    <table>
+        <tr>
+            <th>Record Date</th>
+            <th>User</th>
+            <th>Date of Movement</th>
+            <th>Custodian</th>
+            <th>Action</th>
+            <th>Comment</th>
+            <th>Attachments</th>
+        </tr>
+        % for chain in evidence.user_handled:
+        <tr>
+            <td>${chain.date|h}</td>
+            <td><a href='${urls.build("user.view", dict(user_id=chain.user.id))|h}'>${chain.user.fullname|h}</a></td>
+            <td>${chain.custody_date|h}</td>
+            <td>${chain.custodian|h}</td>
+            <td>
+                % if chain.check_in == True:
+                Evidence checked in
+                % else:
+                Evidence checked out
+                % endif
+            </td>
+            <td>${chain.comment|h}</td>
+            <td>
+                % if chain.custody_receipt is not None:
+                <a href="${urls.build('evidence_custody_receipts', dict(file=chain.custody_receipt))|h}">${chain.custody_receipt_label|h}</a>
+                % endif
+            </td>
+        </tr>
+        % endfor
+    </table>
+
+    % if evidence.case_id is not None:
+        % if check_perms(evidence, 'check-in-out'):
+            <br />
+            % if evidence.current_status.check_in == True:
+            <p><a href='${urls.build("evidence.custody_out", dict(case_id=evidence.case.case_name, evidence_id=evidence.reference))|h}'>Check out the evidence</a></p>
+            % else:
+            <p><a href='${urls.build("evidence.custody_in", dict(case_id=evidence.case.case_name, evidence_id=evidence.reference))|h}'>Check in the evidence</a></p>
+            % endif
+        % endif
+    % endif
+
+
+    <h2>Photographs</h2>
+    % if evidence.photographs:
+    <% import os %>
+    % for file in os.listdir(photo_location):
+        <img src="${urls.build('evidence_photos', dict(file=str(evidence.id) + '//' + file))|h}" height="200px"/>
+    % endfor
+    % endif
+</div>

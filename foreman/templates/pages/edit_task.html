@@ -1,0 +1,118 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+<%namespace file="/utils/forms.html" name="forms" />
+<%namespace file="/utils/format.html" name="format" />
+
+<%def name="javascripts()" filter="trim">
+    <link rel="StyleSheet" href="${urls.build('css', dict(file='jquery-ui-1.10.4.custom.css'))|h}" type="text/css" />
+    <script src="${urls.build('javascript', dict(file='jquery-1.10.2.js'))|h}"></script>
+    <script src="${urls.build('javascript', dict(file='jquery-ui-1.10.4.custom.min.js'))|h}"></script>
+    <script>
+        $(function() {
+        $( "#tabs" ).tabs();
+        $( "#tabs" ).tabs({ active: ${active_tab}});
+        });
+    </script>
+</%def>
+
+
+<div id="sidebar">
+   ${sidebars.tasks_menu()}
+</div>
+
+<div id="mainbar">
+    <h1>Edit Task ${task.task_name|h}</h1>
+    <p><a href="${urls.build('task.view', dict(task_id=task.task_name, case_id=task.case.case_name))|h}">Back to Task</a> |
+       <a href="${urls.build('case.view', dict(case_id=task.case.case_name))|h}">Back to Case</a></p>
+    <div id="tabs">
+        <ul>
+        <li><a href="#tabs-1">Edit Task Details</a></li>
+        <li><a href="#tabs-2">Edit Investigators & QA Partners</a></li>
+        </ul>
+
+        <div id="tabs-1" class="forensics_work_contents">
+
+            <h2>Task History</h2>
+
+            <table>
+                <tr>
+                    <th>Date</th>
+                    <th>User</th>
+                    <th>Changes</th>
+                </tr>
+                % for history in task_history:
+                <tr>
+                    <td>${history['date']|h}</td>
+                    <td><a href='${urls.build("user.view", dict(user_id=history['user'].id))|h}'>${history['user'].fullname|h}</a></td>
+                    <td>
+                        % if not isinstance(history['change_log'], basestring):
+                        % for entry, change in history['change_log'].iteritems():
+                            The ${entry|h} changed from ${change[0]|h} to ${change[1]|h} <br/>
+                        % endfor
+                        % else:
+                            ${history['change_log']|h}
+                        % endif
+                    </td>
+                </tr>
+                % endfor
+            </table>
+
+
+
+            <h2>Edit Task Details</h2>
+
+            <form method="post" action="${urls.build('task.edit', dict(task_id=task.task_name, case_id=task.case.case_name, form='edit_task'))|h}">
+                ${forms.formTextField("Task Name", "task_name", "task_name", "form_label", "input_long", value=task.task_name, first=True)}
+                ${forms.formTextField("Task Files Location", "location", "location", "form_label", "input_long", value=task.location)}
+                ${forms.formTextArea("Task Description", "background", "background", "form_label", "addeditcase", value=task.background)}
+                ${forms.formSelectBox("Task Type", "task_type", "task_type", "form_label", "input_long", task_type_options, value=task.task_type, please_select=False)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+            </form>
+
+        </div>
+
+        <div id="tabs-2" class="forensics_work_contents">
+
+            % if task_investigators_and_qa_history:
+            <h2>Investigators & QA Partners History</h2>
+
+            <table>
+                <tr>
+                    <th>Date</th>
+                    <th>User</th>
+                    <th>Changes</th>
+                </tr>
+                % for history in task_investigators_and_qa_history:
+                <tr>
+                    <td>${history['date']|h}</td>
+                    <td><a href='${urls.build("user.view", dict(user_id=history['user'].id))|h}'>${history['user'].fullname|h}</a></td>
+                    <td>
+                        % for entry, change in history['change_log'].iteritems():
+                            % if change[0] == "ADD":
+                            The ${entry|h} was assigned to ${change[1]|h} <br/>
+                            % elif change[0] == "DEL":
+                            ${change[1]|h} was removed from ${entry|h}<br/>
+                            % else:
+                            The ${entry|h} changed from ${change[0]|h} to ${change[1]|h} <br/>
+                            % endif
+                        % endfor
+                    </td>
+                </tr>
+                % endfor
+            </table>
+            % endif
+
+            <h2>Edit Investigators & QA Partners</h2>
+            <form method="post" action="${urls.build('task.edit', dict(task_id=task.task_name, case_id=task.case.case_name, form='edit_users'))|h}">
+                ${forms.formSelectBox("Principle Investigator", "primary_investigator", "primary_investigator", "form_label", "input_long", investigators, first=True, please_select=True, value=principle_inv)}
+                ${forms.formSelectBox("Secondary Investigator", "secondary_investigator", "secondary_investigator", "form_label", "input_long", investigators, please_select=True, value=secondary_inv)}
+                ${forms.formSelectBox("Principle QA Partner", "primary_qa", "primary_qa", "form_label", "input_long", qas, please_select=True, value=principle_qa)}
+                ${forms.formSelectBox("Secondary QA Partner", "secondary_qa", "secondary_qa", "form_label", "input_long", qas, please_select=True, value=secondary_qa)}
+
+                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+            </form>
+         </div>
+
+    </div>
+
+</div>

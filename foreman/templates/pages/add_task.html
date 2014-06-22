@@ -1,0 +1,31 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+<%namespace file="/utils/forms.html" name="forms" />
+<%namespace file="/utils/format.html" name="format" />
+
+<%def name="javascripts()" filter="trim">
+
+</%def>
+
+
+<div id="sidebar">
+   ${sidebars.tasks_menu()}
+</div>
+<div id="mainbar">
+    <h1>Add Task</h1>
+    <form method="post" action="${urls.build('task.add', dict(case_id=case.case_name))|h}">
+        ${forms.formTextField("Task Name", "task_name", "task_name", "form_label", "input_long", first=True)}
+        ${forms.formTextField("Task Files Location", "location", "location", "form_label", "input_long", value=case.location)}
+        ${forms.formTextArea("Task Description", "background", "background", "form_label", "addeditcase")}
+        ${forms.formSelectBox("Task Type", "task_type", "task_type", "form_label", "input_long", task_type_options, please_select=True)}
+
+    <div style="clear:both"></div>
+    <h1>Add Investigators & QA Partners</h1>
+        ${forms.formSelectBox("Principle Investigator", "primary_investigator", "primary_investigator", "form_label", "input_long", investigators, first=True, please_select=True)}
+        ${forms.formSelectBox("Secondary Investigator", "secondary_investigator", "secondary_investigator", "form_label", "input_long", investigators, please_select=True)}
+        ${forms.formSelectBox("Principle QA Partner", "primary_qa", "primary_qa", "form_label", "input_long", qas, please_select=True)}
+        ${forms.formSelectBox("Secondary QA Partner", "secondary_qa", "secondary_qa", "form_label", "input_long", qas, please_select=True)}
+
+        <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+    </form>
+</div>

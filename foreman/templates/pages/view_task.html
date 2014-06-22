@@ -1,0 +1,208 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+
+<%def name="javascripts()" filter="trim">
+
+</%def>
+
+
+<div id="sidebar">
+    ${sidebars.tasks_menu()}
+</div>
+<div id="mainbar">
+    <h1>${task.case.case_name|h}: Task ${task.task_name|h}</h1>
+
+    <p>
+    % if check_perms(task.case, 'view'):
+    <a href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>View Case</a>
+    % endif
+
+    % if check_perms(task, 'edit'):
+        | <a href='${urls.build("task.edit", dict(task_id=task.task_name,case_id=task.case.case_name))|h}'>Edit</a>
+    % endif
+    % if check_perms(task, 'close'):
+        | <a href='${urls.build("task.close", dict(task_id=task.task_name,case_id=task.case.case_name))|h}'>Close</a>
+    % endif
+
+    % if check_perms(task, 'edit'):
+        % if task.status == task_statuses['created']:
+        | <a href='${urls.build("task.change_status", dict(task_id=task.task_name,case_id=task.case.case_name,status=task_statuses["queued"]))|h}'>Change Status to Queued</a>
+        % elif task.status == task_statuses['complete']:
+        | <a href='${urls.build("task.change_status", dict(task_id=task.task_name,case_id=task.case.case_name,status=task_statuses["closed"]))|h}'>Change Status to Closed</a>
+        % endif
+    % endif
+
+    % if check_perms(task, 'work'):
+        % if task.status != task_statuses['queued'] and task.status != task_statuses['created'] and task.status != task_statuses['start'] and task.status != task_statuses['complete']:
+        | <a href='${urls.build("forensics.work", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>Work on task</a>
+        % elif task.status == task_statuses['start']:
+        | <a href='${urls.build("forensics.work", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>Begin work on task</a>
+        % endif
+    % endif
+    </p>
+
+    <p>
+    % if check_perms(task, 'assign-self'):
+        % if task.principle_investigator is None and (task.secondary_investigator is None or task.secondary_investigator.id != current_user.id):
+            <a href='${urls.build("task.assign_work", dict(task_id=task.task_name, case_id=task.case.case_name, assign="principle"))|h}'>Assign myself as principle investigator</a> |
+        % endif
+        % if task.secondary_investigator is None and (task.principle_investigator is None or task.principle_investigator.id != current_user.id):
+            <a href='${urls.build("task.assign_work", dict(task_id=task.task_name, case_id=task.case.case_name, assign="secondary"))|h}'>Assign myself as secondary investigator</a> |
+        % endif
+    % endif
+
+    % if check_perms(task, 'assign-other') and (task.principle_investigator is None or task.secondary_investigator is None):
+    <a href='${urls.build("task.assign_work_manager", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>Assign an Investigator to task</a>
+    % endif
+
+    % if check_perms(task, 'qa') and task.status == task_statuses['qa']:
+    | <a href='${urls.build("forensics.qa", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>QA task</a>
+    % endif
+    </p>
+
+    <h2>Task Description</h2>
+
+    <div class="task_background">${task.background}</div>
+
+    <h2>Case Details</h2>
+
+    <table>
+        <tr>
+            <th>Case</th>
+            <td><a href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a></td>
+        </tr>
+
+         <tr>
+            <th>Case Created</th>
+            <td>${task.case.date_created|h}</td>
+        </tr>
+
+        <tr>
+            <th>Case Status</th>
+            <td>
+                % if task.case.status == "Archived":
+                    <span class="archived">${task.case.status|h}</span>
+                % else:
+                    ${task.case.status|h}
+                % endif
+            </td>
+        </tr>
+
+        <tr>
+            <th>Principle Case Manager</th>
+             % if task.case.principle_case_manager != None:
+            <td><a href='${urls.build("user.view", dict(user_id=task.case.principle_case_manager.id))|h}'>${task.case.principle_case_manager.fullname|h}</a></td>
+            % else:
+            <td>None assigned</td>
+            % endif
+        </tr>
+        <tr>
+            <th>Secondary Case Manager</th>
+            % if task.case.secondary_case_manager != None:
+            <td><a href='${urls.build("user.view", dict(user_id=task.case.secondary_case_manager.id))|h}'>${task.case.secondary_case_manager.fullname|h}</a></td>
+            % else:
+            <td>None assigned</td>
+            % endif
+        </tr>
+        <tr>
+            <th>Requester</th>
+            <td>
+                % if task.case.requester is not None:
+                <a href='${urls.build("user.view", dict(user_id=task.case.requester.id))|h}'>${task.case.requester.fullname|h}</a>
+                % else:
+                None assigned
+                % endif
+            </td>
+        </tr>
+        </table>
+
+        <h2>Task Details</h2>
+        <table>
+        <tr>
+            <th>Task Created</th>
+            <td>${task.date_created|h}</td>
+        </tr>
+        <tr>
+            <th>Task Status</th>
+            <td>${task.status|h}</td>
+        </tr>
+        <tr>
+            <th>Task Type</th>
+            <td>${task.task_type|h}</td>
+        </tr>
+        <tr>
+             <th>Task Files Location</th>
+            <td>
+                % if task.location:
+                    <a href="file:///${task.location.replace('\\','/')|h}" target="_blank">${task.location|h}</a>
+                % else:
+                    Not Specified
+                % endif
+            </td>
+        </tr>
+        <tr>
+            <th>Principle Forensic Investigator</th>
+            % if task.principle_investigator != None:
+            <td><a href='${urls.build("user.view", dict(user_id=task.principle_investigator.id))|h}'>${task.principle_investigator.fullname|h}</a></td>
+            % else:
+            <td>None assigned</td>
+            % endif
+        </tr>
+        <tr>
+            <th>Secondary Forensic Investigator</th>
+            % if task.secondary_investigator != None:
+            <td><a href='${urls.build("user.view", dict(user_id=task.secondary_investigator.id))|h}'>${task.secondary_investigator.fullname|h}</a></td>
+            % else:
+            <td>None assigned</td>
+            % endif
+        </tr>
+        <tr>
+            <th>Principle QA Investigator</th>
+             % if task.principle_QA != None:
+            <td><a href='${urls.build("user.view", dict(user_id=task.principle_QA.id))|h}'>${task.principle_QA.fullname|h}</a></td>
+            % else:
+            <td>None assigned</td>
+            % endif
+        </tr>
+        <tr>
+            <th>Secondary QA Investigator</th>
+            % if task.secondary_QA != None:
+            <td><a href='${urls.build("user.view", dict(user_id=task.secondary_QA.id))|h}'>${task.secondary_QA.fullname|h}</a></td>
+            % else:
+            <td>None assigned</td>
+            % endif
+        </tr>
+
+    </table>
+
+    <h2>Notes</h2>
+
+    % if len(task.notes) > 0:
+        <table>
+        % for note in task.notes:
+        <tr class="note">
+            <th>Date & Time</th>
+            <th>Author</th>
+            <th>Hash of note</th>
+        </tr>
+        <tr>
+            <td>${note.date|h}</td>
+            <td>${note.author.fullname|h}</td>
+            <td>
+                % if note.check_hash():
+                <img src='${urls.build("images", dict(file="siteimages/icons/tick-icon.jpg"))|h}' /> ${note.hash|h}
+                % else:
+                <img src='${urls.build("images", dict(file="siteimages/icons/cross-icon.jpg"))|h}' /> ${note.hash|h}
+                % endif
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3"><pre class="notes">${note.note}</pre></td></td>
+        </tr>
+        % endfor
+        </table>
+    % else:
+        <p>No notes have been added yet. </p>
+    % endif
+
+</div>

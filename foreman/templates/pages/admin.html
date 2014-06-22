@@ -1,0 +1,127 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+<%namespace file="/utils/forms.html" name="forms" />
+<%namespace file="/utils/format.html" name="format" />
+
+<%def name="javascripts()" filter="trim">
+    <link rel="StyleSheet" href="${urls.build('css', dict(file='jquery-ui-1.10.4.custom.css'))|h}" type="text/css" />
+    <script src="${urls.build('javascript', dict(file='jquery-1.10.2.js'))|h}"></script>
+    <script src="${urls.build('javascript', dict(file='jquery-ui-1.10.4.custom.min.js'))|h}"></script>
+    <script>
+        $(function() {
+        $( "#tabs" ).tabs();
+        $( "#tabs" ).tabs({ active: ${active_tab}});
+        });
+    </script>
+</%def>
+
+
+
+<div id="mainbar_noside">
+    <h1>Foreman Administration</h1>
+
+    <div id="tabs">
+        <ul>
+            <li><a href="#tabs-1">Options</a></li>
+            <li><a href="#tabs-2">Task Types & Categories</a></li>
+            <li><a href="#tabs-3">Evidence Types</a></li>
+            <li><a href="#tabs-4">Notes Export Formatting</a></li>
+            <li><a href="#tabs-5">Validate Users</a></li>
+        </ul>
+
+        <div id="tabs-1" class="forensics_work_contents">
+
+            <h2>Options</h2>
+
+            <form method="post" action="${urls.build('general.admin', dict(form='options'))|h}">
+                ${forms.formTextField("Company Name", "company", "company", "form_label", "input_long", value=options.company, first=True)}
+                ${forms.formTextField("Department Name", "department", "department", "form_label", "input_long", value=options.department)}
+                ${forms.formTextField("Default folder location", "folder", "folder", "form_label", "input_long", value=options.default_location)}
+                ${forms.formTextField("Date & time display", "datedisplay", "datedisplay", "form_label", "input_long", value=options.date_format)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+            </form>
+
+        </div>
+
+        <div id="tabs-2" class="forensics_work_contents">
+
+            <h2>Task Types & Categories</h2>
+
+            <table>
+                <tr>
+                    <th>Task Category</th>
+                    <th>Task Type</th>
+                </tr>
+                % for tt in task_types.iterkeys():
+                    % for t in task_types[tt]:
+                <tr>
+                    <td>${tt|h}</td>
+                    <td>${t|h}</td>
+                </tr>
+                    % endfor
+                % endfor
+            </table>
+
+            <form method="post" action="${urls.build('general.admin', dict(form='task_types'))|h}">
+                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+            </form>
+        </div>
+
+        <div id="tabs-3" class="forensics_work_contents">
+
+            <h2>Current Evidence Types</h2>
+
+            % for evi in evidence_types:
+            <div class="evidence">
+                <img alt="${evi|h} icon" src="${urls.build("images", dict(file='siteimages/evidence_icons/' + evi.replace(" ", "").lower() + '.png'))|h}" class="evidenceicon"/>
+                ${evi|h}
+            </div>
+            % endfor
+
+            <div style="clear:both"></div>
+
+            <h2>Add New Evidence Type</h2>
+
+            <form method="post" action="${urls.build('general.admin', dict(form='evidence_types'))|h}">
+                ${forms.formTextField("New Evidence Type", "evi_type", "evi_type", "form_label", "input_long", first=True)}
+
+                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+            </form>
+        </div>
+
+        <div id="tabs-4" class="forensics_work_contents">
+
+            <h2>Notes Export Formatting</h2>
+
+            <p>Unavailable.</p>
+
+
+        </div>
+
+        <div id="tabs-5" class="forensics_work_contents">
+
+            <h2>Validate Users</h2>
+
+            % if users:
+            <table>
+                <tr>
+                    <th>Username</th> <th>Name</th> <th>Email address</th> <th>Validate</th>
+                </tr>
+                % for user in users:
+                <tr>
+                     <td><a href='${urls.build("user.view", dict(user_id=user.id))|h}'>${user.username|h}</a></td>
+                     <td>${user.fullname|h}</td>
+                     <td>${user.email|h}</td>
+                     <td><a href='${urls.build("general.admin", dict(active_tab=4, validate_user=user.id))|h}'>Validate user</a></td>
+                </tr>
+                % endfor
+            </table>
+            % else:
+                <p>There are no users that need validating.</p>
+            % endif
+
+        </div>
+
+    </div>
+
+</div>

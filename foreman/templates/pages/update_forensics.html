@@ -1,0 +1,228 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/forms.html" name="forms" />
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+
+<%def name="javascripts()" filter="trim">
+    <link rel="StyleSheet" href="${urls.build('css', dict(file='jquery-ui-1.10.4.custom.css'))|h}" type="text/css" />
+    <script src="${urls.build('javascript', dict(file='jquery-1.10.2.js'))|h}"></script>
+    <script src="${urls.build('javascript', dict(file='jquery-ui-1.10.4.custom.min.js'))|h}"></script>
+    <script>
+        $(function() {
+        $( "#tabs" ).tabs();
+        });
+
+         $(function() {
+        $( "#notes_tabs" ).tabs().addClass( "ui-tabs-vertical ui-helper-clearfix" );
+        $( "#notes_tabs li" ).removeClass( "ui-corner-top" ).addClass( "ui-corner-left" );
+        });
+     </script>
+
+</%def>
+
+<%def name="not_yet_begun()" filter="trim">
+     <div class="confirmclosurebox">
+        <h2>Set Status to Work in Progress</h2>
+        <p>Task ${task.task_name|h} is currently allocated to you, but work has not yet begun. <a href="?status=start_work">Click here to set the status to work in progress</a>.</p>
+     </div>
+</%def>
+
+<div id="sidebar">
+    ${sidebars.tasks_menu()}
+</div>
+<div id="mainbar">
+
+    % if task.status != task_statuses['complete']:
+    <h1>Work on ${task.case.case_name|h}: Task ${task.task_name|h}</h1>
+    % else:
+    <h1>${task.case.case_name|h}: Task ${task.task_name|h} has been completed</h1>
+    % endif
+
+    <p><a href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>View task summary</a></p>
+
+    <div id="tabs">
+        <ul>
+        % if task.status != task_statuses['complete']:
+        <li><a href="#tabs-1">Notes</a></li>
+        % endif
+
+        % if task.status == task_statuses['progress']:
+            % if len(task.QAs) == 0:
+        <li><a href="#tabs-2">Assign QA</a></li>
+            % else:
+        <li><a href="#tabs-2">Request QA</a></li>
+            % endif
+        % endif
+
+        % if task.status != task_statuses['start'] and task.status != task_statuses['complete']:
+        <li><a href="#tabs-3">Upload file</a></li>
+        % endif
+
+        % if task.status == task_statuses['deliver']:
+        <li><a href="#tabs-4">Deliver data</a></li>
+        % endif
+
+        </ul>
+
+        % if task.status != task_statuses['complete']:
+        <div id="tabs-1" class="forensics_work_contents">
+            % if start == True:
+            <div class="success">
+                <h1>Success!</h1>
+                <p>You have changed the status of ${task.task_name|h} to work in progress. </p>
+            </div>
+            % endif
+
+            % if success:
+             <div class="success">
+                <h1>Success!</h1>
+                <p>The task notes have been updated.</p>
+            </div>
+            % endif
+
+            % if task.status == task_statuses['start'] and current_user.id in [inv.id for inv in task.investigators]:
+            ${not_yet_begun()}
+            % else:
+                % if len(task.notes) != 0:
+                    <h2>Case Notes</h2>
+                % endif
+
+            % if csv_location is not None:
+            <p>Export the notes to
+                % if pdf_location is not None:
+                <a href='${pdf_location|h}'>PDF</a>,
+                % endif
+                % if rtf_location is not None:
+                <a href='${rtf_location|h}'>RTF</a>,
+                % endif
+
+                % if pdf_location and rtf_location:
+                and
+                % endif
+                <a href='${csv_location|h}'>spreadsheet</a>.</p>
+            % endif
+
+            % if len(case_note_dates) > 0:
+            <div id="notes_tabs">
+                <ul>
+                % for i, dates in enumerate(case_note_dates):
+                <li><a href="#notes_tabs-${i}">${dates|h}</a></li>
+                % endfor
+                </ul>
+
+                <div class="notes_area">
+                % for i, dates in enumerate(case_note_dates):
+                <div id="notes_tabs-${i}" class="case_notes_contents" style="min-height:${len(case_note_dates)*50}px!important">
+                    % for note in task.notes:
+                    % if note.date_time.strftime("%d %b %Y") == dates:
+                    <div class="casenotes_div">
+                    <table class="casenotes">
+                        <tr>
+                            <th class="casenote_highlight" width="120px">Date & Time:</th>
+                            <td class="casenote_highlight">${note.date|h}</td>
+                            <th class="casenote_highlight">Author:</th>
+                            <td class="casenote_highlight">${note.author.fullname|h}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="4"><pre class="notes">${note.note}</pre></td>
+                        </tr>
+                        <tr>
+                           <th class="casenote_highlight">Hash of note:</th>
+                           <td colspan="3" class="casenote_highlight">
+                               % if note.check_hash():
+                                <img src='${urls.build("images", dict(file="siteimages/icons/tick-icon.jpg"))|h}' /> ${note.hash|h}
+                                % else:
+                                <img src='${urls.build("images", dict(file="siteimages/icons/cross-icon.jpg"))|h}' /> ${note.hash|h}
+                                % endif
+                           </td>
+                        </tr>
+                    </table>
+                    </div>
+                    % endif
+                    % endfor
+                </div>
+                % endfor
+                </div>
+            </div>
+            % endif
+
+            <h2>Update Case Notes</h2>
+            <form method="post" action="${urls.build('forensics.work', dict(task_id=task.task_name, case_id=task.case.case_name, add_notes='true'))|h}">
+                ${forms.formTextArea("Notes", "notes", "notes", "form_label", "addeditcase_notes", first=True)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+            </form>
+
+            % endif
+
+        </div>
+        % endif
+
+        % if task.status == task_statuses['progress']:
+        <div id="tabs-2" class="forensics_work_contents">
+                % if success_qa:
+                <div class="success">
+                    <h1>Success!</h1>
+                    <p>You have successfully assigned someone to do QA and they have been notified.</p>
+                </div>
+                % endif
+
+                % if len(task.QAs) < 2:
+                <h2>Assign QA</h2>
+                    % if len(task.QAs) == 0:
+                    <p>No one has been selected to do QA. Please select an investigator to QA your work.</p>
+                    % else:
+                    <p>Assign a second QA investigator.</p>
+                    % endif
+                    <% assign_num = "2" if len(task.QAs) == 0 else "1" %>
+                    <form method="post" action="${urls.build('forensics.work', dict(task_id=task.task_name, case_id=task.case.case_name, assign_QA='true', assign_num=assign_num))|h}">
+                        % if task.principle_QA is None:
+                            ${forms.formSelectBox("Primary QA Investigator", "investigator", "investigator", "form_label", "addeditcase", qa_partner_list, please_select=True)}
+                        % endif
+                        % if len(task.QAs) == 0:
+                            ${forms.formSelectBox("Secondary QA Investigator (optional)", "investigator2", "investigator2", "form_label", "addeditcase", qa_partner_list, please_select=True)}
+                        % elif task.secondary_QA is None:
+                            ${forms.formSelectBox("Secondary QA Investigator", "investigator", "investigator", "form_label", "addeditcase", qa_partner_list, please_select=True)}
+                        % endif
+                        <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+                    </form>
+                % endif
+                <p/>
+                % if len(task.QAs) != 0:
+                <h2>Request QA</h2>
+
+                    <form method="post" action="${urls.build('forensics.work', dict(task_id=task.task_name, case_id=task.case.case_name, request_qa='true'))|h}">
+                        ${forms.formSelectBox("To", "qa_partners", "qa_partners", "form_label", "addeditcase", qa_partners, please_select=True, first=True)}
+                        ${forms.formTextField("Message Subject", "subject", "subject", "form_label", "input_long", value="QA for " + task.case.case_name + " " + task.task_name)}
+                        ${forms.formTextArea("Message body", "body", "body", "form_label", "addeditcase")}
+                        <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+                    </form>
+                % endif
+
+        </div>
+        % endif
+
+        % if task.status != task_statuses['start'] and task.status != task_statuses['complete']:
+        <div id="tabs-3" class="forensics_work_contents">
+            % if task.status == task_statuses['start']:
+            ${not_yet_begun()}
+            % else:
+            <h2>Upload file</h2>
+
+            <p>Upload file...</p>
+            % endif
+        </div>
+        % endif
+
+        % if task.status == task_statuses['deliver']:
+        <div id="tabs-4" class="forensics_work_contents">
+
+             <div class="confirmclosurebox">
+                 <h2>Set Status to Delivered</h2>
+                 <p>Task ${task.task_name|h} has been QA passed and is ready for delivery.</p>
+                 <p><a href="?status=deliver">Click here to set the status to delivered</a>.</p>
+             </div>
+        </div>
+        % endif
+
+    </div>
+
+</div>

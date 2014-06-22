@@ -1,0 +1,33 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+<%namespace file="/utils/forms.html" name="forms" />
+
+<%def name="javascripts()" filter="trim">
+    <script>
+        function goBack(){
+            window.history.back()
+        }
+    </script>
+</%def>
+
+<div id="sidebar">
+    ${sidebars.tasks_menu()}
+</div>
+<div id="mainbar">
+
+    % if success == True:
+    <div class="success">
+        <h1>Success!</h1>
+        <p>You have successfully added ${investigator.fullname|h} as ${role.title()|h} Investigator for ${task.task_name|h}</p>
+        <p><a href='${urls.build("task.view", dict(case_id=task.case.case_name, task_id=task.task_name))|h}'>View Task</a> </p>
+    </div>
+
+    % else:
+    <h1>Assign an Investigator to the Task</h1>
+    <form method="post" action="${urls.build('task.assign_work_manager', dict(task_id=task.task_name, case_id=task.case.case_name))|h}">
+        ${forms.formSelectBox("Role", "role", "role", "form_label", "addeditcase", roles, first=True)}
+        ${forms.formSelectBox("Investigator", "investigator", "investigator", "form_label", "addeditcase", investigators)}
+        <p style="clear:both;"><input type="submit" value="Assign Investigator" /></p>
+    </form>
+    % endif
+</div>
