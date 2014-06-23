@@ -6,6 +6,8 @@ In today’s market there is a plethora of Digital forensics software available 
 
 Introducing Foreman, a new open source forensic case management system. Foreman helps case managers organise cases into tasks and delegate work. It also provides investigators with evidence tracking and verified case note generation. It will also be able to generate detailed audit trails and reporting & management information. All of this will be provided in a simple, centralised web-based system that makes it easy to track everything relating to a case in one place. Foreman is currently in the early stages of development, and I invite forensic investigators to influence and  collaborate!!
 
+Please head over to the [Wiki](https://bitbucket.org/lowmanio/foreman/wiki) to get installation and setup instructions.
+
 ### Who do I talk to? ###
 
 * sarah@lowmanio.co.uk
