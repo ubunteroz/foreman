@@ -255,8 +255,7 @@ span.archived, span.highlight{
 }
 
 div.case_background, div.task_background{
-    border: solid 1px black;
-    background-color: #EEEEEE;
+    background-color: #FAFAFA;
     width: 98%;
     padding: 10px;
     border-radius: 10px;
@@ -391,6 +390,16 @@ textarea{
 textarea.addeditcase_notes{
     width: 700px;
     height: 400px;
+}
+
+textarea.addeditcase{
+    width: 400px;
+    height: 200px;
+}
+
+textarea.addeditcase_short{
+    width: 400px;
+    height: 100px;
 }
 
 div.radio{

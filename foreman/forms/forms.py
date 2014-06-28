@@ -16,6 +16,7 @@ class AddCaseForm(Schema):
     secondary_case_manager = GetCaseManager(not_empty=True)
     classification = GetCaseClassification(not_emtpy=True)
     case_type = GetCaseType(not_empty=True)
+    justification = v.UnicodeString(not_empty=True)
 
 
 class AddTaskForm(Schema):
@@ -167,6 +168,7 @@ class EditCaseForm(Schema):
     private = v.Bool()
     background = v.UnicodeString(not_empty=True)
     location = v.UnicodeString()
+    justification = v.UnicodeString(not_empty=True)
     classification = GetCaseClassification(not_emtpy=True)
     case_type = GetCaseType(not_empty=True)
 
