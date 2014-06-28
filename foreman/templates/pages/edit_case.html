@@ -70,6 +70,8 @@
                 ${forms.formTextField("Case Files Location", "location", "location", "form_label", "input_long", value=case.location)}
                 ${forms.formTextArea("Case Background", "background", "background", "form_label", "addeditcase", value=case.background)}
                 ${forms.formTextField("Reference", "reference", "reference", "form_label", "input_long", value=case.reference)}
+                ${forms.formSelectBox("Classification", "classification", "classification", "form_label", "input_long", classifications, please_select=True, value=case.classification)}
+                ${forms.formSelectBox("Case Type", "case_type", "case_type", "form_label", "input_long", case_types, please_select=True, value=case.case_type)}
                 ${forms.formCheckBoxes("Private", "private", "private", "private", "form_label", "radio_input_short", checked=case.private)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
             </form>

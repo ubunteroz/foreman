@@ -6,6 +6,7 @@ from formencode import validators as v, Invalid
 from formencode.compound import CompoundValidator
 # local imports
 from ..model import User, UserTaskRoles, UserRoles, TaskStatus, Task, CaseStatus, Case, ForemanOptions, TaskType
+from ..model import CaseType, CaseClassification
 from ..utils.utils import session, ROOT_DIR
 
 
@@ -227,6 +228,42 @@ class GetTaskStatus(GetObject):
     def getObject(self, status_text):
         if status_text in TaskStatus.all_statuses:
             return status_text
+        else:
+            return None
+
+
+class GetCaseClassification(GetObject):
+    messages = {
+        'invalid': 'Classification is invalid.',
+        'null': 'Please select an option.'
+    }
+
+    allow_new = False
+    allow_null = False
+
+    def getObject(self, classification):
+        for ct in CaseClassification.get_classifications():
+            if classification == ct.replace(" ", "").lower():
+                return ct
+        else:
+            return None
+
+
+class GetCaseType(GetObject):
+    messages = {
+        'invalid': 'Case Type is invalid.',
+        'null': 'Please select an option.'
+    }
+
+    allow_new = False
+    allow_null = False
+
+    def getObject(self, case_type):
+        print case_type
+        for ct in CaseType.get_case_types():
+            print ct
+            if case_type == ct.replace(" ", "").lower():
+                return ct
         else:
             return None
 

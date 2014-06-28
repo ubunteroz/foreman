@@ -142,12 +142,15 @@ class CaseHistory(HistoryModel, Base):
     date_time = Column(DateTime)
     location = Column(Unicode)
     user_id = Column(Integer, ForeignKey('users.id'))
+    classification = Column(Unicode)
+    case_type = Column(Unicode)
 
     case = relation('Case', backref=backref('history', order_by=asc(date_time)))
     user = relation('User', backref=backref('case_history_changes'))
 
     comparable_fields = {'Case Name': 'case_name', 'Reference': 'reference', 'Background': 'background',
-                         "Case Files Location": 'location'}
+                         "Case Files Location": 'location', 'Classification': 'classification',
+                         'Case Type:': 'case_type'}
     history_name = ("Case", "case_name")
 
     def __init__(self, case, user):
@@ -159,6 +162,8 @@ class CaseHistory(HistoryModel, Base):
         self.date_time = datetime.now()
         self.user = user
         self.location = case.location
+        self.classification = case.classification
+        self.case_type = case.case_type
 
     @property
     def previous(self):
@@ -188,13 +193,18 @@ class Case(Base, Model):
     background = Column(Unicode)
     location = Column(Unicode)
     creation_date = Column(DateTime)
+    classification = Column(Unicode)
+    case_type = Column(Unicode)
 
-    def __init__(self, case_name, user, background=None, reference=None, private=False, location=None):
+    def __init__(self, case_name, user, background=None, reference=None, private=False, location=None,
+                 classification=None, case_type=None):
         self.case_name = case_name
         self.reference = reference
         self.set_status(CaseStatus.CREATED, user)
         self.private = private
         self.background = background
+        self.classification = classification
+        self.case_type = case_type
         if location is None:
             self.location = ForemanOptions.get_default_location()
         else:

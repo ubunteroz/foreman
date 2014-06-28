@@ -53,6 +53,9 @@ class ForemanOptions(Base, Model):
         TaskCategory.populate_default()
         TaskType.populate_default()
         EvidenceType.populate_default()
+        CaseClassification.populate_default()
+        CaseType.populate_default()
+        session.commit()
 
     def import_list(self, list_location):
         if list_location is not None:
@@ -218,6 +221,61 @@ class TaskCategory(Base, Model):
         return self.category
 
 
+class CaseClassification(Base, Model):
+    __tablename__ = 'case_classification'
+
+    id = Column(Integer, primary_key=True)
+    classification = Column(Unicode)
+
+    def __init__(self, classification):
+        self.classification = classification
+
+    @staticmethod
+    def populate_default():
+        classifications = ['Public', 'Secret', 'Confidential', 'Internal']
+
+        for classification in classifications:
+            c = CaseClassification(classification)
+            session.add(c)
+            session.flush()
+
+    @staticmethod
+    def get_classifications():
+        q = session.query(CaseClassification).all()
+        return [c.classification for c in q]
+
+    def __str__(self):
+        return self.classification
+
+
+class CaseType(Base, Model):
+    __tablename__ = 'case_type'
+
+    id = Column(Integer, primary_key=True)
+    case_type = Column(Unicode)
+
+    def __init__(self, case_type):
+        self.case_type = case_type
+
+    @staticmethod
+    def populate_default():
+        case_types = ['eDiscovery', 'Internal Investigation', 'Fraud Investigation', 'Incident Response',
+                      'Security & Malware Investigation', 'Other']
+
+        for case_type in case_types:
+            c = CaseType(case_type)
+            session.add(c)
+            session.flush()
+
+    @staticmethod
+    def get_case_types():
+        q = session.query(CaseType).all()
+        return [c.case_type for c in q]
+
+    def __str__(self):
+        return self.classification
+
+
 class EvidenceType(Base, Model):
     __tablename__ = 'evidence_types'
 
@@ -232,9 +290,9 @@ class EvidenceType(Base, Model):
         if icon is None:
             default_icon = path.abspath(path.join(ROOT_DIR, 'static', 'images', 'siteimages',
                                                   'evidence_icons', 'other.png'))
-            if path.exists(default_icon):
+            if path.exists(default_icon) and not path.exists(new_icon):
                 shutil.copy(default_icon, new_icon)
-        elif path.exists(icon):
+        elif path.exists(icon) and not path.exists(new_icon):
             shutil.copy(icon, new_icon)
 
     @staticmethod
@@ -242,7 +300,7 @@ class EvidenceType(Base, Model):
         evis = ['SATA Hard Drive', 'IDE Hard Drive', 'Other Hard Drive', 'USB Hard drive', 'Floppy Disk', 'CD', 'DVD',
                 'Other Removable Media', 'Zip Drive', 'Mobile Phone', 'Smart Phone', 'Tablet', 'PDA', 'USB Media',
                 'GPS Device', 'Digital Camera', 'Gaming System', 'Laptop', 'Whole Computer Tower', 'Inkjet Printer',
-                'Laser Printer', 'Other Printer', 'Scanner', 'Multi-Functional Printer', 'Other' 'Music Player']
+                'Laser Printer', 'Other Printer', 'Scanner', 'Multi-Functional Printer', 'Other', 'Music Player']
 
         for evi in evis:
             e = EvidenceType(evi)

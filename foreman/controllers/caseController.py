@@ -4,7 +4,7 @@ from werkzeug import Response, redirect
 from baseController import BaseController
 from taskController import TaskController
 from ..model import Case, User, CaseStatus, UserCaseRoles, Task, UserTaskRoles, LinkedCase, UserRoles, \
-    CaseHistory, TaskHistory, TaskStatus, ForemanOptions
+    CaseHistory, TaskHistory, TaskStatus, ForemanOptions, CaseClassification, CaseType
 from ..utils.utils import multidict_to_dict, session
 from ..forms.forms import AddCaseForm, AddTaskForm, EditCaseForm, AddCaseLinkForm, RemoveCaseLinkForm, EditCaseManagersForm, \
     ReAssignTasksForm
@@ -80,10 +80,13 @@ class CaseController(BaseController):
         self.check_permissions(self.current_user, "Case", 'add')
         case_loc = ForemanOptions.get_default_location()
         managers = [(user.id, user.fullname) for user in UserRoles.get_managers()]
+        classifications = [(cl.replace(" ", "").lower(), cl) for cl in CaseClassification.get_classifications()]
+        case_types = [(ct.replace(" ", "").lower(), ct) for ct in CaseType.get_case_types()]
 
         if self.validate_form(AddCaseForm()):
             new_case = Case(self.form_result['case_name'], self.current_user, self.form_result['background'],
-                            self.form_result['reference'], self.form_result['private'], self.form_result['location'])
+                            self.form_result['reference'], self.form_result['private'], self.form_result['location'],
+                            self.form_result['classification'], self.form_result['case_type'])
             session.add(new_case)
             session.flush()
             new_case.add_change(self.current_user)
@@ -95,10 +98,12 @@ class CaseController(BaseController):
             if self.form_result['secondary_case_manager']:
                 self._create_new_user_role(UserCaseRoles.SECONDARY_CASE_MANAGER, new_case,
                                            self.form_result['secondary_case_manager'])
-            return self.return_response('pages', 'view_case.html', case=new_case)
+            return self.return_response('pages', 'view_case.html', case=new_case, classifications=classifications,
+                                        case_types=case_types)
         else:
             return self.return_response('pages', 'add_case.html', case_loc=case_loc,
-                                    managers=managers, errors=self.form_error)
+                                    managers=managers, errors=self.form_error, classifications=classifications,
+                                    case_types=case_types)
 
     def _return_edit_response(self, case, active_tab, errors=None):
         managers = [(user.id, user.fullname) for user in UserRoles.get_managers()]
@@ -115,6 +120,8 @@ class CaseController(BaseController):
         case_link_remove_options = [(case_link.id, case_link.case_name) for case_link in linked_cases]
         principle_man = case.principle_case_manager.fullname if case.principle_case_manager else "Please Select"
         secondary_man = case.secondary_case_manager.fullname if case.secondary_case_manager else "Please Select"
+        classifications = [(cl.replace(" ", "").lower(), cl) for cl in CaseClassification.get_classifications()]
+        case_types = [(ct.replace(" ", "").lower(), ct) for ct in CaseType.get_case_types()]
 
         return self.return_response('pages', 'edit_case.html', case=case, active_tab=active_tab,
                                     status_options=status_options, case_link_options=case_link_options,
@@ -122,7 +129,8 @@ class CaseController(BaseController):
                                     principle_man=principle_man, secondary_man=secondary_man,
                                     reassign_tasks=reassign_tasks, reassign_cases=reassign_cases,
                                     case_history=case_history, case_manager_history=case_manager_history,
-                                    tasks_history=tasks_history, errors=errors)
+                                    tasks_history=tasks_history, errors=errors, classifications=classifications,
+                                    case_types=case_types)
 
     def edit(self, case_id):
         case = self._validate_case(case_id)
@@ -132,18 +140,15 @@ class CaseController(BaseController):
             form_type = multidict_to_dict(self.request.args)
             if 'form' in form_type and form_type['form'] == "edit_case":
                 if self.validate_form(EditCaseForm()):
-                    if case.case_name != self.form_result['case_name'] or (
-                                    case.reference != self.form_result['reference'] and self.form_result[
-                                'reference'] != "None") or case.private != self.form_result[
-                        'private'] or case.background != self.form_result['background'] or case.location != \
-                            self.form_result['location']:
-                        case.case_name = self.form_result['case_name']
-                        if self.form_result['reference'] != "None":
-                            case.reference = self.form_result['reference']
-                        case.private = self.form_result['private']
-                        case.background = self.form_result['background']
-                        case.location = self.form_result['location']
-                        case.add_change(self.current_user)
+                    case.case_name = self.form_result['case_name']
+                    if self.form_result['reference'] != "None":
+                        case.reference = self.form_result['reference']
+                    case.private = self.form_result['private']
+                    case.background = self.form_result['background']
+                    case.location = self.form_result['location']
+                    case.classification = self.form_result['classification']
+                    case.case_type = self.form_result['case_type']
+                    case.add_change(self.current_user)
                     return self._return_edit_response(case, 0)
                 else:
                     return self._return_edit_response(case, 0, self.form_error)
