@@ -94,7 +94,7 @@ class ForemanOptions(Base, Model):
             return ForemanOptions.get_next_case_name_from_list(options.c_list_name, options.c_increment)
 
     @staticmethod
-    def get_next_task_name(tasktype, case):
+    def get_next_task_name(case, tasktype=None):
         options = session.query(ForemanOptions).first()
         options.t_increment = len(case.tasks)
         if options.task_names == 'UserCreated':

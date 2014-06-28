@@ -26,6 +26,7 @@ class EvidenceController(BaseController):
                                self.current_user, self.form_result['bag_num'], photos, self.form_result['qr'])
                 session.add(evi)
                 session.flush()
+                evi.create_qr_code()
                 evi.add_change(self.current_user)
                 return self.custody_in(case.case_name, evi.reference, True, initial=True)
             else:

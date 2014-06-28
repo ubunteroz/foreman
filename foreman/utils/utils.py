@@ -49,14 +49,14 @@ def setup(config_file):
         raise Exception('The database in the config file must be sqlite or postgres only')
     sessionMaker.configure(bind=db, autocommit=False, autoflush=False)
 
-    print "Database setup"
+    print "Binding to database."
 
 
 def init_database():
     from ..model import Base
 
     Base.metadata.create_all(db)
-    print "Database initialised"
+    print "Database initialised."
 
 
 def drop_database():
@@ -69,19 +69,19 @@ def drop_database():
 def create_admin_user():
     from population import create_admin_user
     create_admin_user()
-    print "Admin user created"
+    print "Admin user created."
 
 
 def load_initial_values():
     from population import load_initial_values
     load_initial_values()
-    print "Initial data added to database"
+    print "Initial data added to database!"
 
 
 def populate_database():
-    from example_populate import populate
-    populate()
-    print "Example data populated"
+    from population import create_test_data
+    create_test_data()
+    print "Example data populated!"
 
 
 def multidict_to_dict(md):

@@ -470,7 +470,6 @@ class Evidence(Base, Model):
         if qr:
             self.qr_code = True
             self.qr_code_text = self.generate_qr_code_text()
-            self.create_qr_code()
         else:
             self.qr_code = False
             self.qr_code_text = ""
@@ -502,7 +501,7 @@ class Evidence(Base, Model):
         qr.make()
         img = qr.make_image()
 
-        qr_image_location = path.join(ROOT_DIR, 'static', 'evidence_QR_codes', str(self.id) + '.png')
+        qr_image_location = path.abspath(path.join(ROOT_DIR, 'static', 'evidence_QR_codes', str(self.id) + '.png'))
         img.save(qr_image_location, "PNG")
 
     def disassociate(self):
