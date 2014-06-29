@@ -4,7 +4,7 @@ import shutil
 from os import path
 from hashlib import sha256
 # library imports
-from sqlalchemy import Table, Column, Integer, Boolean, Float, Unicode, ForeignKey, asc, desc, func, and_, or_
+from sqlalchemy import Table, Column, Integer, DateTime, Float, Unicode, ForeignKey, asc, desc, func, and_, or_
 from sqlalchemy.orm import backref, relation
 # local imports
 from models import Base, Model
@@ -30,6 +30,7 @@ class ForemanOptions(Base, Model):
     t_list_name = Column(Unicode)
     company = Column(Unicode)
     department = Column(Unicode)
+    date_created = Column(DateTime)
 
     CASE_NAME_OPTIONS = ['UserCreated', 'NumericIncrement', 'DateNumericIncrement', 'FromList']
     TASK_NAME_OPTIONS = ['UserCreated', 'NumericIncrement', 'FromList', 'TaskTypeNumericIncrement']
@@ -49,6 +50,7 @@ class ForemanOptions(Base, Model):
         self.t_list_name = self.import_list(t_list_location)
         self.company = company
         self.department = department
+        self.date_created = datetime.now()
 
         TaskCategory.populate_default()
         TaskType.populate_default()
@@ -72,6 +74,11 @@ class ForemanOptions(Base, Model):
     def get_default_location():
         options = session.query(ForemanOptions).first()
         return options.default_location
+
+    @staticmethod
+    def get_date_created():
+        options = session.query(ForemanOptions).first()
+        return options.date_created
 
     @staticmethod
     def get_next_case_name():

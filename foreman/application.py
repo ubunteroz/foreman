@@ -107,6 +107,8 @@ class Application(object):
 
         map.add(Rule('/admin/', endpoint='general.admin'))
 
+        map.add(Rule('/reporting/', endpoint='general.report'))
+
         map.add(Rule('/cases/', endpoint='case.view_all'))
         map.add(Rule('/cases/<case_id>/', endpoint='case.view'))
         map.add(Rule('/cases/add/', endpoint='case.add'))

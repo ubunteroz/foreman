@@ -2,6 +2,7 @@
 
 <html>
 <%def name="javascripts()"></%def>
+<%def name="bodyload()"></%def>
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=windows-1252" />
     <link href='http://fonts.googleapis.com/css?family=Nunito:400,300' rel='stylesheet' type='text/css'>
@@ -11,7 +12,7 @@
     ${self.javascripts()}
 </head>
 
-<body>
+<body ${self.bodyload()}>
 <div id="body">
     <div id="header">
         <div id="top_menu">
@@ -21,7 +22,8 @@
                 <a href='${urls.build("task.view_all")|h}'>Tasks</a> |
                 <a href='${urls.build("task.view_qas")|h}'>QAs</a> |
                 <a href='${urls.build("user.view_all")|h}'>Users</a> |
-                <a href='${urls.build("evidence.view_all")|h}'>Evidence</a>
+                <a href='${urls.build("evidence.view_all")|h}'>Evidence</a> |
+                <a href='${urls.build("general.report")|h}'>Reports</a>
                 % if check_perms("Case", 'admin'):
                 | <a href='${urls.build("general.admin")|h}'>Administration</a>
                 % endif

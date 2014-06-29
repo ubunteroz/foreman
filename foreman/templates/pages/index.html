@@ -22,10 +22,10 @@
             View and edit cases <br />
              <img src="${urls.build("images", dict(file='siteimages/icons/binoculars.png'))|h}" />
         </div></a>
-        <div class="pick_a_box not_used">
-            Produce a report <br />
+        <a href='${urls.build("general.report")|h}'><div class="pick_a_box">
+            Show Reports<br />
              <img src="${urls.build("images", dict(file='siteimages/icons/Statistics.png'))|h}" />
-        </div>
+        </div></a>
         <a href='${urls.build("evidence.view_all")|h}'><div class="pick_a_box">
             View evidence locker <br />
             <img src="${urls.build("images", dict(file='siteimages/icons/cabinet.png'))|h}" />

@@ -1,0 +1,44 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/forms.html" name="forms" />
+
+<%def name="javascripts()" filter="trim">
+    <script src="${urls.build('javascript', dict(file='Chart.js'))|h}"></script>
+    <link rel="StyleSheet" href="${urls.build('css', dict(file='jquery-ui-1.10.4.custom.css'))|h}" type="text/css" />
+    <script src="${urls.build('javascript', dict(file='jquery-1.10.2.js'))|h}"></script>
+    <script src="${urls.build('javascript', dict(file='jquery-ui-1.10.4.custom.min.js'))|h}"></script>
+
+    <script>
+        function CasesOpenedChart() {
+            var data = {
+                labels: ${months},
+                datasets: [
+                    {
+                        label: "Cases Opened",
+                        fillColor: "rgba(220,220,220,0.2)",
+                        strokeColor: "rgba(220,220,220,1)",
+                        pointColor: "rgba(220,220,220,1)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(220,220,220,1)",
+                        data: ${[int(x) for x in cases_opened]}
+                    }
+                ]
+            };
+            var cases_opened_chart = document.getElementById("cases_opened").getContext("2d");
+            var myLineChart = new Chart(cases_opened_chart).Bar(data);
+    }
+    </script>
+</%def>
+
+<%def name="bodyload()" filter="trim">
+ onload="CasesOpenedChart();"
+</%def>
+
+
+<div id="wholemiddle">
+    <h1>Reporting</h1>
+
+    <h2>Number of cases opened per month</h2>
+    <canvas id="cases_opened" width="400" height="400"></canvas>
+
+</div>

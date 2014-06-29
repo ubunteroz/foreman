@@ -3,8 +3,9 @@ from datetime import datetime
 from hashlib import sha256
 from os import path, rename
 import shutil
+import calendar
 # library imports
-from sqlalchemy import Table, Column, Integer, Boolean, Unicode, ForeignKey, DateTime, asc, desc, and_, or_
+from sqlalchemy import Table, Column, Integer, Boolean, Unicode, ForeignKey, DateTime, asc, desc, and_, or_, func
 from sqlalchemy.orm import backref, relation
 from qrcode import *
 from werkzeug.exceptions import Forbidden
@@ -250,6 +251,16 @@ class Case(Base, Model):
 
     def get_from_links(self):
         return LinkedCase.get_from_links(self)
+
+    @staticmethod
+    def get_cases_opened_on_date(date_required, by_month=False):
+        if by_month:
+            month = date_required.month
+            year = date_required.year
+            first_day = datetime(year, month, 1)
+            last_day = datetime(year, month, calendar.monthrange(year, month)[1])
+            return session.query(func.count(Case.id)).filter(and_(Case.creation_date >= first_day,
+                                                   Case.creation_date <= last_day)).scalar()
 
     @staticmethod
     def cases_with_user_involved(user_id):

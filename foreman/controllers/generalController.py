@@ -1,5 +1,7 @@
 from os import listdir
 from os.path import isfile, join
+from datetime import datetime
+from monthdelta import monthdelta
 
 # library imports
 from werkzeug import Response, redirect
@@ -163,3 +165,15 @@ class GeneralController(BaseController):
                                     classifications=classifications, case_types=case_types, evi_types=evi_types,
                                     empty_categories=empty_categories, task_categories=task_categories,
                                     errors=self.form_error)
+
+    def report(self):
+        start_date = ForemanOptions.get_date_created()
+        today_date = datetime.now()
+        months = [start_date.strftime("%B %Y")]
+        cases_opened = [Case.get_cases_opened_on_date(start_date, by_month=True)]
+        while start_date.month != today_date.month and start_date.year != today_date.year:
+            start_date = start_date + monthdelta(1)
+            months.append(start_date.strftime("%B %Y"))
+            cases_opened.append(Case.get_cases_opened_on_date(start_date, by_month=True))
+        print cases_opened
+        return self.return_response('pages', 'report.html', months=months, cases_opened=cases_opened)
