@@ -69,7 +69,12 @@
     <table>
         <tr>
             <th>Case</th>
-            <td><a href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a></td>
+            <td>
+                % if task.case.private:
+                <a class="highlight" href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a>
+                % else:
+                <a href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a>
+                % endif
         </tr>
 
          <tr>

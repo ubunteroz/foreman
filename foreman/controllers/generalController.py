@@ -1,13 +1,17 @@
+from os import listdir
+from os.path import isfile, join
 
 # library imports
 from werkzeug import Response, redirect
 
 # local imports
 from baseController import BaseController
-from ..model.caseModel import Task, User, ForemanOptions
-from ..model.generalModel import TaskType, TaskCategory, EvidenceType
-from ..forms.forms import LoginForm, OptionsForm, AddEvidenceTypeForm, RegisterForm
-from ..utils.utils import multidict_to_dict, session
+from ..model.caseModel import Task, User, ForemanOptions, Case, Evidence
+from ..model.generalModel import TaskType, TaskCategory, EvidenceType, CaseClassification, CaseType
+from ..forms.forms import LoginForm, OptionsForm, AddEvidenceTypeForm, RegisterForm, AddClassificationForm
+from ..forms.forms import AddCaseTypeForm, RemoveCaseTypeForm, RemoveClassificationForm, RemoveEvidenceTypeForm
+from ..forms.forms import MoveTaskTypeForm, AddTaskTypeForm, RemoveTaskTypeForm, AddTaskCategoryForm, RemoveCategoryForm
+from ..utils.utils import multidict_to_dict, session, ROOT_DIR
 
 
 class GeneralController(BaseController):
@@ -63,16 +67,77 @@ class GeneralController(BaseController):
         if 'form' in form_type and form_type['form'] == "options" and self.validate_form(OptionsForm()):
             ForemanOptions.set_options(self.form_result['company'], self.form_result['department'],
                                        self.form_result['folder'], self.form_result['datedisplay'])
-        elif 'form' in form_type and form_type['form'] == "evidence_types" and self.validate_form(AddEvidenceTypeForm()):
+        elif 'form' in form_type and form_type['form'] == "add_evidence_types" and self.validate_form(AddEvidenceTypeForm()):
             new_evidence_type = EvidenceType(self.form_result['evi_type'], None)
             session.add(new_evidence_type)
             session.flush()
+        elif 'form' in form_type and form_type['form'] == "remove_evidence_types" and self.validate_form(RemoveEvidenceTypeForm()):
+            evidence_type = EvidenceType.get_filter_by(evidence_type=self.form_result['evi_type']).first()
+            if evidence_type:
+                session.delete(evidence_type)
+                session.commit()
+                # find all evidence that have this type and assign it to 'Undefined'
+                evidences = Evidence.get_filter_by(type=evidence_type.evidence_type).all()
+                for evidence in evidences:
+                    evidence.type = EvidenceType.undefined()
         elif 'validate_user' in form_type:
             user = self._validate_user(form_type['validate_user'])
             if user:
                 user.validated = True
                 session.flush()
                 user.add_change(self.current_user)
+        elif 'form' in form_type and form_type['form'] == 'remove_classification' and self.validate_form(RemoveClassificationForm):
+            classification = CaseClassification.get_filter_by(classification=self.form_result['classification']).first()
+            if classification:
+                session.delete(classification)
+                session.commit()
+                # find all cases that have this classification and assign it to 'Undefined'
+                cases = Case.get_filter_by(classification=classification.classification).all()
+                for case in cases:
+                    case.classification = CaseClassification.undefined()
+        elif 'form' in form_type and form_type['form'] == 'add_classification' and self.validate_form(AddClassificationForm):
+            new_cls = CaseClassification(self.form_result['classification'])
+            session.add(new_cls)
+            session.commit()
+        elif 'form' in form_type and form_type['form'] == 'remove_case_type' and self.validate_form(RemoveCaseTypeForm):
+            case_type = CaseType.get_filter_by(case_type=self.form_result['case_type']).first()
+            if case_type:
+                session.delete(case_type)
+                session.commit()
+                # find all cases that have this type and assign it to 'Undefined'
+                cases = Case.get_filter_by(case_type=case_type.case_type).all()
+                for case in cases:
+                    case.case_type = CaseType.undefined()
+        elif 'form' in form_type and form_type['form'] == 'add_case_type' and self.validate_form(AddCaseTypeForm):
+            new_type = CaseType(self.form_result['case_type'])
+            session.add(new_type)
+            session.commit()
+        elif 'form' in form_type and form_type['form'] == 'move_task_type' and self.validate_form(MoveTaskTypeForm):
+            task_type = self.form_result['task_type']
+            task_type.category = self.form_result['task_category']
+            session.flush()
+        elif 'form' in form_type and form_type['form'] == 'add_task_type' and self.validate_form(AddTaskTypeForm):
+            new_tt = TaskType(self.form_result['task_type'], self.form_result['task_category'])
+            session.add(new_tt)
+            session.commit()
+        elif 'form' in form_type and form_type['form'] == 'remove_task_type' and self.validate_form(RemoveTaskTypeForm):
+            task_type = self.form_result['task_type']
+            # find all task that have this type and assign it to 'Undefined'
+            tasks = Task.get_tasks_with_type(task_type)
+            for task in tasks:
+                task.task_type = TaskType.get_filter_by(task_type=TaskType.undefined()).first()
+                session.flush()
+                pass
+            session.delete(task_type)
+            session.commit()
+        elif 'form' in form_type and form_type['form'] == 'add_task_category' and self.validate_form(AddTaskCategoryForm):
+            new_tc = TaskCategory(self.form_result['task_category'])
+            session.add(new_tc)
+            session.commit()
+        elif 'form' in form_type and form_type['form'] == 'remove_task_category' and self.validate_form(RemoveCategoryForm):
+            category = self.form_result['task_category']
+            session.delete(category)
+            session.commit()
 
         users = User.get_filter_by(validated=False).all()
         options = ForemanOptions.get_options()
@@ -84,10 +149,17 @@ class GeneralController(BaseController):
                 active_tab = 0
         else:
             active_tab = 0
-        task_types = {}
-        task_categories = TaskCategory.get_all()
+        task_types = [(tt.replace(" ", "").lower(), tt) for tt in TaskType.get_task_types()]
+        task_categories = [(tc.replace(" ", "").lower(), tc) for tc in TaskCategory.get_categories()]
         evidence_types = EvidenceType.get_evidence_types()
-        for cat in task_categories:
-            task_types[cat.category] = [t.task_type for t in TaskType.get_filter_by(category_id=cat.id).all()]
-        return self.return_response('pages', 'admin.html', options=options, active_tab=active_tab,
-                                    task_types=task_types, evidence_types=evidence_types, users=users)
+        classifications = [(cl.replace(" ", "").lower(), cl) for cl in CaseClassification.get_classifications()]
+        case_types = [(ct.replace(" ", "").lower(), ct) for ct in CaseType.get_case_types()]
+        evi_types = [(et.replace(" ", "").lower(), et) for et in evidence_types]
+        icon_path = join(ROOT_DIR, 'static', 'images', 'siteimages', 'evidence_icons_unique')
+        icons = [f for f in listdir(icon_path) if isfile(join(icon_path,f)) and f != "Thumbs.db"]
+        empty_categories = [(ct.replace(" ", "").lower(), ct) for ct in TaskCategory.get_empty_categories()]
+        return self.return_response('pages', 'admin.html', options=options, active_tab=active_tab, icons=icons,
+                                    task_types=task_types, evidence_types=evidence_types, users=users,
+                                    classifications=classifications, case_types=case_types, evi_types=evi_types,
+                                    empty_categories=empty_categories, task_categories=task_categories,
+                                    errors=self.form_error)

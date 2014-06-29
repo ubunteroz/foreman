@@ -3,7 +3,7 @@ from werkzeug import Response
 from werkzeug.utils import redirect
 # local imports
 from baseController import BaseController, lookup, jsonify
-from ..model import Case, User, Task, UserTaskRoles, UserRoles, TaskStatus, TaskHistory, ForemanOptions
+from ..model import Case, User, Task, UserTaskRoles, UserRoles, TaskStatus, TaskHistory, ForemanOptions, TaskType
 from ..utils.utils import multidict_to_dict, session
 from ..forms.forms import AssignInvestigatorForm, EditTaskUsersForm, EditTaskForm, AddTaskForm
 
@@ -77,8 +77,7 @@ class TaskController(BaseController):
         case = self._validate_case(case_id)
         if case is not None:
             self.check_permissions(self.current_user, case, 'add-task')
-            task_type_options = [(task_type.task_type.replace(" ", "").lower(), task_type) for task_type in
-                                 ForemanOptions.get_task_types()]
+            task_type_options = [(tt.replace(" ", "").lower(), tt) for tt in TaskType.get_task_types()]
             investigators = [(user.id, user.fullname) for user in UserRoles.get_investigators()]
             qas = [(user.id, user.fullname) for user in UserRoles.get_qas()]
 
@@ -115,8 +114,7 @@ class TaskController(BaseController):
         if task is not None:
             self.check_permissions(self.current_user, task, 'edit')
 
-            task_type_options = [(task_type.task_type.replace(" ", "").lower(), task_type) for task_type in
-                                 ForemanOptions.get_task_types()]
+            task_type_options = [(tt.replace(" ", "").lower(), tt) for tt in TaskType.get_task_types()]
             investigators = [(user.id, user.fullname) for user in UserRoles.get_investigators()]
             qas = [(user.id, user.fullname) for user in UserRoles.get_qas()]
             status_options = [(status, status) for status in TaskStatus.all_statuses]

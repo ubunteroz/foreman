@@ -19,6 +19,22 @@ class AddCaseForm(Schema):
     justification = v.UnicodeString(not_empty=True)
 
 
+class RemoveClassificationForm(Schema):
+    classification = GetCaseClassification(not_emtpy=True)
+
+
+class RemoveCaseTypeForm(Schema):
+    case_type = GetCaseType(not_empty=True)
+
+
+class AddClassificationForm(Schema):
+    classification = v.UnicodeString(not_emtpy=True)
+
+
+class AddCaseTypeForm(Schema):
+    case_type = v.UnicodeString(not_empty=True)
+
+
 class AddTaskForm(Schema):
     task_name = v.UnicodeString(not_empty=True)
     task_type = GetTaskTypes(not_empty=True)
@@ -131,6 +147,32 @@ class EditEvidencePhotosForm(Schema):
 
 class AddEvidenceTypeForm(Schema):
     evi_type = v.UnicodeString(not_empty=True)
+
+
+class RemoveEvidenceTypeForm(Schema):
+    evi_type = GetEvidenceType(not_empty=True)
+
+
+class MoveTaskTypeForm(Schema):
+    task_type = GetTaskTypes(not_empty=True)
+    task_category = GetTaskCategory(not_empty=True)
+
+
+class AddTaskTypeForm(Schema):
+    task_type = v.UnicodeString(not_empty=True)
+    task_category = GetTaskCategory(not_empty=True)
+
+
+class RemoveTaskTypeForm(Schema):
+    task_type = GetTaskTypes(not_empty=True)
+
+
+class AddTaskCategoryForm(Schema):
+    task_category = v.UnicodeString(not_empty=True)
+
+
+class RemoveCategoryForm(Schema):
+    task_category = GetTaskCategory(not_empty=True)
 
 
 class AddEvidenceForm(Schema):

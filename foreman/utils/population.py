@@ -303,8 +303,13 @@ def create_test_cases(case_managers, requestors, investigators):
         classification = CaseClassification.get_classifications()[
             randint(0, len(CaseClassification.get_classifications()) - 1)]
         case_type = CaseType.get_case_types()[randint(0, len(CaseType.get_case_types()) - 1)]
+        private = randint(0,10)
+        if private <= 1:
+            is_private = True
+        else:
+            is_private = False
         new_case = Case(ForemanOptions.get_next_case_name(), case_manager, background=background, reference=None,
-                        private=False, location=None, classification=classification, case_type=case_type,
+                        private=is_private, location=None, classification=classification, case_type=case_type,
                         justification=justification)
         session.add(new_case)
         session.flush()

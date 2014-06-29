@@ -117,11 +117,11 @@ class ForemanOptions(Base, Model):
 
     @staticmethod
     def get_task_types():
-        return session.query(TaskType).all()
+        return TaskType.get_task_types()
 
     @staticmethod
     def get_evidence_types():
-        return session.query(EvidenceType).order_by(asc(EvidenceType.evidence_type)).all()
+        return EvidenceType.get_evidence_types()
 
     @staticmethod
     def get_options():
@@ -175,7 +175,8 @@ class TaskType(Base, Model):
                       ('Windows Event Log Analysis', 'Log file Analysis'),
                       ('Printer Log Analysis', 'Log file Analysis'),
                       ('SIEM Log Analysis', 'Log file Analysis'),
-                      ('Malware Analysis', 'Specialist Tasks')]
+                      ('Malware Analysis', 'Specialist Tasks'),
+                      ('Undefined', 'Other')]
 
         for tt, cat in task_types:
             t = TaskType(tt, TaskType.get_category(cat))
@@ -194,6 +195,15 @@ class TaskType(Base, Model):
                 return task_type
         return None
 
+    @staticmethod
+    def get_task_types():
+        q = session.query(TaskType).all()
+        return [c.task_type for c in q if c.task_type != "Undefined"]
+
+    @staticmethod
+    def undefined():
+        return "Undefined"
+
     def __str__(self):
         return "{} > {}".format(self.category, self.task_type)
 
@@ -210,15 +220,33 @@ class TaskCategory(Base, Model):
     @staticmethod
     def populate_default():
         cats = ['Communications Retrieval', 'Internet Logs', 'Computer Forensics', 'Mobile & Tablet Forensics', 'Networked Data',
-                'Log file Analysis', 'Specialist Tasks']
+                'Log file Analysis', 'Specialist Tasks', 'Other']
 
         for cat in cats:
             c = TaskCategory(cat)
             session.add(c)
             session.flush()
 
+    @staticmethod
+    def get_categories():
+        q = session.query(TaskCategory).all()
+        return [c.category for c in q]
+
     def __str__(self):
         return self.category
+
+    @staticmethod
+    def get_empty_categories():
+        q = session.query(TaskCategory).outerjoin('task_types').filter(TaskType.task_type==None)
+        return [c.category for c in q]
+
+    @staticmethod
+    def get_category_from_list(category):
+        cats = session.query(TaskCategory).all()
+        for cat in cats:
+            if category == cat.category.replace(" ", "").lower():
+                return cat
+        return None
 
 
 class CaseClassification(Base, Model):
@@ -232,7 +260,7 @@ class CaseClassification(Base, Model):
 
     @staticmethod
     def populate_default():
-        classifications = ['Public', 'Secret', 'Confidential', 'Internal']
+        classifications = ['Public', 'Secret', 'Confidential', 'Internal', 'Undefined']
 
         for classification in classifications:
             c = CaseClassification(classification)
@@ -242,10 +270,14 @@ class CaseClassification(Base, Model):
     @staticmethod
     def get_classifications():
         q = session.query(CaseClassification).all()
-        return [c.classification for c in q]
+        return [c.classification for c in q if c.classification != "Undefined"]
 
     def __str__(self):
         return self.classification
+
+    @staticmethod
+    def undefined():
+        return "Undefined"
 
 
 class CaseType(Base, Model):
@@ -260,7 +292,7 @@ class CaseType(Base, Model):
     @staticmethod
     def populate_default():
         case_types = ['eDiscovery', 'Internal Investigation', 'Fraud Investigation', 'Incident Response',
-                      'Security & Malware Investigation', 'Other']
+                      'Security & Malware Investigation', 'Other', 'Undefined']
 
         for case_type in case_types:
             c = CaseType(case_type)
@@ -270,7 +302,11 @@ class CaseType(Base, Model):
     @staticmethod
     def get_case_types():
         q = session.query(CaseType).all()
-        return [c.case_type for c in q]
+        return [c.case_type for c in q if c.case_type != "Undefined"]
+
+    @staticmethod
+    def undefined():
+        return "Undefined"
 
     def __str__(self):
         return self.classification
@@ -284,23 +320,26 @@ class EvidenceType(Base, Model):
 
     def __init__(self, evidence_type, icon=None):
         self.evidence_type = evidence_type
-        icon_path = self.evidence_type.replace(" ", "").lower() + ".png"
-        new_icon = path.abspath(path.join(ROOT_DIR, 'static', 'images' ,'siteimages', 'evidence_icons', icon_path))
 
-        if icon is None:
-            default_icon = path.abspath(path.join(ROOT_DIR, 'static', 'images', 'siteimages',
-                                                  'evidence_icons', 'other.png'))
-            if path.exists(default_icon) and not path.exists(new_icon):
-                shutil.copy(default_icon, new_icon)
-        elif path.exists(icon) and not path.exists(new_icon):
-            shutil.copy(icon, new_icon)
+        if self.evidence_type != self.undefined():
+            icon_path = self.evidence_type.replace(" ", "").lower() + ".png"
+            new_icon = path.abspath(path.join(ROOT_DIR, 'static', 'images' ,'siteimages', 'evidence_icons', icon_path))
+
+            if icon is None:
+                default_icon = path.abspath(path.join(ROOT_DIR, 'static', 'images', 'siteimages',
+                                                      'evidence_icons', 'other.png'))
+                if path.exists(default_icon) and not path.exists(new_icon):
+                    shutil.copy(default_icon, new_icon)
+            elif path.exists(icon) and not path.exists(new_icon):
+                shutil.copy(icon, new_icon)
 
     @staticmethod
     def populate_default():
         evis = ['SATA Hard Drive', 'IDE Hard Drive', 'Other Hard Drive', 'USB Hard drive', 'Floppy Disk', 'CD', 'DVD',
                 'Other Removable Media', 'Zip Drive', 'Mobile Phone', 'Smart Phone', 'Tablet', 'PDA', 'USB Media',
                 'GPS Device', 'Digital Camera', 'Gaming System', 'Laptop', 'Whole Computer Tower', 'Inkjet Printer',
-                'Laser Printer', 'Other Printer', 'Scanner', 'Multi-Functional Printer', 'Other', 'Music Player']
+                'Laser Printer', 'Other Printer', 'Scanner', 'Multi-Functional Printer', 'Other', 'Music Player',
+                "Undefined"]
 
         for evi in evis:
             e = EvidenceType(evi)
@@ -310,7 +349,11 @@ class EvidenceType(Base, Model):
     @staticmethod
     def get_evidence_types():
         evis = session.query(EvidenceType).order_by(asc(EvidenceType.evidence_type)).all()
-        return [evi.evidence_type for evi in evis]
+        return [evi.evidence_type for evi in evis if evi.evidence_type != "Undefined"]
 
     def __str__(self):
         return self.evidence_type
+
+    @staticmethod
+    def undefined():
+        return "Undefined"

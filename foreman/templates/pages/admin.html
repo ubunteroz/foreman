@@ -25,7 +25,7 @@
             <li><a href="#tabs-1">Options</a></li>
             <li><a href="#tabs-2">Task Types & Categories</a></li>
             <li><a href="#tabs-3">Evidence Types</a></li>
-            <li><a href="#tabs-6">Case Types & Classifations</a></li>
+            <li><a href="#tabs-6">Case Types & Classifications</a></li>
             <li><a href="#tabs-4">Notes Export Formatting</a></li>
             <li><a href="#tabs-5">Validate Users</a></li>
         </ul>
@@ -48,26 +48,54 @@
 
         <div id="tabs-2" class="forensics_work_contents">
 
-            <h2>Task Types & Categories</h2>
+            <div class="form_background">
+            <h2>Move Task Type To Different Category</h2>
 
-            <table>
-                <tr>
-                    <th>Task Category</th>
-                    <th>Task Type</th>
-                </tr>
-                % for tt in task_types.iterkeys():
-                    % for t in task_types[tt]:
-                <tr>
-                    <td>${tt|h}</td>
-                    <td>${t|h}</td>
-                </tr>
-                    % endfor
-                % endfor
-            </table>
-
-            <form method="post" action="${urls.build('general.admin', dict(form='task_types'))|h}">
-                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+            <form method="post" action="${urls.build('general.admin', dict(form='move_task_type'))|h}">
+                ${forms.formSelectBox("Task Type", "task_type", "task_type", "form_label", "input_long", task_types, please_select=True, first=True)}
+                ${forms.formSelectBox("New Task Category", "task_category", "task_Category", "form_label", "input_long", task_categories, please_select=True)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Move" /></p>
             </form>
+            </div>
+
+            <div class="form_background">
+            <h2>Add New Task Category</h2>
+
+            <form method="post" action="${urls.build('general.admin', dict(form='add_task_category'))|h}">
+                 ${forms.formTextField("New Task Category", "task_category", "task_category", "form_label", "input_long", first=True)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Add" /></p>
+            </form>
+            </div>
+
+            <div class="form_background">
+            <h2>Add New Task Type</h2>
+
+            <form method="post" action="${urls.build('general.admin', dict(form='add_task_type'))|h}">
+                ${forms.formTextField("New Task Type", "task_type", "task_type", "form_label", "input_long", first=True)}
+                ${forms.formSelectBox("Task Category", "task_category", "task_Category", "form_label", "input_long", task_categories, please_select=True)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Add" /></p>
+            </form>
+            </div>
+
+            <div class="form_background">
+            <h2>Remove Task Category</h2>
+
+            <p>Please note you can only remove Task Categories that are empty, please move all task types from the category into different categories first.</p>
+            <form method="post" action="${urls.build('general.admin', dict(form='remove_task_category'))|h}">
+                 ${forms.formSelectBox("Task Category", "task_category", "task_Category", "form_label", "input_long", empty_categories, please_select=True, first=True)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Remove" /></p>
+            </form>
+            </div>
+
+            <div class="form_background">
+            <h2>Remove Task Type</h2>
+
+            <form method="post" action="${urls.build('general.admin', dict(form='remove_task_type'))|h}">
+                 ${forms.formSelectBox("Task Type", "task_type", "task_type", "form_label", "input_long", task_types, please_select=True)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Remove" /></p>
+            </form>
+            </div>
+
         </div>
 
         <div id="tabs-3" class="forensics_work_contents">
@@ -83,38 +111,63 @@
 
             <div style="clear:both"></div>
 
+            <div class="form_background">
+            <h2>Remove Evidence Type</h2>
+
+            <form method="post" action="${urls.build('general.admin', dict(form='remove_evidence_types'))|h}">
+                 ${forms.formSelectBox("Evidence Type", "evi_type", "evi_type", "form_label", "input_long", evi_types, please_select=True)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Remove" /></p>
+            </form>
+            </div>
+
+            <div class="form_background">
             <h2>Add New Evidence Type</h2>
 
-            <form method="post" action="${urls.build('general.admin', dict(form='evidence_types'))|h}">
+            <form method="post" action="${urls.build('general.admin', dict(form='add_evidence_types'))|h}">
                 ${forms.formTextField("New Evidence Type", "evi_type", "evi_type", "form_label", "input_long", first=True)}
-
-                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+                ${forms.pickImageField("Pick an Icon", "icon", "icon", "form_label", "icon_input", icons)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Add" /></p>
             </form>
+            </div>
         </div>
 
         <div id="tabs-6" class="forensics_work_contents">
 
             <h1>Case Types</h1>
 
-            <h2>Remove Case Classification</h2>
+            <div class="form_background">
+            <h2>Remove Case Type</h2>
+             <form method="post" action="${urls.build('general.admin', dict(form='remove_case_type', active_tab=6))|h}">
+                 ${forms.formSelectBox("Case Types", "case_type", "case_type", "form_label", "input_long", case_types, please_select=True)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Remove" /></p>
+            </form>
+            </div>
 
-            <p>Unavailable</p>
-
+            <div class="form_background">
             <h2>Add New Case Type</h2>
-
-            <p>Unavailable</p>
-
-            <div style="clear:both"></div>
+            <form method="post" action="${urls.build('general.admin', dict(form='add_case_type', active_tab=6))|h}">
+                ${forms.formTextField("New Case Type", "case_type", "case_type", "form_label", "input_long", first=True)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Add" /></p>
+            </form>
+            </div>
 
             <h1>Case Classifications</h1>
 
+            <div class="form_background">
             <h2>Remove Case Classification</h2>
+            <form method="post" action="${urls.build('general.admin', dict(form='remove_classification', active_tab=6))|h}">
+                ${forms.formSelectBox("Case Classification", "classification", "classification", "form_label", "input_long", classifications, please_select=True)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Remove" /></p>
+            </form>
+            </div>
 
-            <p>Unavailable</p>
-
+            <div class="form_background">
             <h2>Add New Case Classification</h2>
-
-            <p>Unavailable</p>
+            <form method="post" action="${urls.build('general.admin', dict(form='add_classification', active_tab=6))|h}">
+                ${forms.formTextField("New Classification", "classification", "classification", "form_label", "input_long", first=True)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Add" /></p>
+            </form>
+            </div>
 
         </div>
 

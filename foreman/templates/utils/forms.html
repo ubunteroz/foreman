@@ -112,3 +112,20 @@
         ${getError(name)|h}
     </p>
 </%def>
+
+<%def name="pickImageField(label, name, id, labelclass, inputclass, icon_list, first=False)" filter="trim">
+    % if first != True:
+    <p style="clear:both; position:relative">
+    % else:
+    <p>
+    % endif
+		<label for="${name|h}" class="${labelclass|h}">${label}</label></p>
+        <div class="${inputclass|h}">
+            <input type="hidden" name="${name|h}" id="${id|h}" value="" />
+            % for icon in icon_list:
+            <img alt="${icon|h} icon" src="${urls.build("images", dict(file='siteimages/evidence_icons_unique/' + icon))|h}" />
+            % endfor
+        </div>
+        ${getError(name)|h}
+    </p>
+</%def>

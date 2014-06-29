@@ -887,6 +887,11 @@ class Task(Base, Model):
         secondary = Task._get_user_tasks(user, [UserTaskRoles.SECONDARY_INVESTIGATOR], TaskStatus.openStatuses)
         return principle, secondary
 
+    @staticmethod
+    def get_tasks_with_type(task_type):
+        q = session.query(Task).join('task_type').filter_by(task_type=task_type.task_type).all()
+        return q
+
     @property
     def principle_investigator(self):
         return User.get_user_with_role(UserTaskRoles.PRINCIPLE_INVESTIGATOR, task_id=self.id)

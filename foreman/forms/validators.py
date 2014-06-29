@@ -6,7 +6,7 @@ from formencode import validators as v, Invalid
 from formencode.compound import CompoundValidator
 # local imports
 from ..model import User, UserTaskRoles, UserRoles, TaskStatus, Task, CaseStatus, Case, ForemanOptions, TaskType
-from ..model import CaseType, CaseClassification
+from ..model import CaseType, CaseClassification, TaskCategory
 from ..utils.utils import session, ROOT_DIR
 
 
@@ -328,6 +328,18 @@ class GetTaskTypes(GetObject):
     def getObject(self, task_type):
         return TaskType.get_type_from_list(task_type)
 
+
+class GetTaskCategory(GetObject):
+    messages = {
+        'invalid': 'Task Category is invalid.',
+        'null': 'Please select an option.'
+    }
+
+    allow_new = False
+    allow_null = False
+
+    def getObject(self, category):
+        return TaskCategory.get_category_from_list(category)
 
 
 class GetEvidenceType(GetObject):
