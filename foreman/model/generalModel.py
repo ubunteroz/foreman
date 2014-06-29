@@ -339,7 +339,7 @@ class EvidenceType(Base, Model):
                 'Other Removable Media', 'Zip Drive', 'Mobile Phone', 'Smart Phone', 'Tablet', 'PDA', 'USB Media',
                 'GPS Device', 'Digital Camera', 'Gaming System', 'Laptop', 'Whole Computer Tower', 'Inkjet Printer',
                 'Laser Printer', 'Other Printer', 'Scanner', 'Multi-Functional Printer', 'Other', 'Music Player',
-                "Undefined"]
+                "Undefined", 'Server']
 
         for evi in evis:
             e = EvidenceType(evi)
