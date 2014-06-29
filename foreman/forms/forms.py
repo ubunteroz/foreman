@@ -147,6 +147,7 @@ class EditEvidencePhotosForm(Schema):
 
 class AddEvidenceTypeForm(Schema):
     evi_type = v.UnicodeString(not_empty=True)
+    icon_input = AddIcon(not_empty=True)
 
 
 class RemoveEvidenceTypeForm(Schema):

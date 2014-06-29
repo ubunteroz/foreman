@@ -62,13 +62,14 @@ class GeneralController(BaseController):
 
     def admin(self):
         self.check_permissions(self.current_user, "Case", 'admin')
+        icon_path = join(ROOT_DIR, 'static', 'images', 'siteimages', 'evidence_icons_unique')
 
         form_type = multidict_to_dict(self.request.args)
         if 'form' in form_type and form_type['form'] == "options" and self.validate_form(OptionsForm()):
             ForemanOptions.set_options(self.form_result['company'], self.form_result['department'],
                                        self.form_result['folder'], self.form_result['datedisplay'])
         elif 'form' in form_type and form_type['form'] == "add_evidence_types" and self.validate_form(AddEvidenceTypeForm()):
-            new_evidence_type = EvidenceType(self.form_result['evi_type'], None)
+            new_evidence_type = EvidenceType(self.form_result['evi_type'], self.form_result['icon_input'])
             session.add(new_evidence_type)
             session.flush()
         elif 'form' in form_type and form_type['form'] == "remove_evidence_types" and self.validate_form(RemoveEvidenceTypeForm()):
@@ -155,7 +156,6 @@ class GeneralController(BaseController):
         classifications = [(cl.replace(" ", "").lower(), cl) for cl in CaseClassification.get_classifications()]
         case_types = [(ct.replace(" ", "").lower(), ct) for ct in CaseType.get_case_types()]
         evi_types = [(et.replace(" ", "").lower(), et) for et in evidence_types]
-        icon_path = join(ROOT_DIR, 'static', 'images', 'siteimages', 'evidence_icons_unique')
         icons = [f for f in listdir(icon_path) if isfile(join(icon_path,f)) and f != "Thumbs.db"]
         empty_categories = [(ct.replace(" ", "").lower(), ct) for ct in TaskCategory.get_empty_categories()]
         return self.return_response('pages', 'admin.html', options=options, active_tab=active_tab, icons=icons,

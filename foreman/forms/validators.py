@@ -102,6 +102,21 @@ class IsPrincipleInvestigator(v.UnicodeString):
             raise Invalid(self.message('invalid', state), value, state)
 
 
+class AddIcon(v.UnicodeString):
+    messages = {
+        'empty': 'Please select an icon.',
+        'invalid': 'This icon does not exist.',
+    }
+    allow_null = False
+
+    def _to_python(self, value, state):
+        icon_path = path.join(ROOT_DIR, 'static', 'images', 'siteimages', 'evidence_icons_unique', value)
+        if path.exists(icon_path):
+            return icon_path
+        else:
+            raise Invalid(self.message('invalid', state), value, state)
+
+
 class GetObject(v.UnicodeString):
     """ Override this - abstract class """
     messages = {

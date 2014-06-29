@@ -113,7 +113,7 @@
     </p>
 </%def>
 
-<%def name="pickImageField(label, name, id, labelclass, inputclass, icon_list, first=False)" filter="trim">
+<%def name="pickImageField(label, name, id, labelclass, inputclass, icon_list, func, img_class, first=False)" filter="trim">
     % if first != True:
     <p style="clear:both; position:relative">
     % else:
@@ -123,7 +123,7 @@
         <div class="${inputclass|h}">
             <input type="hidden" name="${name|h}" id="${id|h}" value="" />
             % for icon in icon_list:
-            <img alt="${icon|h} icon" src="${urls.build("images", dict(file='siteimages/evidence_icons_unique/' + icon))|h}" />
+            <img id="${icon|h}" class="${img_class|h}" onclick="return ${func}('${icon}');" alt="${icon|h} icon" src="${urls.build("images", dict(file='siteimages/evidence_icons_unique/' + icon))|h}" />
             % endfor
         </div>
         ${getError(name)|h}

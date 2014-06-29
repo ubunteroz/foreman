@@ -12,7 +12,18 @@
         $( "#tabs" ).tabs();
         $( "#tabs" ).tabs({ active: ${active_tab}});
         });
+
+        function populate_icon(icon){
+            document.getElementById("icon_input").value = icon;
+            var list = document.getElementsByClassName("img_hover");
+            for (var i = 0; i < list.length; i++) {
+                list[i].style.border = "None";
+            }
+            document.getElementById(icon).style.border = "solid black 2px";
+            return false;
+        }
     </script>
+
 </%def>
 
 
@@ -25,16 +36,16 @@
             <li><a href="#tabs-1">Options</a></li>
             <li><a href="#tabs-2">Task Types & Categories</a></li>
             <li><a href="#tabs-3">Evidence Types</a></li>
-            <li><a href="#tabs-6">Case Types & Classifications</a></li>
-            <li><a href="#tabs-4">Notes Export Formatting</a></li>
-            <li><a href="#tabs-5">Validate Users</a></li>
+            <li><a href="#tabs-4">Case Types & Classifications</a></li>
+            <li><a href="#tabs-5">Notes Export Formatting</a></li>
+            <li><a href="#tabs-6">Validate Users</a></li>
         </ul>
 
         <div id="tabs-1" class="forensics_work_contents">
 
             <h2>Options</h2>
 
-            <form method="post" action="${urls.build('general.admin', dict(form='options'))|h}">
+            <form method="post" action="${urls.build('general.admin', dict(form='options', active_tab=0))|h}">
                 ${forms.formTextField("Company Name", "company", "company", "form_label", "input_long", value=options.company, first=True)}
                 ${forms.formTextField("Department Name", "department", "department", "form_label", "input_long", value=options.department)}
                 ${forms.formTextField("Default folder location", "folder", "folder", "form_label", "input_long", value=options.default_location)}
@@ -51,7 +62,7 @@
             <div class="form_background">
             <h2>Move Task Type To Different Category</h2>
 
-            <form method="post" action="${urls.build('general.admin', dict(form='move_task_type'))|h}">
+            <form method="post" action="${urls.build('general.admin', dict(form='move_task_type', active_tab=1))|h}">
                 ${forms.formSelectBox("Task Type", "task_type", "task_type", "form_label", "input_long", task_types, please_select=True, first=True)}
                 ${forms.formSelectBox("New Task Category", "task_category", "task_Category", "form_label", "input_long", task_categories, please_select=True)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Move" /></p>
@@ -61,7 +72,7 @@
             <div class="form_background">
             <h2>Add New Task Category</h2>
 
-            <form method="post" action="${urls.build('general.admin', dict(form='add_task_category'))|h}">
+            <form method="post" action="${urls.build('general.admin', dict(form='add_task_category', active_tab=1))|h}">
                  ${forms.formTextField("New Task Category", "task_category", "task_category", "form_label", "input_long", first=True)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Add" /></p>
             </form>
@@ -70,7 +81,7 @@
             <div class="form_background">
             <h2>Add New Task Type</h2>
 
-            <form method="post" action="${urls.build('general.admin', dict(form='add_task_type'))|h}">
+            <form method="post" action="${urls.build('general.admin', dict(form='add_task_type', active_tab=1))|h}">
                 ${forms.formTextField("New Task Type", "task_type", "task_type", "form_label", "input_long", first=True)}
                 ${forms.formSelectBox("Task Category", "task_category", "task_Category", "form_label", "input_long", task_categories, please_select=True)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Add" /></p>
@@ -81,7 +92,7 @@
             <h2>Remove Task Category</h2>
 
             <p>Please note you can only remove Task Categories that are empty, please move all task types from the category into different categories first.</p>
-            <form method="post" action="${urls.build('general.admin', dict(form='remove_task_category'))|h}">
+            <form method="post" action="${urls.build('general.admin', dict(form='remove_task_category', active_tab=1))|h}">
                  ${forms.formSelectBox("Task Category", "task_category", "task_Category", "form_label", "input_long", empty_categories, please_select=True, first=True)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Remove" /></p>
             </form>
@@ -90,7 +101,7 @@
             <div class="form_background">
             <h2>Remove Task Type</h2>
 
-            <form method="post" action="${urls.build('general.admin', dict(form='remove_task_type'))|h}">
+            <form method="post" action="${urls.build('general.admin', dict(form='remove_task_type', active_tab=1))|h}">
                  ${forms.formSelectBox("Task Type", "task_type", "task_type", "form_label", "input_long", task_types, please_select=True)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Remove" /></p>
             </form>
@@ -114,7 +125,7 @@
             <div class="form_background">
             <h2>Remove Evidence Type</h2>
 
-            <form method="post" action="${urls.build('general.admin', dict(form='remove_evidence_types'))|h}">
+            <form method="post" action="${urls.build('general.admin', dict(form='remove_evidence_types', active_tab=2))|h}">
                  ${forms.formSelectBox("Evidence Type", "evi_type", "evi_type", "form_label", "input_long", evi_types, please_select=True)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Remove" /></p>
             </form>
@@ -123,21 +134,21 @@
             <div class="form_background">
             <h2>Add New Evidence Type</h2>
 
-            <form method="post" action="${urls.build('general.admin', dict(form='add_evidence_types'))|h}">
+            <form method="post" action="${urls.build('general.admin', dict(form='add_evidence_types', active_tab=2))|h}">
                 ${forms.formTextField("New Evidence Type", "evi_type", "evi_type", "form_label", "input_long", first=True)}
-                ${forms.pickImageField("Pick an Icon", "icon", "icon", "form_label", "icon_input", icons)}
+                ${forms.pickImageField("Pick an Icon", "icon_input", "icon_input", "form_label", "icon_input", icons, "populate_icon", "img_hover")}
                 <p style="clear:both; text-align:center"><input type="submit" value="Add" /></p>
             </form>
             </div>
         </div>
 
-        <div id="tabs-6" class="forensics_work_contents">
+        <div id="tabs-4" class="forensics_work_contents">
 
             <h1>Case Types</h1>
 
             <div class="form_background">
             <h2>Remove Case Type</h2>
-             <form method="post" action="${urls.build('general.admin', dict(form='remove_case_type', active_tab=6))|h}">
+             <form method="post" action="${urls.build('general.admin', dict(form='remove_case_type', active_tab=3))|h}">
                  ${forms.formSelectBox("Case Types", "case_type", "case_type", "form_label", "input_long", case_types, please_select=True)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Remove" /></p>
             </form>
@@ -145,7 +156,7 @@
 
             <div class="form_background">
             <h2>Add New Case Type</h2>
-            <form method="post" action="${urls.build('general.admin', dict(form='add_case_type', active_tab=6))|h}">
+            <form method="post" action="${urls.build('general.admin', dict(form='add_case_type', active_tab=3))|h}">
                 ${forms.formTextField("New Case Type", "case_type", "case_type", "form_label", "input_long", first=True)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Add" /></p>
             </form>
@@ -155,7 +166,7 @@
 
             <div class="form_background">
             <h2>Remove Case Classification</h2>
-            <form method="post" action="${urls.build('general.admin', dict(form='remove_classification', active_tab=6))|h}">
+            <form method="post" action="${urls.build('general.admin', dict(form='remove_classification', active_tab=3))|h}">
                 ${forms.formSelectBox("Case Classification", "classification", "classification", "form_label", "input_long", classifications, please_select=True)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Remove" /></p>
             </form>
@@ -163,7 +174,7 @@
 
             <div class="form_background">
             <h2>Add New Case Classification</h2>
-            <form method="post" action="${urls.build('general.admin', dict(form='add_classification', active_tab=6))|h}">
+            <form method="post" action="${urls.build('general.admin', dict(form='add_classification', active_tab=3))|h}">
                 ${forms.formTextField("New Classification", "classification", "classification", "form_label", "input_long", first=True)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Add" /></p>
             </form>
@@ -172,7 +183,7 @@
         </div>
 
 
-        <div id="tabs-4" class="forensics_work_contents">
+        <div id="tabs-5" class="forensics_work_contents">
 
             <h2>Notes Export Formatting</h2>
 
@@ -181,7 +192,7 @@
 
         </div>
 
-        <div id="tabs-5" class="forensics_work_contents">
+        <div id="tabs-6" class="forensics_work_contents">
 
             <h2>Validate Users</h2>
 
@@ -195,7 +206,7 @@
                      <td><a href='${urls.build("user.view", dict(user_id=user.id))|h}'>${user.username|h}</a></td>
                      <td>${user.fullname|h}</td>
                      <td>${user.email|h}</td>
-                     <td><a href='${urls.build("general.admin", dict(active_tab=4, validate_user=user.id))|h}'>Validate user</a></td>
+                     <td><a href='${urls.build("general.admin", dict(active_tab=5, validate_user=user.id))|h}'>Validate user</a></td>
                 </tr>
                 % endfor
             </table>
