@@ -107,10 +107,19 @@ class User(Base, Model):
         session.flush()
 
     def is_investigator(self):
-        q = session.query(UserRoles).filter_by(user_id=self.id, role=UserRoles.INV).all()
-        if len(q) == 1:
-            return True
-        return False
+        return UserRoles.check_user_has_active_role(user=self, role=UserRoles.INV)
+
+    def is_QA(self):
+        return UserRoles.check_user_has_active_role(user=self, role=UserRoles.QA)
+
+    def is_case_manager(self):
+        return UserRoles.check_user_has_active_role(user=self, role=UserRoles.CASE_MAN)
+
+    def is_requester(self):
+        return UserRoles.check_user_has_active_role(user=self, role=UserRoles.REQUESTER)
+
+    def is_worker(self):
+        return self.is_case_manager() or self.is_investigator() or self.is_QA()
 
     @property
     def fullname(self):

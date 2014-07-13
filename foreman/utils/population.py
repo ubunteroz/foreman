@@ -313,9 +313,10 @@ def create_test_cases(case_managers, requestors, investigators):
                         justification=justification)
         session.add(new_case)
         session.flush()
-
         new_case.add_change(case_manager)
-        requestor = case_managers[randint(0, len(requestors) - 1)]
+        session.commit()
+
+        requestor = requestors[randint(0, len(requestors) - 1)]
         n = UserCaseRoles(requestor, new_case, UserCaseRoles.REQUESTER)
         n.add_change(case_manager)
         n1 = UserCaseRoles(case_manager, new_case, UserCaseRoles.PRINCIPLE_CASE_MANAGER)
@@ -428,7 +429,10 @@ def create_test_tasks(case, investigators, rand_user):
                     new_task.set_status(TaskStatus.QA, new_task.principle_investigator)
                     rand = randint(0, 1)
                     if rand == 1 or case.status == CaseStatus.ARCHIVED or case.status == CaseStatus.CLOSED:
-                        new_task.set_status(TaskStatus.DELIVERY, new_task.principle_QA)
+                        new_task.pass_QA("Well done, case work looks fine.", new_task.principle_QA)
+                        if new_task.secondary_QA:
+                            new_task.pass_QA("I agree, all looks good. QA pass.", new_task.secondary_QA)
+                        #new_task.set_status(TaskStatus.DELIVERY, new_task.principle_QA)
                         rand = randint(0, 1)
                         if rand == 1 or case.status == CaseStatus.ARCHIVED or case.status == CaseStatus.CLOSED:
                             new_task.set_status(TaskStatus.COMPLETE, new_task.principle_investigator)

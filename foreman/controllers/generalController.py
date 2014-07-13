@@ -7,9 +7,10 @@ from monthdelta import monthdelta
 from werkzeug import Response, redirect
 
 # local imports
-from baseController import BaseController
-from ..model.caseModel import Task, User, ForemanOptions, Case, Evidence
+from baseController import BaseController, jsonify
+from ..model.caseModel import Task, User, ForemanOptions, Case, Evidence, CaseStatus
 from ..model.generalModel import TaskType, TaskCategory, EvidenceType, CaseClassification, CaseType
+from ..model.userModel import UserRoles
 from ..forms.forms import LoginForm, OptionsForm, AddEvidenceTypeForm, RegisterForm, AddClassificationForm
 from ..forms.forms import AddCaseTypeForm, RemoveCaseTypeForm, RemoveClassificationForm, RemoveEvidenceTypeForm
 from ..forms.forms import MoveTaskTypeForm, AddTaskTypeForm, RemoveTaskTypeForm, AddTaskCategoryForm, RemoveCategoryForm
@@ -170,10 +171,68 @@ class GeneralController(BaseController):
         start_date = ForemanOptions.get_date_created()
         today_date = datetime.now()
         months = [start_date.strftime("%B %Y")]
-        cases_opened = [Case.get_cases_opened_on_date(start_date, by_month=True)]
-        while start_date.month != today_date.month and start_date.year != today_date.year:
+        categories = CaseType.get_case_types()
+        cases_opened = []
+        cases_closed = []
+        cases_archived = []
+        total_cases = []
+        cases_assigned_inv = []
+        active_tab = 0
+        for status in CaseStatus.all_statuses:
+            total_cases.append([start_date.strftime("%B %Y"), status,
+                                Case.get_num_cases_opened_on_date(start_date, status, case_type=None, by_month=True)])
+        for category in categories:
+            cases_opened.append([start_date.strftime("%B %Y"), category,
+                                 Case.get_num_cases_opened_on_date(start_date, CaseStatus.OPEN, case_type=category,
+                                                               by_month=True)])
+            cases_closed.append([start_date.strftime("%B %Y"), category,
+                                 Case.get_num_cases_opened_on_date(start_date, CaseStatus.CLOSED, case_type=category,
+                                                               by_month=True)])
+            cases_archived.append([start_date.strftime("%B %Y"), category,
+                                   Case.get_num_cases_opened_on_date(start_date, CaseStatus.ARCHIVED, case_type=category,
+                                                                 by_month=True)])
+        for category in TaskCategory.get_categories():
+            for investigator in UserRoles.get_investigators():
+                cases_assigned_inv.append([investigator.fullname, category, Task.get_num_tasks_by_user(investigator,
+                                                                                                       category,
+                                                                                                       start_date)])
+
+        max_months = 11
+        while start_date.month != today_date.month and max_months != 0:
             start_date = start_date + monthdelta(1)
             months.append(start_date.strftime("%B %Y"))
-            cases_opened.append(Case.get_cases_opened_on_date(start_date, by_month=True))
-        print cases_opened
-        return self.return_response('pages', 'report.html', months=months, cases_opened=cases_opened)
+            for status in CaseStatus.all_statuses:
+                total_cases.append([start_date.strftime("%B %Y"), status,
+                                    Case.get_num_cases_opened_on_date(start_date, status, case_type=None, by_month=True)])
+            for category in categories:
+                cases_opened.append([start_date.strftime("%B %Y"), category,
+                                     Case.get_num_cases_opened_on_date(start_date, CaseStatus.OPEN, case_type=category,
+                                                                   by_month=True)])
+                cases_closed.append([start_date.strftime("%B %Y"), category,
+                                     Case.get_num_cases_opened_on_date(start_date, CaseStatus.CLOSED, case_type=category,
+                                                                   by_month=True)])
+                cases_archived.append([start_date.strftime("%B %Y"), category,
+                                       Case.get_num_cases_opened_on_date(start_date, CaseStatus.ARCHIVED,
+                                                                     case_type=category, by_month=True)])
+            max_months -= 1
+
+        return self.return_response('pages', 'report.html', cases_opened=cases_opened, cases_closed=cases_closed,
+                                    months=months, cases_archived=cases_archived, total_cases=total_cases,
+                                    active_tab=active_tab, cases_assigned_inv=cases_assigned_inv)
+
+    @jsonify
+    def jason_tasks_assigned_to_inv(self):
+        start_date = self.request.args.get('start_date', datetime.now().strftime("%B %Y"))
+        try:
+            datetime.strptime(start_date, "%B %Y")
+        except ValueError:
+            start_date = datetime.now().strftime("%B %Y")
+        tasks_assigned_inv = []
+        for category in TaskCategory.get_categories():
+            for investigator in UserRoles.get_investigators():
+                tasks_assigned_inv.append([investigator.fullname, category, Task.get_num_tasks_by_user(investigator,
+                                                                                                       category,
+                                                                                                       start_date)])
+        return tasks_assigned_inv
+
+        return URL.getTop(num=amount, highlight_funcs=highlight_funcs, remove_funcs=remove_funcs)

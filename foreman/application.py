@@ -107,8 +107,6 @@ class Application(object):
 
         map.add(Rule('/admin/', endpoint='general.admin'))
 
-        map.add(Rule('/reporting/', endpoint='general.report'))
-
         map.add(Rule('/cases/', endpoint='case.view_all'))
         map.add(Rule('/cases/<case_id>/', endpoint='case.view'))
         map.add(Rule('/cases/add/', endpoint='case.add'))
@@ -146,6 +144,12 @@ class Application(object):
         map.add(Rule('/users/add/', endpoint='user.add'))
         map.add(Rule('/users/edit/<user_id>/', endpoint='user.edit'))
         map.add(Rule('/users/edit_password/<user_id>/', endpoint='user.edit_password'))
+
+        map.add(Rule('/users/<user_id>/case_history/', endpoint='user.case_history'))
+
+        map.add(Rule('/reporting/', endpoint='report.report'))
+        map.add(Rule('/json/jason_tasks_assigned_to_inv/', endpoint='report.jason_tasks_assigned_to_inv'))
+        map.add(Rule('/json/jason_tasks_qaed/', endpoint='report.jason_tasks_qaed'))
 
         # Static rules -- these never match, they're only used for building.
         for k in staticLocations:

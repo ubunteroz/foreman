@@ -74,84 +74,88 @@
     <p><a href="${urls.build("user.edit", dict(user_id=user.id, tab="edit_roles"))|h}">Edit Role Groups</a></p>
     % endif
 
-    % if len(user_changes_history) > 0:
-    <h2>Changes Made</h2>
-    <table>
-        <tr>
-            <th>Date</th>
-            <th>Item Changed</th>
-            <th>Change Details</th>
-        </tr>
-        % for history in user_changes_history:
+    % if check_perms(user, 'view-changes'):
+        % if len(user_changes_history) > 0:
+        <h2>Changes Made</h2>
+        <table>
             <tr>
-                <td>${history['date']|h}</td>
-                <td>
-                    ${history['object'][0]|h}: ${history['object'][1]|h}
-                </td>
-                <td>
-                    % if not isinstance(history['change_log'], basestring):
-                    % for entry, change in history['change_log'].iteritems():
-                        % if change[0] == "ADD":
-                            % if history['object'][0] == "Role":
-                            The ${entry|h} Role was assigned to ${change[1]|h} <br/>
+                <th>Date</th>
+                <th>Item Changed</th>
+                <th>Change Details</th>
+            </tr>
+            % for history in user_changes_history:
+                <tr>
+                    <td>${history['date']|h}</td>
+                    <td>
+                        ${history['object'][0]|h}: ${history['object'][1]|h}
+                    </td>
+                    <td>
+                        % if not isinstance(history['change_log'], basestring):
+                        % for entry, change in history['change_log'].iteritems():
+                            % if change[0] == "ADD":
+                                % if history['object'][0] == "Role":
+                                The ${entry|h} Role was assigned to ${change[1]|h} <br/>
+                                % else:
+                                The ${entry|h} was assigned to ${change[1]|h} <br/>
+                                % endif
+                            % elif change[0] == "DEL":
+                                % if history['object'][0] == "Role":
+                                ${change[1]|h} was removed from the ${entry|h} Role<br/>
+                                % else:
+                                ${change[1]|h} was removed from ${entry|h}<br/>
+                                % endif
                             % else:
-                            The ${entry|h} was assigned to ${change[1]|h} <br/>
+                                The ${entry|h} changed from ${change[0]|h} to ${change[1]|h} <br/>
                             % endif
-                        % elif change[0] == "DEL":
-                            % if history['object'][0] == "Role":
-                            ${change[1]|h} was removed from the ${entry|h} Role<br/>
-                            % else:
-                            ${change[1]|h} was removed from ${entry|h}<br/>
-                            % endif
+                        % endfor
                         % else:
-                            The ${entry|h} changed from ${change[0]|h} to ${change[1]|h} <br/>
+                            ${history['change_log']|h}
                         % endif
-                    % endfor
-                    % else:
-                        ${history['change_log']|h}
-                    % endif
-                </td>
-            </tr>
-        % endfor
-    </table>
-    % endif
-
-    % if len(cases_worked_on) > 0:
-    <h3>Active roles</h3>
-
-    <table>
-        <tr>
-            <th>Case</th>
-            <th>Case Roles</th>
-            <th>Task</th>
-            <th>Task Roles</th>
-        </tr>
-        % for case in cases_worked_on:
-            % for x, task in enumerate(case.tasks):
-            <tr>
-                % if x == 0:
-                <td rowspan="${len(case.tasks)}">${case.case_name|h}</td>
-                <td rowspan="${len(case.tasks)}">
-                    % if len(case.get_user_roles(user.id)) > 0:
-                        % for roles in case.get_user_roles(user.id):
-                        ${roles.role|h}
-                        % endfor
-                    % endif
-                </td>
-                % endif
-
-                <td>${task.task_name|h}</td>
-                <td>
-                    % if len(task.get_user_roles(user.id)) > 0:
-                        % for roles in task.get_user_roles(user.id):
-                        ${roles.role|h}
-                        % endfor
-                    % endif
-                </td>
-            </tr>
+                    </td>
+                </tr>
             % endfor
-        % endfor
-    </table>
+        </table>
+        % endif
     % endif
+
+    % if check_perms(user, 'view-active-roles'):
+        % if len(cases_worked_on) > 0:
+        <h3>Active roles</h3>
+
+        <table>
+            <tr>
+                <th>Case</th>
+                <th>Case Roles</th>
+                <th>Task</th>
+                <th>Task Roles</th>
+            </tr>
+            % for case in cases_worked_on:
+                % for x, task in enumerate(case.tasks):
+                <tr>
+                    % if x == 0:
+                    <td rowspan="${len(case.tasks)}">${case.case_name|h}</td>
+                    <td rowspan="${len(case.tasks)}">
+                        % if len(case.get_user_roles(user.id)) > 0:
+                            % for roles in case.get_user_roles(user.id):
+                            ${roles.role|h}
+                            % endfor
+                        % endif
+                    </td>
+                    % endif
+
+                    <td>${task.task_name|h}</td>
+                    <td>
+                        % if len(task.get_user_roles(user.id)) > 0:
+                            % for roles in task.get_user_roles(user.id):
+                            ${roles.role|h}
+                            % endfor
+                        % endif
+                    </td>
+                </tr>
+                % endfor
+            % endfor
+        </table>
+        % endif
+   % endif
 
 </div>

@@ -11,7 +11,7 @@ from qrcode import *
 from werkzeug.exceptions import Forbidden
 # local imports
 from models import Base, Model, HistoryModel
-from generalModel import ForemanOptions
+from generalModel import ForemanOptions, TaskCategory, TaskType
 from userModel import UserTaskRoles, User, UserCaseRoles
 from ..utils.utils import session, ROOT_DIR
 
@@ -253,14 +253,22 @@ class Case(Base, Model):
         return LinkedCase.get_from_links(self)
 
     @staticmethod
-    def get_cases_opened_on_date(date_required, by_month=False):
+    def get_num_cases_opened_on_date(date_required, on_status, case_type=None, by_month=False):
         if by_month:
             month = date_required.month
             year = date_required.year
             first_day = datetime(year, month, 1)
             last_day = datetime(year, month, calendar.monthrange(year, month)[1])
-            return session.query(func.count(Case.id)).filter(and_(Case.creation_date >= first_day,
-                                                   Case.creation_date <= last_day)).scalar()
+            q = session.query(func.count(Case.id))
+            if on_status == CaseStatus.OPEN:
+                q = q.filter(and_(Case.creation_date >= first_day, Case.creation_date <= last_day))
+            else:
+                q = q.join(CaseStatus).filter(
+                    and_(CaseStatus.status == on_status, CaseStatus.date_time >= first_day,
+                         CaseStatus.date_time <= last_day))
+            if case_type is not None:
+                q = q.filter(Case.case_type == case_type)
+            return q.scalar()
 
     @staticmethod
     def cases_with_user_involved(user_id):
@@ -271,6 +279,43 @@ class Case(Base, Model):
 
     def get_user_roles(self, user_id):
         return session.query(UserCaseRoles).filter_by(case_id=self.id, user_id=user_id).all()
+
+    @staticmethod
+    def _check_perms(case_manager, cases, case_perm_checker):
+        output = []
+        for case in cases:
+            try:
+                case_perm_checker(case_manager, case, "view")
+                output.append(case)
+            except Forbidden:
+                pass
+        return output
+
+    @staticmethod
+    def get_completed_cases(case_manager, case_perm_checker, current_user):
+        q = session.query(Case)
+        q = q.join(UserCaseRoles).filter(UserCaseRoles.user_id == case_manager.id).filter(or_(
+                UserCaseRoles.role == UserCaseRoles.PRINCIPLE_CASE_MANAGER,
+                UserCaseRoles.role == UserCaseRoles.SECONDARY_CASE_MANAGER))
+        q = q.filter(or_(Case.currentStatus == CaseStatus.CLOSED, Case.currentStatus == CaseStatus.ARCHIVED))
+        return Case._check_perms(current_user, q, case_perm_checker)
+
+    @staticmethod
+    def get_current_cases(case_manager, case_perm_checker, current_user):
+        q = session.query(Case)
+        q = q.join(UserCaseRoles).filter(UserCaseRoles.user_id == case_manager.id).filter(or_(
+                UserCaseRoles.role == UserCaseRoles.PRINCIPLE_CASE_MANAGER,
+                UserCaseRoles.role == UserCaseRoles.SECONDARY_CASE_MANAGER))
+        q = q.filter(or_(Case.currentStatus == CaseStatus.OPEN, Case.currentStatus == CaseStatus.CREATED))
+        return Case._check_perms(current_user, q, case_perm_checker)
+
+    @staticmethod
+    def get_cases_requested(requester, case_perm_checker, current_user, statuses):
+        q = session.query(Case)
+        q = q.join(UserCaseRoles).filter(UserCaseRoles.user_id == requester.id).\
+            filter(UserCaseRoles.role == UserCaseRoles.REQUESTER)
+        q = q.filter(Case.currentStatus.in_(statuses))
+        return Case._check_perms(current_user, q, case_perm_checker)
 
     @staticmethod
     def get_cases(status, current_user, user=False, QA=False, current_user_perms=False, case_perm_checker=None):
@@ -843,59 +888,126 @@ class Task(Base, Model):
         self.set_status(TaskStatus.COMPLETE, user)
 
     @staticmethod
+    def _check_perms(investigator, tasks, case_perm_checker):
+        output = []
+        for task in tasks:
+            try:
+                case_perm_checker(investigator, task, "view")
+                output.append(task)
+            except Forbidden:
+                pass
+        return output
+
+    @staticmethod
+    def get_completed_qas(investigator, case_perm_checker, current_user):
+        q = session.query(Task)
+        q = q.join(UserTaskRoles).filter(UserTaskRoles.user_id == investigator.id).filter(or_(
+                UserTaskRoles.role == UserTaskRoles.PRINCIPLE_QA,
+                UserTaskRoles.role == UserTaskRoles.SECONDARY_QA))
+        q = q.join(TaskStatus).filter(TaskStatus.status == TaskStatus.DELIVERY)
+        return Task._check_perms(current_user, q, case_perm_checker)
+
+    @staticmethod
+    def get_current_qas(investigator, case_perm_checker, current_user):
+        return Task.get_active_QAs(investigator, case_perm_checker, True, current_user)
+
+    @staticmethod
+    def get_completed_investigations(investigator, case_perm_checker, current_user):
+        q = session.query(Task)
+        q = q.join(UserTaskRoles).filter(UserTaskRoles.user_id == investigator.id).filter(or_(
+                UserTaskRoles.role == UserTaskRoles.SECONDARY_INVESTIGATOR,
+                UserTaskRoles.role == UserTaskRoles.PRINCIPLE_INVESTIGATOR))
+        q = q.join(TaskStatus).filter(TaskStatus.status == TaskStatus.COMPLETE)
+        return Task._check_perms(current_user, q, case_perm_checker)
+
+    @staticmethod
+    def get_current_investigations(investigator, case_perm_checker, current_user):
+        return Task.get_active_tasks(investigator, case_perm_checker, True, current_user)
+
+    @staticmethod
+    def get_num_tasks_by_user(investigator, category, date_required):
+        month = date_required.month
+        year = date_required.year
+        first_day = datetime(year, month, 1)
+        last_day = datetime(year, month, calendar.monthrange(year, month)[1])
+        q = session.query(func.count(Task.id))
+        q = q.filter(and_(Task.creation_date >= first_day, Task.creation_date <= last_day))
+        if category is not None:
+            q = q.join(TaskType).join(TaskCategory).filter(TaskCategory.category == category)
+            q = q.join(UserTaskRoles).filter(UserTaskRoles.user_id == investigator.id).filter(or_(
+                UserTaskRoles.role == UserTaskRoles.PRINCIPLE_INVESTIGATOR,
+                UserTaskRoles.role == UserTaskRoles.SECONDARY_INVESTIGATOR))
+        return q.scalar()
+
+    @staticmethod
+    def get_num_completed_qas(investigator, date_required):
+        month = date_required.month
+        year = date_required.year
+        first_day = datetime(year, month, 1)
+        last_day = datetime(year, month, calendar.monthrange(year, month)[1])
+        q = session.query(func.count(Task.id))
+        q = q.join(UserTaskRoles).filter(UserTaskRoles.user_id == investigator.id).filter(or_(
+                UserTaskRoles.role == UserTaskRoles.PRINCIPLE_QA,
+                UserTaskRoles.role == UserTaskRoles.SECONDARY_QA))
+        q = q.join(TaskStatus).filter(and_(TaskStatus.status == TaskStatus.DELIVERY,
+                                           TaskStatus.date_time >= first_day,
+                                           TaskStatus.date_time <= last_day))
+        return q.scalar()
+
+    @staticmethod
     def get_queued_tasks():
         q = session.query(Task).join('case').filter(Task.currentStatus == TaskStatus.QUEUED).filter(
             Case.currentStatus == CaseStatus.OPEN)
         return q.all()
 
     @staticmethod
-    def _get_user_tasks(user=None, usergroups=None, statusgroups=None, case_perm_checker=None):
+    def _get_user_tasks(user=None, usergroups=None, statusgroups=None, case_perm_checker=None, filter_check=None,
+                        current_user=None):
         q = session.query(Task)
         if statusgroups is not None:
             q = q.filter(Task.currentStatus.in_(statusgroups))
-        if user is not None and usergroups is not None:
+        if filter_check is not None:
             q = q.join('task_roles').filter(and_(UserTaskRoles.user_id == user.id, UserTaskRoles.role.in_(usergroups)))
         q = q.join('case').filter(Case.currentStatus == CaseStatus.OPEN)
-        if usergroups is None:
-            tasks = q.all()
-            output = []
-            for task in tasks:
-                try:
-
-                    case_perm_checker(user, task, "view")
-                    output.append(task)
-                except Forbidden:
-                    pass
-            return output  # do now want to show private cases
+        if case_perm_checker is not None:
+            if current_user is None:
+                return Task._check_perms(user, q, case_perm_checker)  # do now want to show private cases
+            else:
+                return Task._check_perms(current_user, q, case_perm_checker)
         else:
             return q.all()
 
     @staticmethod
-    def get_active_QAs(user=None, case_perm_checker=None):
-        if not case_perm_checker:
-            query = Task._get_user_tasks(user, UserTaskRoles.qa_roles, [TaskStatus.QA])
+    def get_active_QAs(user=None, case_perm_checker=None, filter_check=None, current_user=None):
+        if case_perm_checker is None:
+            query = Task._get_user_tasks(user, UserTaskRoles.qa_roles, [TaskStatus.QA], filter_check=True)
         else:
-            query = Task._get_user_tasks(user, None, [TaskStatus.QA], case_perm_checker)
+            query = Task._get_user_tasks(user, UserTaskRoles.qa_roles, [TaskStatus.QA], case_perm_checker,
+                                         filter_check=filter_check, current_user=current_user)
         return query
 
     @staticmethod
-    def get_active_tasks(user=None, case_perm_checker=None):
-        if not case_perm_checker:
-            query = Task._get_user_tasks(user, UserTaskRoles.inv_roles, TaskStatus.openStatuses)
+    def get_active_tasks(user=None, case_perm_checker=None, filter_check=None, current_user=None):
+        if case_perm_checker is None:
+            query = Task._get_user_tasks(user, UserTaskRoles.inv_roles, TaskStatus.openStatuses, filter_check=True)
         else:
-            query = Task._get_user_tasks(user, None, TaskStatus.openStatuses, case_perm_checker=case_perm_checker)
+            query = Task._get_user_tasks(user, UserTaskRoles.inv_roles, TaskStatus.openStatuses,
+                                         case_perm_checker=case_perm_checker, filter_check=filter_check,
+                                         current_user=current_user)
         return query
 
     @staticmethod
     def get_tasks_requiring_QA_by_user(user):
-        principle = Task._get_user_tasks(user, [UserTaskRoles.PRINCIPLE_QA], [TaskStatus.QA])
-        secondary = Task._get_user_tasks(user, [UserTaskRoles.SECONDARY_QA], [TaskStatus.QA])
+        principle = Task._get_user_tasks(user, [UserTaskRoles.PRINCIPLE_QA], [TaskStatus.QA], filter_check=True)
+        secondary = Task._get_user_tasks(user, [UserTaskRoles.SECONDARY_QA], [TaskStatus.QA], filter_check=True)
         return principle, secondary
 
     @staticmethod
     def get_tasks_assigned_to_user(user):
-        principle = Task._get_user_tasks(user, [UserTaskRoles.PRINCIPLE_INVESTIGATOR], TaskStatus.openStatuses)
-        secondary = Task._get_user_tasks(user, [UserTaskRoles.SECONDARY_INVESTIGATOR], TaskStatus.openStatuses)
+        principle = Task._get_user_tasks(user, [UserTaskRoles.PRINCIPLE_INVESTIGATOR], TaskStatus.openStatuses,
+                                         filter_check=True)
+        secondary = Task._get_user_tasks(user, [UserTaskRoles.SECONDARY_INVESTIGATOR], TaskStatus.openStatuses,
+                                         filter_check=True)
         return principle, secondary
 
     @staticmethod

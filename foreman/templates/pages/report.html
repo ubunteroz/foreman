@@ -1,44 +1,189 @@
 ﻿<%inherit file="/base/base.html"/>
 <%namespace file="/utils/forms.html" name="forms" />
 
+<%def name="plot_dimple(svg, chart, cat_axis, measure_axis, series, legend=True)" filter="trim">
+                ${chart} = new dimple.chart(${svg}, data);
+                ${chart}.setBounds(120, 20, "85%", 330);
+                ${chart}.addCategoryAxis("y", "${cat_axis}");
+                ${chart}.addMeasureAxis("x", "${measure_axis}");
+        % if legend is True:
+                ${chart}.addLegend(0, 0, "90%", 400, "right");
+        % endif
+                ${chart}.addSeries("${series}", dimple.plot.bar);
+                ${chart}.draw();
+</%def>
+
 <%def name="javascripts()" filter="trim">
-    <script src="${urls.build('javascript', dict(file='Chart.js'))|h}"></script>
     <link rel="StyleSheet" href="${urls.build('css', dict(file='jquery-ui-1.10.4.custom.css'))|h}" type="text/css" />
     <script src="${urls.build('javascript', dict(file='jquery-1.10.2.js'))|h}"></script>
     <script src="${urls.build('javascript', dict(file='jquery-ui-1.10.4.custom.min.js'))|h}"></script>
+    <script src="${urls.build('javascript', dict(file='d3.min.js'))|h}"></script>
+    <script src="${urls.build('javascript', dict(file='dimple.v2.0.0.js'))|h}"></script>
 
     <script>
-        function CasesOpenedChart() {
-            var data = {
-                labels: ${months},
-                datasets: [
-                    {
-                        label: "Cases Opened",
-                        fillColor: "rgba(220,220,220,0.2)",
-                        strokeColor: "rgba(220,220,220,1)",
-                        pointColor: "rgba(220,220,220,1)",
-                        pointStrokeColor: "#fff",
-                        pointHighlightFill: "#fff",
-                        pointHighlightStroke: "rgba(220,220,220,1)",
-                        data: ${[int(x) for x in cases_opened]}
-                    }
-                ]
-            };
-            var cases_opened_chart = document.getElementById("cases_opened").getContext("2d");
-            var myLineChart = new Chart(cases_opened_chart).Bar(data);
-    }
-    </script>
-</%def>
+        var invChart = null;
+        var qaChart = null;
 
-<%def name="bodyload()" filter="trim">
- onload="CasesOpenedChart();"
+        $(function() {
+            $("#tabs").tabs();
+            $("#tabs").tabs({active: ${active_tab}});
+            $("#case_reports_tabs").tabs();
+
+            var svg1 = dimple.newSvg("#cases_assigned_inv", 1500, 400);
+            $.getJSON('${urls.build("report.jason_tasks_assigned_to_inv")|h}?start_date=July 2014', function(data){
+                ${plot_dimple("sgv1", "invChart", "Investigator", "Number of Tasks", "Task Type")}
+            });
+            var svg2 = dimple.newSvg("#cases_completed_qa", 1500, 400);
+            $.getJSON('${urls.build("report.jason_tasks_qaed")|h}?start_date=July 2014', function(data){
+                ${plot_dimple("svg2", "qaChart", "QA Partner", "Number of QAs", "QA Partner", False)}
+            });
+
+            $(".load_inv_month").click(function () {
+                var month_year = $(this).text();
+                $('#load_inv_month_heading').text(month_year);
+                reload_investigators_monthly_tasks(month_year);
+            });
+
+            $(".load_qa_month").click(function () {
+                var month_year = $(this).text();
+                $('#load_qa_month_heading').text(month_year);
+                reload_qa_monthly_tasks(month_year);
+            });
+        });
+
+        function reload_investigators_monthly_tasks(month_year){
+            $.getJSON('${urls.build("report.jason_tasks_assigned_to_inv")|h}?start_date='+month_year, function(data){
+                invChart.data = data;
+                invChart.draw(500);
+            })
+        }
+
+        function reload_qa_monthly_tasks(month_year){
+            $.getJSON('${urls.build("report.jason_tasks_qaed")|h}?start_date='+month_year, function(data){
+                qaChart.data = data;
+                qaChart.draw(500);
+            })
+        }
+    </script>
 </%def>
 
 
 <div id="wholemiddle">
     <h1>Reporting</h1>
 
-    <h2>Number of cases opened per month</h2>
-    <canvas id="cases_opened" width="400" height="400"></canvas>
+     <div id="tabs">
+        <ul>
+            <li><a href="#tabs-1">Case Reports</a></li>
+            <li><a href="#tabs-2">User Reports</a></li>
+        </ul>
+
+        <div id="tabs-1" class="forensics_work_contents">
+            <p>Download case data to CSV.</p>
+            <div id="case_reports_tabs">
+                <ul>
+                    <li><a href="#case_reports_tabs-1">Case Statuses in the last 12 months</a></li>
+                    <li><a href="#case_reports_tabs-2">Cases Opened in last 12 months</a></li>
+                    <li><a href="#case_reports_tabs-3">Cases Closed in last 12 months</a></li>
+                    <li><a href="#case_reports_tabs-4">Cases Archived in last 12 months</a></li>
+                </ul>
+
+                <div id="case_reports_tabs-1" class="forensics_work_contents">
+                    <h2>Case Statuses in the last 12 months</h2>
+                    <div id="total_cases">
+                        <script type="text/javascript">
+                            var svg = dimple.newSvg("#total_cases", "100%", 400);
+                            var data = [
+                                % for entry in total_cases:
+                                {"Month": "${entry[0]}", "Status": "${entry[1]}", "Number of Cases": ${entry[2]|h}},
+                                % endfor
+                            ];
+                            var myChart = new dimple.chart(svg, data);
+                            myChart.setBounds(40, 20, "100%", 330)
+                            myChart.addCategoryAxis("x", ["Month", "Status"]);
+                            myChart.addMeasureAxis("y", "Number of Cases");
+                            myChart.addLegend(0, 0, "90%", 400, "right");
+                            myChart.addSeries("Status", dimple.plot.bar);
+                            myChart.draw();
+                    </script>
+                    </div>
+                </div>
+                <div id="case_reports_tabs-2" class="forensics_work_contents">
+                    <h2>Cases Opened in last 12 months</h2>
+                    <div id="cases_opened">
+                        <script type="text/javascript">
+                            var svg = dimple.newSvg("#cases_opened", "100%", 400);
+                            var data = [
+                                % for entry in cases_opened:
+                                {"Month": "${entry[0]}", "Case Type": "${entry[1]}", "Number of Cases": ${entry[2]|h}},
+                                % endfor
+                            ];
+                            var myChart = new dimple.chart(svg, data);
+                            myChart.setBounds(40, 20, "100%", 330)
+                            myChart.addCategoryAxis("x", ["Month", "Case Type"]);
+                            myChart.addMeasureAxis("y", "Number of Cases");
+                            myChart.addLegend(0, 0, "90%", 400, "right");
+                            myChart.addSeries("Case Type", dimple.plot.bar);
+                            myChart.draw();
+                    </script>
+                    </div>
+                </div>
+                <div id="case_reports_tabs-3" class="forensics_work_contents">
+                    <h2>Cases Closed in last 12 months</h2>
+                    <div id="cases_closed">
+                        <script type="text/javascript">
+                            var svg = dimple.newSvg("#cases_closed", "100%", 400);
+                            var data = [
+                                % for entry in cases_closed:
+                                {"Month": "${entry[0]}", "Case Type": "${entry[1]}", "Number of Cases": ${entry[2]|h}},
+                                % endfor
+                            ];
+                            var myChart = new dimple.chart(svg, data);
+                            myChart.setBounds(40, 20, "100%", 330)
+                            myChart.addCategoryAxis("x", ["Month", "Case Type"]);
+                            myChart.addMeasureAxis("y", "Number of Cases");
+                            myChart.addLegend(0, 0, "90%", 400, "right");
+                            myChart.addSeries("Case Type", dimple.plot.bar);
+                            myChart.draw();
+                    </script>
+                    </div>
+                </div>
+                <div id="case_reports_tabs-4" class="forensics_work_contents">
+                    <h2>Cases Archived in last 12 months</h2>
+                    <div id="cases_archived">
+                        <script type="text/javascript">
+                            var svg = dimple.newSvg("#cases_archived", "100%", 400);
+                            var data = [
+                                % for entry in cases_archived:
+                                {"Month": "${entry[0]}", "Case Type": "${entry[1]}", "Number of Cases": ${entry[2]|h}},
+                                % endfor
+                            ];
+                            var myChart = new dimple.chart(svg, data);
+                            myChart.setBounds(40, 20, "100%", 330)
+                            myChart.addCategoryAxis("x", ["Month", "Case Type"]);
+                            myChart.addMeasureAxis("y", "Number of Cases");
+                            myChart.addLegend(0, 0, "90%", 400, "right");
+                            myChart.addSeries("Case Type", dimple.plot.bar);
+                            myChart.draw();
+                    </script>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div id="tabs-2" class="forensics_work_contents">
+            <h2>Cases assigned to Investigators for <span id="load_inv_month_heading">July 2014</span></h2>
+
+            <p><a href="#" class="load_inv_month">June 2014</a> | <a href="#" class="load_inv_month">July 2014</a></p>
+
+            <div id="cases_assigned_inv"></div>
+
+            <h2>QAs completed by Investigator for <span id="load_qa_month_heading">July 2014</span></h2>
+
+            <p><a href="#" class="load_qa_month">June 2014</a> | <a href="#" class="load_qa_month">July 2014</a></p>
+
+            <div id="cases_completed_qa"></div>
+        </div>
+     </div>
+
 
 </div>

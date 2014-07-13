@@ -1,0 +1,52 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+<%namespace file="/utils/forms.html" name="forms" />
+<%namespace file="/utils/format.html" name="format" />
+
+<%def name="javascripts()" filter="trim">
+
+</%def>
+
+
+<div id="sidebar">
+     ${sidebars.tasks_menu()}
+</div>
+<div id="mainbar">
+
+    % if current_user == user and current_user.is_requester():
+    <h1>Cases Requested</h1>
+    % else:
+    <h1>Case History for ${user.fullname|h}</h1>
+    % endif
+
+    % if user.is_investigator() or user.is_QA():
+        <h2>Tasks Currently Investigating</h2>
+        ${format.task_table(current_tasks_investigated, show_qa=True, case_tasks=True, highlighted=user)}
+
+        <h2>Tasks Investigated</h2>
+        ${format.task_table(old_tasks_investigated, show_qa=True, case_tasks=True, highlighted=user)}
+
+        <h2>Tasks Currently QAing</h2>
+        ${format.task_table(current_tasks_qaed, show_qa=True, case_tasks=True, highlighted=user)}
+
+        <h2>Tasks QAed</h2>
+        ${format.task_table(old_tasks_qaed, show_qa=True, case_tasks=True, highlighted=user)}
+    % endif
+
+    % if user.is_case_manager():
+        <h2>Cases Currently Managing</h2>
+        ${format.case_table(current_cases_managed, highlighted=user)}
+
+        <h2>Closed Cases Managed</h2>
+        ${format.case_table(old_cases_managed, highlighted=user)}
+    % endif
+
+    % if user.is_requester():
+        <h2>Cases Currently Requesting</h2>
+        ${format.case_table(current_cases_requested, highlighted=user)}
+
+        <h2>Closed Cases Requested</h2>
+        ${format.case_table(old_cases_requested, highlighted=user)}
+    % endif
+
+</div>

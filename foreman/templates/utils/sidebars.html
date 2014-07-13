@@ -1,11 +1,14 @@
 <%def name="user_menu()" filter="trim">
     <h1>Users</h1>
 
+    % if check_perms("User", 'view-all'):
     <p><a href='${urls.build("user.view_all")|h}'>View All Users</a></p>
+    % endif
 
     <h2>Options for My Account</h2>
 
     <p><a href='${urls.build("user.view", dict(user_id=current_user.id))|h}'>View My Profile</a></p>
+    <p><a href='${urls.build("user.case_history", dict(user_id=current_user.id))|h}'>View My Case History</a></p>
     <p><a href='${urls.build("user.edit", dict(user_id=current_user.id))|h}'>Edit My Basic Details</a></p>
     <p><a href='${urls.build("user.edit_password", dict(user_id=current_user.id))|h}'>Change My Password</a></p>
 
@@ -20,6 +23,11 @@
         % if check_perms(user, 'edit'):
         <p><a href='${urls.build("user.edit", dict(user_id=user.id))|h}'>Edit ${user.username.title()|h}'s Basic Details</a></p>
         % endif
+
+        % if check_perms(user, 'view-history'):
+        <p><a href='${urls.build("user.case_history", dict(user_id=user.id))|h}'>View Case History</a></p>
+        % endif
+
         % if check_perms(user, 'edit-password'):
         <p><a href='${urls.build("user.edit_password", dict(user_id=user.id))|h}'>Change ${user.username.title()|h}'s Password</a></p>
         % endif
@@ -35,6 +43,64 @@
         <p><a href='${urls.build("case.add", dict())|h}'>Add new Case</a></p>
         <p><a href='${urls.build("case.view_all", dict(view="Created"))|h}'>View Created Cases</a> (${created_cases|h})</p>
         <p><a href='${urls.build("case.view_all", dict(view="Open"))|h}'>View Open Cases</a> (${open_cases|h})</p>
+    % endif
+
+    % if check_perms("Case", 'request'):
+        <h1>Cases Requested</h1>
+        <p><a href='${urls.build("user.case_history", dict(user_id=current_user.id))|h}'>View summary</a></p>
+
+        <h2>Cases Created</h2>
+        % for case in requester_created_cases:
+            <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a> (${len(case.tasks)})
+                % for task in case.tasks:
+                    <br /><span class="side_indent">
+                    <a href='${urls.build("task.view", dict(task_id=task.task_name,case_id=task.case.case_name))|h}'>${task.task_name|h}</a> [${task.currentStatus|h}]</span>
+                % endfor
+            </p>
+        % endfor
+        % if len(requester_created_cases) == 0:
+            <p>None.</p>
+        % endif
+
+        <h2>Cases Opened</h2>
+        % for case in requester_opened_cases:
+            <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a> (${len(case.tasks)})
+                % for task in case.tasks:
+                    <br /><span class="side_indent">
+                    <a href='${urls.build("task.view", dict(task_id=task.task_name,case_id=task.case.case_name))|h}'>${task.task_name|h}</a> [${task.currentStatus|h}]</span>
+                % endfor
+            </p>
+        % endfor
+        % if len(requester_opened_cases) == 0:
+            <p>None.</p>
+        % endif
+
+        <h2>Cases Closed</h2>
+        % for case in requester_closed_cases:
+            <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a> (${len(case.tasks)})
+                % for task in case.tasks:
+                    <br /><span class="side_indent">
+                    <a href='${urls.build("task.view", dict(task_id=task.task_name,case_id=task.case.case_name))|h}'>${task.task_name|h}</a> [${task.currentStatus|h}]</span>
+                % endfor
+            </p>
+        % endfor
+        % if len(requester_closed_cases) == 0:
+            <p>None.</p>
+        % endif
+
+        <h2>Cases Archived</h2>
+        % for case in requester_archived_cases:
+            <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a> (${len(case.tasks)})
+                % for task in case.tasks:
+                    <br /><span class="side_indent">
+                    <a href='${urls.build("task.view", dict(task_id=task.task_name,case_id=task.case.case_name))|h}'>${task.task_name|h}</a> [${task.currentStatus|h}]</span>
+                % endfor
+            </p>
+        % endfor
+        % if len(requester_archived_cases) == 0:
+            <p>None.</p>
+        % endif
+
     % endif
 
     % if check_perms("Case", 'examiner'):
@@ -129,5 +195,8 @@
         % if inv_flag == 0:
             <p><span class="side_indent">None</span></p>
         % endif
+
+        <h2>Old Cases</h2>
+        <p><a href='${urls.build("user.case_history", dict(user_id=current_user.id))|h}'>View History</a></p>
     % endif
 </%def>

@@ -94,10 +94,12 @@ class BaseController():
             base_vars['user_cases'] = Case.get_cases(CaseStatus.OPEN, self.current_user, user=True,
                                                      current_user_perms=self.check_view_permissions("Case", "admin"))
             base_vars['open_cases'] = len(Case.get_cases(CaseStatus.OPEN, self.current_user,
-                                                         current_user_perms=self.check_view_permissions("Case","admin"),
+                                                         current_user_perms=self.check_view_permissions("Case",
+                                                                                                        "admin"),
                                                          case_perm_checker=self.check_permissions))
             base_vars['created_cases'] = len(Case.get_cases(CaseStatus.CREATED, self.current_user,
-                                                            current_user_perms=self.check_view_permissions("Case","admin"),
+                                                            current_user_perms=self.check_view_permissions("Case",
+                                                                                                           "admin"),
                                                             case_perm_checker=self.check_permissions))
         base_vars['invRoles'] = TaskStatus.invRoles
         base_vars['qaRoles'] = TaskStatus.qaRoles
@@ -108,6 +110,15 @@ class BaseController():
                                       'closed': TaskStatus.CLOSED}
         base_vars['case_statuses'] = {'created': CaseStatus.CREATED, 'archived': CaseStatus.ARCHIVED,
                                       'closed': CaseStatus.CLOSED, 'open': CaseStatus.OPEN}
+        if self.current_user.is_requester():
+            base_vars['requester_created_cases'] = Case.get_cases_requested(self.current_user, self.check_permissions,
+                                                                            self.current_user, [CaseStatus.CREATED])
+            base_vars['requester_opened_cases'] = Case.get_cases_requested(self.current_user, self.check_permissions,
+                                                                           self.current_user, [CaseStatus.OPEN])
+            base_vars['requester_closed_cases'] = Case.get_cases_requested(self.current_user, self.check_permissions,
+                                                                           self.current_user, [CaseStatus.CLOSED])
+            base_vars['requester_archived_cases'] = Case.get_cases_requested(self.current_user, self.check_permissions,
+                                                                             self.current_user, [CaseStatus.ARCHIVED])
         return base_vars
 
     @staticmethod

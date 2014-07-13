@@ -4,6 +4,7 @@ from taskController import TaskController
 from forensicsController import ForensicsController
 from userController import UserController
 from evidenceController import EvidenceController
+from reportController import ReportController
 
 controller_lookup = {
                'general': GeneralController,
@@ -11,5 +12,6 @@ controller_lookup = {
                'task': TaskController,
                'forensics': ForensicsController,
                'user': UserController,
-               'evidence': EvidenceController
+               'evidence': EvidenceController,
+               'report': ReportController,
                }

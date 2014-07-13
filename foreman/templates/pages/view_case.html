@@ -176,7 +176,7 @@
     % endif
     </p>
 
-    ${formatting.task_table(case)}
+    ${formatting.task_table(case.tasks, show_qa=True)}
 
     <h2>Evidence</h2>
     % if check_perms(case, 'add-evidence'):

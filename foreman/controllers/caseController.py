@@ -12,6 +12,8 @@ from ..forms.forms import AddCaseForm, AddTaskForm, EditCaseForm, AddCaseLinkFor
 
 class CaseController(BaseController):
     def view_all(self):
+        self.check_permissions(self.current_user, 'Case', 'view-all')
+
         view = multidict_to_dict(self.request.args)
         allowed = CaseStatus.all_statuses
         allowed.append("All")

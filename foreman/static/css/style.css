@@ -315,6 +315,22 @@ table.highlighted{
     background: grey;
 }
 
+table.task_table th, table.case_table th{
+    border-color: #FAFAFA;
+    background-color: #EEE;
+    padding-bottom:5px;
+    border-bottom: solid black 3px;
+}
+
+table.task_table td, table.case_table td{
+    border-color: #EEE;
+}
+
+table.task_table td.highlight, table.case_table td.highlight{
+    background-color: #FAFAFA;
+}
+
+
 pre.notes{
     white-space: pre-wrap;       /* css-3 */
     white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */

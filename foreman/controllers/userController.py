@@ -4,19 +4,21 @@ from werkzeug import Response, redirect
 # local imports
 from baseController import BaseController
 from ..model import User, UserRoles, Case, CaseHistory, TaskHistory, TaskStatus, CaseStatus, EvidenceHistory
-from ..model import UserHistory, UserRolesHistory, UserTaskRolesHistory, UserCaseRolesHistory
+from ..model import UserHistory, UserRolesHistory, UserTaskRolesHistory, UserCaseRolesHistory, Task
 from ..forms.forms import PasswordChangeForm, EditUserForm, EditRolesForm, AddUserForm, AdminPasswordChangeForm
 from ..utils.utils import multidict_to_dict, session, config
 from ..utils.mail import email
 
 class UserController(BaseController):
     def view_all(self):
+        self.check_permissions(self.current_user, "User", 'view-all')
         all_users = User.get_all()
         return self.return_response('pages', 'view_users.html', users=all_users)
 
     def view(self, user_id):
         user = self._validate_user(user_id)
         if user is not None:
+            # no permissions check, all logged in users can view a user profile
             role_groups = UserRoles.roles
             user_roles = UserRoles.get_role_names(user_id)
             cases_worked_on = Case.cases_with_user_involved(user_id)
@@ -28,9 +30,9 @@ class UserController(BaseController):
             return self.return_404()
 
     def add(self):
+        self.check_permissions(self.current_user, "User", 'add')
         if self.validate_form(AddUserForm):
             new_user_password = User.make_random_password()
-            print new_user_password, "*"*99
             if self.form_result['middlename'] == "":
                 self.form_result['middlename'] = None
             new_user = User(self.form_result['username'], new_user_password, self.form_result['forename'],
@@ -161,6 +163,50 @@ class UserController(BaseController):
                 return self.return_response('pages', 'edit_password.html', user=user, success=True, admin=True)
             else:
                 return self.return_response('pages', 'edit_password.html', user=user, errors=self.form_error)
+        else:
+            return self.return_404()
+
+    def case_history(self, user_id):
+        user = self._validate_user(user_id)
+        if user is not None:
+            self.check_permissions(self.current_user, user, "view-history")
+            if user.is_investigator() or user.is_QA():
+                current_tasks_qaed = Task.get_current_qas(user, self.check_permissions, self.current_user)
+                old_tasks_qaed = Task.get_completed_qas(user, self.check_permissions, self.current_user)
+                current_tasks_investigated = Task.get_current_investigations(user, self.check_permissions,
+                                                                             self.current_user)
+                old_tasks_investigated = Task.get_completed_investigations(user, self.check_permissions,
+                                                                           self.current_user)
+            else:
+                current_tasks_investigated = None
+                old_tasks_investigated = None
+                current_tasks_qaed = None
+                old_tasks_qaed = None
+
+            if user.is_case_manager():
+                old_cases_managed = Case.get_completed_cases(user, self.check_permissions, self.current_user)
+                current_cases_managed = Case.get_current_cases(user, self.check_permissions, self.current_user)
+            else:
+                old_cases_managed = None
+                current_cases_managed = None
+
+            if user.is_requester():
+                old_cases_requested = Case.get_cases_requested(user, self.check_permissions,
+                                                               self.current_user, [CaseStatus.CLOSED,
+                                                                                   CaseStatus.ARCHIVED])
+                current_cases_requested = Case.get_cases_requested(user, self.check_permissions, self.current_user,
+                                                                   [CaseStatus.CREATED, CaseStatus.OPEN])
+            else:
+                old_cases_requested = None
+                current_cases_requested = None
+
+            return self.return_response('pages', 'user_case_history.html', current_tasks_qaed=current_tasks_qaed,
+                                        current_tasks_investigated=current_tasks_investigated, user=user,
+                                        old_cases_managed=old_cases_managed,
+                                        current_cases_managed=current_cases_managed,
+                                        old_tasks_investigated=old_tasks_investigated, old_tasks_qaed=old_tasks_qaed,
+                                        old_cases_requested=old_cases_requested,
+                                        current_cases_requested=current_cases_requested)
         else:
             return self.return_404()
 

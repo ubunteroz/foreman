@@ -244,6 +244,7 @@ class And(BaseChecker):
 permissions = {
     ('Case', 'admin'): AdminChecker(),
     ('Case', 'request'): Or(AdminChecker(), RequesterChecker()),
+    ('Case', 'view-all'): Or(AdminChecker(), InvestigatorChecker(), QAChecker(), CaseManagerChecker()),
     ('Case', 'examiner'): Or(AdminChecker(), InvestigatorChecker(), QAChecker()),
     ('Case', 'edit'): And(Or(AdminChecker(), CaseManagerForCaseChecker()), Not(ArchivedCaseChecker())),
     ('Case', 'manage'): Or(AdminChecker(), CaseManagerChecker()),
@@ -269,6 +270,8 @@ permissions = {
     ('Case', 'add'): Or(AdminChecker(), CaseManagerChecker()),
     ('Task', 'edit'): And(Or(AdminChecker(), CaseManagerForTaskChecker()), Not(ArchivedTaskChecker())),
     ('Task', 'close'): And(Or(AdminChecker(), CaseManagerForTaskChecker()), Not(ArchivedTaskChecker())),
+    ('Task', 'view-all'): Or(AdminChecker(), InvestigatorChecker(), QAChecker(), CaseManagerChecker()),
+    ('Task', 'view-qas'): Or(AdminChecker(), InvestigatorChecker(), QAChecker(), CaseManagerChecker()),
     ('Task', 'view'): Or(
                         RequesterForTaskChecker(),
                         AdminChecker(),
@@ -319,6 +322,11 @@ permissions = {
     ('User', 'edit'): Or(AdminChecker(), UserIsCurrentUserChecker()),
     ('User', 'edit-roles'): AdminChecker(),
     ('User', 'add'): AdminChecker(),
+    ('User', 'view-active-roles'): Or(AdminChecker(), UserIsCurrentUserChecker()),
+    ('User', 'view-changes'): Or(AdminChecker(), UserIsCurrentUserChecker()),
+    ('User', 'view-all'): AdminChecker(),
+    ('User', 'view-history'): Or(AdminChecker(), CaseManagerChecker(), InvestigatorChecker(), QAChecker(),
+                                 UserIsCurrentUserChecker())
 }
 
 

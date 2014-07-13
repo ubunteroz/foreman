@@ -10,12 +10,14 @@ from ..forms.forms import AssignInvestigatorForm, EditTaskUsersForm, EditTaskFor
 
 class TaskController(BaseController):
     def view_all(self):
+        self.check_permissions(self.current_user, 'Task', 'view-all')
         all_tasks = Task.get_active_tasks(user=self.current_user, case_perm_checker=self.check_permissions)
         user_primary_inv, user_secondary_inv = Task.get_tasks_assigned_to_user(user=self.current_user)
         return self.return_response('pages', 'view_tasks.html', all_tasks=all_tasks, user_primary_inv=user_primary_inv,
                                     user_secondary_inv=user_secondary_inv)
 
     def view_qas(self):
+        self.check_permissions(self.current_user, 'Task', 'view-qas')
         completed = multidict_to_dict(self.request.args)
         if 'completed' in completed and completed['completed'] == "True":
             user_primary_qa, user_secondary_qa = Task.get_tasks_requiring_QA_by_user(user=self.current_user,
