@@ -20,9 +20,14 @@ class AdminChecker(BaseChecker):
 class CaseManagerForCaseChecker(BaseChecker):
     def check(self, user, case):
         case_managers = case.case_managers
+        both_none = True
         for case_manager in case_managers:
+            if case_manager is not None:
+                both_none = False
             if case_manager and user.id == case_manager.id:
                 return True
+        if both_none is True:
+            return CaseManagerChecker()
         return False
 
 
@@ -267,7 +272,7 @@ permissions = {
                                 QAForCaseChecker(),
                                 CaseManagerForCaseChecker()),
                             PrivateCaseChecker())),
-    ('Case', 'add'): Or(AdminChecker(), CaseManagerChecker()),
+    ('Case', 'add'): Or(AdminChecker(), CaseManagerChecker(), RequesterChecker()),
     ('Task', 'edit'): And(Or(AdminChecker(), CaseManagerForTaskChecker()), Not(ArchivedTaskChecker())),
     ('Task', 'close'): And(Or(AdminChecker(), CaseManagerForTaskChecker()), Not(ArchivedTaskChecker())),
     ('Task', 'view-all'): Or(AdminChecker(), InvestigatorChecker(), QAChecker(), CaseManagerChecker()),

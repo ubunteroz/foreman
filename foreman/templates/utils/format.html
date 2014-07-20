@@ -5,6 +5,9 @@
 </%def>
 
 <%def name="case_table(cases, highlighted=None)" filter="trim">
+    % if len(cases) == 0:
+    <p>None.</p>
+    % else:
     <table class="case_table">
         <tr>
             <th>Case</th>
@@ -29,31 +32,68 @@
                 % endif
             </td>
             <td>${case.status|h}</td>
-            <td colspan="7"><a href='${urls.build("task.add", dict(case_id=case.case_name))|h}'>Add Tasks</a></td>
+            <td>${case.date_created|h}</td>
+            % if case.principle_case_manager is None and case.secondary_case_manager is None:
+            <td colspan="2">
+                % if check_perms(case, 'edit'):
+                 <a href='${urls.build("case.edit", dict(case_id=case.case_name, active_tab=2))|h}'>Assign yourself to case</a>
+                % else:
+                None assigned
+                % endif
+            </td>
+            % else:
+            <td ${highlight(case, 'principle_case_manager', highlighted)}>
+                % if case.principle_case_manager != None:
+                <a href="${urls.build('user.view', dict(user_id=case.principle_case_manager.id))|h}">${case.principle_case_manager.fullname|h}</a>
+                % else:
+                None
+                % endif
+            </td>
+            <td ${highlight(case, 'secondary_case_manager', highlighted)}>
+                % if case.secondary_case_manager != None:
+                <a href="${urls.build('user.view', dict(user_id=case.secondary_case_manager.id))|h}">${case.secondary_case_manager.fullname|h}</a>
+                % else:
+                None
+                % endif
+            </td>
+            % endif
+            <td colspan="4">
+                % if check_perms(case, 'edit'):
+                <a href='${urls.build("task.add", dict(case_id=case.case_name))|h}'>Add Tasks</a>
+                % else:
+                No Tasks added.
+                % endif
+            </td>
         </tr>
             % else:
                 <% start_again = True %>
+                <% case_length = 0 %>
+                % for task in case.tasks:
+                    % if (case_status == task_statuses['queued'] and task.status == task_statuses['queued']) or case_status != task_statuses['queued']:
+                        <% case_length += 1 %>
+                    % endif
+                % endfor
                 % for task in case.tasks:
                     % if (case_status == task_statuses['queued'] and task.status == task_statuses['queued']) or case_status != task_statuses['queued']:
                     <tr>
                         % if start_again:
-                            <td rowspan="${len(case.tasks)|h}">
+                            <td rowspan="${case_length|h}">
                                 % if case.private is True:
                                     <a class="highlight" href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a>
                                 % else:
                                     <a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a>
                                 % endif
                             </td>
-                            <td rowspan="${len(case.tasks)|h}">${case.status|h}</td>
-                            <td rowspan="${len(case.tasks)|h}">${case.date_created|h}</td>
-                            <td rowspan="${len(case.tasks)|h}" ${highlight(case, 'principle_case_manager', highlighted)}>
+                            <td rowspan="${case_length|h}">${case.status|h}</td>
+                            <td rowspan="${case_length|h}">${case.date_created|h}</td>
+                            <td rowspan="${case_length|h}" ${highlight(case, 'principle_case_manager', highlighted)}>
                                 % if case.principle_case_manager != None:
                                 <a href="${urls.build('user.view', dict(user_id=case.principle_case_manager.id))|h}">${case.principle_case_manager.fullname|h}</a>
                                 % else:
                                 None
                                 % endif
                             </td>
-                            <td rowspan="${len(case.tasks)|h}" ${highlight(case, 'secondary_case_manager', highlighted)}>
+                            <td rowspan="${case_length|h}" ${highlight(case, 'secondary_case_manager', highlighted)}>
                                 % if case.secondary_case_manager != None:
                                 <a href="${urls.build('user.view', dict(user_id=case.secondary_case_manager.id))|h}">${case.secondary_case_manager.fullname|h}</a>
                                 % else:
@@ -70,7 +110,7 @@
                             <a href="${urls.build('user.view', dict(user_id=task.principle_investigator.id))|h}">${task.principle_investigator.fullname|h}</a>
                             % else:
                             None
-                            % endif
+                           % endif
                         </td>
                         <td ${highlight(task, 'secondary_investigator', highlighted)}>
                             % if task.secondary_investigator != None:
@@ -86,6 +126,7 @@
             % endif
         % endfor
     </table>
+    % endif
 </%def>
 
 <%def name="task_table(tasks, edit=False, show_qa=False, case_tasks=False, work_on=False, highlighted=None)" filter="trim">

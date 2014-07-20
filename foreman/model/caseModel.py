@@ -318,7 +318,8 @@ class Case(Base, Model):
         return Case._check_perms(current_user, q, case_perm_checker)
 
     @staticmethod
-    def get_cases(status, current_user, user=False, QA=False, current_user_perms=False, case_perm_checker=None):
+    def get_cases(status, current_user, user=False, QA=False, current_user_perms=False, case_perm_checker=None,
+                  case_man=False):
         q = session.query(Case)
         if status != 'All' and status != "Queued":
             q = q.filter_by(currentStatus=status)
@@ -330,16 +331,18 @@ class Case(Base, Model):
                 q = q.filter(and_(UserTaskRoles.user_id == current_user.id, UserTaskRoles.role.in_(UserTaskRoles.qa_roles)))
             else:
                 q = q.filter(and_(UserTaskRoles.user_id == current_user.id, UserTaskRoles.role.in_(UserTaskRoles.inv_roles)))
-            return q.all()
+            return q.order_by(desc(Case.creation_date)).all()
         else:
-            cases = q.all()
+            cases = q.order_by(desc(Case.creation_date)).all()
             output = []
             for case in cases:
-                try:
-                    case_perm_checker(current_user, case, "view")
-                    output.append(case)
-                except Forbidden:
-                    pass
+                if (case_man is True and case.principle_case_manager is None and case.secondary_case_manager is None) \
+                        or case_man is False:
+                    try:
+                        case_perm_checker(current_user, case, "view")
+                        output.append(case)
+                    except Forbidden:
+                        pass
             return output
 
     def __repr__(self):

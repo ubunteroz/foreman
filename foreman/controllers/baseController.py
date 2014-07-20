@@ -101,6 +101,11 @@ class BaseController():
                                                             current_user_perms=self.check_view_permissions("Case",
                                                                                                            "admin"),
                                                             case_perm_checker=self.check_permissions))
+            base_vars['created_cases_no_manager'] = len(Case.get_cases(CaseStatus.CREATED, self.current_user,
+                                                                       current_user_perms=self.check_view_permissions(
+                                                                           "Case", "admin"),
+                                                                       case_perm_checker=self.check_permissions,
+                                                                       case_man=True))
         base_vars['invRoles'] = TaskStatus.invRoles
         base_vars['qaRoles'] = TaskStatus.qaRoles
         base_vars['unassigned_tasks'] = len(Task.get_queued_tasks())
@@ -110,7 +115,7 @@ class BaseController():
                                       'closed': TaskStatus.CLOSED}
         base_vars['case_statuses'] = {'created': CaseStatus.CREATED, 'archived': CaseStatus.ARCHIVED,
                                       'closed': CaseStatus.CLOSED, 'open': CaseStatus.OPEN}
-        if self.current_user.is_requester():
+        if self.current_user and self.current_user.is_requester():
             base_vars['requester_created_cases'] = Case.get_cases_requested(self.current_user, self.check_permissions,
                                                                             self.current_user, [CaseStatus.CREATED])
             base_vars['requester_opened_cases'] = Case.get_cases_requested(self.current_user, self.check_permissions,

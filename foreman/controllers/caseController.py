@@ -6,8 +6,8 @@ from taskController import TaskController
 from ..model import Case, User, CaseStatus, UserCaseRoles, Task, UserTaskRoles, LinkedCase, UserRoles, \
     CaseHistory, TaskHistory, TaskStatus, ForemanOptions, CaseClassification, CaseType
 from ..utils.utils import multidict_to_dict, session
-from ..forms.forms import AddCaseForm, AddTaskForm, EditCaseForm, AddCaseLinkForm, RemoveCaseLinkForm, EditCaseManagersForm, \
-    ReAssignTasksForm
+from ..forms.forms import AddCaseForm, EditCaseForm, AddCaseLinkForm, RemoveCaseLinkForm
+from ..forms.forms import EditCaseManagersForm, ReAssignTasksForm, RequesterAddCaseForm
 
 
 class CaseController(BaseController):
@@ -27,6 +27,10 @@ class CaseController(BaseController):
                 all_cases = Case.get_cases("All",  self.current_user,
                                            current_user_perms=self.check_view_permissions("Case", "admin"),
                                            case_perm_checker=self.check_permissions)
+            elif self.request.args['view'] == "Unassigned":
+                all_cases = Case.get_cases("Created",  self.current_user,
+                                           current_user_perms=self.check_view_permissions("Case", "admin"),
+                                           case_perm_checker=self.check_permissions, case_man=True)
             else:
                 all_cases = Case.get_cases('Open',  self.current_user,
                                            current_user_perms=self.check_view_permissions("Case", "admin"),
@@ -80,12 +84,32 @@ class CaseController(BaseController):
 
     def add(self):
         self.check_permissions(self.current_user, "Case", 'add')
+        is_requester = self.current_user.is_requester()
         case_loc = ForemanOptions.get_default_location()
         managers = [(user.id, user.fullname) for user in UserRoles.get_managers()]
         classifications = [(cl.replace(" ", "").lower(), cl) for cl in CaseClassification.get_classifications()]
         case_types = [(ct.replace(" ", "").lower(), ct) for ct in CaseType.get_case_types()]
-
-        if self.validate_form(AddCaseForm()):
+        args = multidict_to_dict(self.request.args)
+        if 'type' in args and args['type'] == "requester" and is_requester:
+            if self.validate_form(RequesterAddCaseForm()):
+                case_name = ForemanOptions.get_next_case_name()
+                new_case = Case(case_name, self.current_user, self.form_result['background'],
+                            self.form_result['reference'], self.form_result['private'], None,
+                            self.form_result['classification'], self.form_result['case_type'],
+                            self.form_result['justification'])
+                session.add(new_case)
+                session.flush()
+                new_case.add_change(self.current_user)
+                session.flush()
+                new_role = UserCaseRoles(self.current_user, new_case, UserCaseRoles.REQUESTER)
+                session.add(new_role)
+                new_role.add_change(self.current_user)
+                return self.return_response('pages', 'case_added.html', case=new_case)
+            else:
+                return self.return_response('pages', 'add_case.html', case_loc=case_loc, is_requester=is_requester,
+                                managers=managers, errors=self.form_error, classifications=classifications,
+                                case_types=case_types)
+        elif self.validate_form(AddCaseForm()):
             new_case = Case(self.form_result['case_name'], self.current_user, self.form_result['background'],
                             self.form_result['reference'], self.form_result['private'], self.form_result['location'],
                             self.form_result['classification'], self.form_result['case_type'],
@@ -104,9 +128,10 @@ class CaseController(BaseController):
             return self.return_response('pages', 'view_case.html', case=new_case, classifications=classifications,
                                         case_types=case_types)
         else:
-            return self.return_response('pages', 'add_case.html', case_loc=case_loc,
+            next_case_name = ForemanOptions.get_next_case_name()
+            return self.return_response('pages', 'add_case.html', case_loc=case_loc, is_requester=is_requester,
                                     managers=managers, errors=self.form_error, classifications=classifications,
-                                    case_types=case_types)
+                                    case_types=case_types, next_case_name=next_case_name)
 
     def _return_edit_response(self, case, active_tab, errors=None):
         managers = [(user.id, user.fullname) for user in UserRoles.get_managers()]
@@ -139,8 +164,12 @@ class CaseController(BaseController):
         case = self._validate_case(case_id)
         if case is not None:
             self.check_permissions(self.current_user, case, 'edit')
-
             form_type = multidict_to_dict(self.request.args)
+            if 'active_tab' in form_type:
+                try:
+                    active_tab = int(form_type['active_tab'])
+                except ValueError:
+                    active_tab = 0
             if 'form' in form_type and form_type['form'] == "edit_case":
                 if self.validate_form(EditCaseForm()):
                     case.case_name = self.form_result['case_name']
@@ -194,7 +223,7 @@ class CaseController(BaseController):
                 else:
                     return self._return_edit_response(case, 3, self.form_error)
             else:
-                return self._return_edit_response(case, 0)
+                return self._return_edit_response(case, active_tab)
 
         else:
             return self.return_404(

@@ -14,9 +14,15 @@
 <div id="mainbar">
     <h1>Add Case Details</h1>
 
+     % if not is_requester:
      <form method="post" action="${urls.build('case.add', dict())|h}">
-        ${forms.formTextField("Case Name", "case_name", "case_name", "form_label", "input_long", first=True)}
-        ${forms.formTextField("Case Files Location", "location", "location", "form_label", "input_long", value=case_loc)}
+     % else:
+     <form method="post" action="${urls.build('case.add', dict(type='requester'))|h}">
+     % endif
+        % if not is_requester:
+            ${forms.formTextField("Case Name", "case_name", "case_name", "form_label", "input_long", first=True, value=next_case_name)}
+            ${forms.formTextField("Case Files Location", "location", "location", "form_label", "input_long", value=case_loc)}
+        % endif
         ${forms.formTextArea("Case Background", "background", "background", "form_label", "addeditcase" )}
         ${forms.formTextArea("Case Justification", "justification", "justification", "form_label", "addeditcase_short")}
         ${forms.formTextField("Reference", "reference", "reference", "form_label", "input_long")}
@@ -26,11 +32,12 @@
 
      <div style="clear:both"></div>
 
+     % if not is_requester:
      <h1>Add Case Managers</h1>
 
         ${forms.formSelectBox("Principle Case Manager", "primary_case_manager", "primary_case_manager", "form_label", "input_long", managers, first=True, please_select=True)}
         ${forms.formSelectBox("Secondary Case Manager", "secondary_case_manager", "secondary_case_manager", "form_label", "input_long", managers, please_select=True)}
-
+     % endif
 
         <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
     </form>

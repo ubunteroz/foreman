@@ -274,9 +274,7 @@ class GetCaseType(GetObject):
     allow_null = False
 
     def getObject(self, case_type):
-        print case_type
         for ct in CaseType.get_case_types():
-            print ct
             if case_type == ct.replace(" ", "").lower():
                 return ct
         else:

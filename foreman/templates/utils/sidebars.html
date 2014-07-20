@@ -40,7 +40,8 @@
 <%def name="tasks_menu()" filter="trim">
     % if check_perms("Case", 'manage'):
         <h1>Case Management</h1>
-        <p><a href='${urls.build("case.add", dict())|h}'>Add new Case</a></p>
+        <p><a href='${urls.build("case.add", dict(active_tab=3))|h}'>Add new Case</a></p>
+        <p><a href='${urls.build("case.view_all", dict(view="Unassigned"))|h}'>View Cases with no Case Manager</a> (${created_cases_no_manager|h})</p>
         <p><a href='${urls.build("case.view_all", dict(view="Created"))|h}'>View Created Cases</a> (${created_cases|h})</p>
         <p><a href='${urls.build("case.view_all", dict(view="Open"))|h}'>View Open Cases</a> (${open_cases|h})</p>
     % endif

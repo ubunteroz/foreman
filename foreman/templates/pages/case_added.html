@@ -1,0 +1,17 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+
+<%def name="javascripts()" filter="trim"></%def>
+
+
+<div id="sidebar">
+   ${sidebars.tasks_menu()}
+</div>
+
+<div id="mainbar">
+    <h1>New case has been submitted</h1>
+    <div class="confirmclosurebox">
+        <p>Your case has been assigned the name <b>${case.case_name|h}</b>. A case manager will be in contact
+        to discuss your case shortly. </p>
+    </div>
+</div>

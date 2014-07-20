@@ -12,9 +12,10 @@
         <h1>${case_status|h} Cases</h1>
 
          <p>View All Cases<br/>
-            <a href='${urls.build("case.view_all", dict(view="Created"))|h}'>View All Created Cases</a> |
-            <a href='${urls.build("case.view_all", dict(view="Queued"))|h}'>View All Open Cases with Unassigned Tasks</a> |
-            <a href='${urls.build("case.view_all", dict(view="Open"))|h}'>View All Open Cases</a> |
+            <a href='${urls.build("case.view_all", dict(view="Unassigned"))|h}'>View Unassigned Cases</a> |
+            <a href='${urls.build("case.view_all", dict(view="Created"))|h}'>View Created Cases</a> |
+            <a href='${urls.build("case.view_all", dict(view="Queued"))|h}'>View Open Cases with Unassigned Tasks</a> |
+            <a href='${urls.build("case.view_all", dict(view="Open"))|h}'>View Open Cases</a> |
             <a href='${urls.build("case.view_all", dict(view="Closed"))|h}'>View Closed Cases</a> |
             <a href='${urls.build("case.view_all", dict(view="Archived"))|h}'>View Archived Cases</a> |
             <a href='${urls.build("case.view_all", dict(view="All"))|h}'>View All Cases</a>

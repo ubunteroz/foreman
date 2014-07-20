@@ -19,6 +19,15 @@ class AddCaseForm(Schema):
     justification = v.UnicodeString(not_empty=True)
 
 
+class RequesterAddCaseForm(Schema):
+    reference = v.UnicodeString()
+    private = v.Bool()
+    background = v.UnicodeString(not_empty=True)
+    classification = GetCaseClassification(not_emtpy=True)
+    case_type = GetCaseType(not_empty=True)
+    justification = v.UnicodeString(not_empty=True)
+
+
 class RemoveClassificationForm(Schema):
     classification = GetCaseClassification(not_emtpy=True)
 
