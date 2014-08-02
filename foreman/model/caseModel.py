@@ -1000,9 +1000,13 @@ class Task(Base, Model):
         return query
 
     @staticmethod
-    def get_tasks_requiring_QA_by_user(user):
-        principle = Task._get_user_tasks(user, [UserTaskRoles.PRINCIPLE_QA], [TaskStatus.QA], filter_check=True)
-        secondary = Task._get_user_tasks(user, [UserTaskRoles.SECONDARY_QA], [TaskStatus.QA], filter_check=True)
+    def get_tasks_requiring_QA_by_user(user, all=False):
+        if all:
+            task_statuses = [TaskStatus.DELIVERY, TaskStatus.CLOSED, TaskStatus.COMPLETE]
+        else:
+            task_statuses = [TaskStatus.QA]
+        principle = Task._get_user_tasks(user, [UserTaskRoles.PRINCIPLE_QA], task_statuses, filter_check=True)
+        secondary = Task._get_user_tasks(user, [UserTaskRoles.SECONDARY_QA], task_statuses, filter_check=True)
         return principle, secondary
 
     @staticmethod

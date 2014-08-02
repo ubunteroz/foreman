@@ -87,6 +87,20 @@ img.img_hover:hover {
     clear: both;
 }
 
+.sidebar-panel .show-hide-sidepanel{
+    display:None;
+}
+
+.show-hide-sidepanel-up-button, .show-hide-sidepanel-down-button{
+    float: right;
+    padding: 10px 5px 0px 0px;
+}
+
+.show-hide-sidepanel-up-button{
+    display: None;
+}
+
+
 #footer_middle a{
     color: white;
 }

@@ -9,6 +9,22 @@
 	<link rel="StyleSheet" href="${urls.build("css", dict(file='style.css'))|h}" type="text/css" />
 	<link rel="icon" type="image/png" href="${urls.build("images", dict(file='site/favicon.png'))|h}" />
 	<title></title>
+
+    <script src="${urls.build('javascript', dict(file='jquery-1.10.2.js'))|h}"></script>
+    <script>
+        $(document).ready(function() {
+            $(".show-hide-sidepanel-up-button").click(function() {
+                $(this).parents('.sidebar-panel').find(".show-hide-sidepanel").slideUp("slow");
+                $(this).hide();
+                $(this).parents('.sidebar-panel').find('.show-hide-sidepanel-down-button').show();
+            });
+            $(".show-hide-sidepanel-down-button").click(function() {
+                $(this).parents('.sidebar-panel').find(".show-hide-sidepanel").slideDown("slow");
+                $(this).hide();
+                $(this).parents('.sidebar-panel').find('.show-hide-sidepanel-up-button').show();
+            });
+        });
+    </script>
     ${self.javascripts()}
 </head>
 

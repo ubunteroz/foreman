@@ -146,6 +146,9 @@ class User(Base, Model):
     def is_worker(self):
         return self.is_case_manager() or self.is_investigator() or self.is_QA()
 
+    def is_admin(self):
+        return UserRoles.check_user_has_active_role(user=self, role=UserRoles.ADMIN)
+
     @property
     def fullname(self):
         if self.middle is not None:
