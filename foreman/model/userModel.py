@@ -50,12 +50,21 @@ class UserHistory(Base, HistoryModel):
     email = Column(Unicode)
     date_time = Column(DateTime)
     user_id = Column(Integer, ForeignKey('users.id'))
+    telephone = Column(Unicode)
+    alt_telephone = Column(Unicode)
+    fax = Column(Unicode)
+    department = Column(Unicode)
+    team = Column(Unicode)
+    job_title = Column(Unicode)
 
     original_user = relation('User', backref=backref('history', order_by=asc(date_time)), foreign_keys=original_user_id)
     user = relation('User', backref=backref('user_history_changes'), foreign_keys=user_id)
 
     comparable_fields = {'Forename': 'forename', 'Surname': 'surname', 'Middle Name': 'middle', 'Username': 'username',
-                         'Email address': 'email'}
+                         'Email address': 'email', 'Telephone Number': 'telephone', 'Alternative Telephone Number':
+                         'alt_telephone', 'Fax number': 'fax', 'Department': 'department', 'Team': 'team', 'Job Title':
+                         'job_title'}
+
     history_name = ("User", "username")
     object_name = "User"
 
@@ -68,6 +77,12 @@ class UserHistory(Base, HistoryModel):
         self.email = original_user.email
         self.date_time = datetime.now()
         self.user = user_who_made_changes
+        self.telephone = original_user.telephone
+        self.alt_telephone = original_user.alt_telephone
+        self.fax = original_user.fax
+        self.department = original_user.department
+        self.team = original_user.team
+        self.job_title = original_user.job_title
 
     @property
     def previous(self):
@@ -91,6 +106,12 @@ class User(Base, Model):
     password = Column(Unicode)
     email = Column(Unicode)
     validated = Column(Boolean)
+    telephone = Column(Unicode)
+    alt_telephone = Column(Unicode)
+    fax = Column(Unicode)
+    department = Column(Unicode)
+    team = Column(Unicode)
+    job_title = Column(Unicode)
 
     def __init__(self, username, password, forename, surname, email, validated=False, middle=None):
         self.username = username

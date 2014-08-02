@@ -5,6 +5,10 @@
     <p><a href='${urls.build("user.view_all")|h}'>View All Users</a></p>
     % endif
 
+    % if check_perms("User", 'add'):
+    <p><a href='${urls.build("user.add")|h}'>Add New User</a></p>
+    % endif
+
     <h2>Options for My Account</h2>
 
     <p><a href='${urls.build("user.view", dict(user_id=current_user.id))|h}'>View My Profile</a></p>
@@ -47,6 +51,10 @@
     % endif
 
     % if check_perms("Case", 'request'):
+
+        <h1>Add New</h1>
+        <p><a href='${urls.build("case.add")|h}'>Add new Case</a></p>
+
         <h1>Cases Requested</h1>
         <p><a href='${urls.build("user.case_history", dict(user_id=current_user.id))|h}'>View summary</a></p>
 

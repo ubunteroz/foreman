@@ -40,6 +40,20 @@ class UserController(BaseController):
                             middle=self.form_result['middlename'])
             session.add(new_user)
             session.flush()
+            new_user.job_title = self.form_result['job_title']
+            new_user.team = self.form_result['team']
+            new_user.department = self.form_result['department']
+
+            if self.form_result['telephone'] == "":
+                self.form_result['telephone'] = None
+            new_user.telephone = self.form_result['telephone']
+            if self.form_result['alt_telephone'] == "":
+                self.form_result['alt_telephone'] = None
+            new_user.alt_telephone = self.form_result['alt_telephone']
+            if self.form_result['fax'] == "":
+                self.form_result['fax'] = None
+            new_user.fax = self.form_result['fax']
+
             new_user.add_change(self.current_user)
             session.flush()
 
@@ -106,6 +120,20 @@ class UserController(BaseController):
                         user.middle = None
                     else:
                         user.middle = self.form_result['middlename']
+                    user.job_title = self.form_result['job_title']
+                    user.team = self.form_result['team']
+                    user.department = self.form_result['department']
+
+                    if self.form_result['telephone'] == "":
+                        self.form_result['telephone'] = None
+                    user.telephone = self.form_result['telephone']
+                    if self.form_result['alt_telephone'] == "":
+                        self.form_result['alt_telephone'] = None
+                    user.alt_telephone = self.form_result['alt_telephone']
+                    if self.form_result['fax'] == "":
+                        self.form_result['fax'] = None
+                    user.fax = self.form_result['fax']
+
                     user.add_change(self.current_user)
 
             self.check_permissions(self.current_user, user, 'edit')

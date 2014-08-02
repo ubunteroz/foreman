@@ -27,7 +27,7 @@ class CaseManagerForCaseChecker(BaseChecker):
             if case_manager and user.id == case_manager.id:
                 return True
         if both_none is True:
-            return CaseManagerChecker()
+            return CaseManagerChecker().check(user, case)
         return False
 
 
@@ -270,6 +270,7 @@ permissions = {
                         And(
                             Or(InvestigatorForCaseChecker(),
                                 QAForCaseChecker(),
+                                RequesterForCaseChecker(),
                                 CaseManagerForCaseChecker()),
                             PrivateCaseChecker())),
     ('Case', 'add'): Or(AdminChecker(), CaseManagerChecker(), RequesterChecker()),
@@ -290,7 +291,7 @@ permissions = {
                                 QAForCaseChecker(),
                                 CaseManagerForTaskChecker()),
                             PrivateTaskChecker())),
-    ('Case', 'add-task'): Or(AdminChecker(), CaseManagerForCaseChecker()),
+    ('Case', 'add-task'): Or(AdminChecker(), CaseManagerForCaseChecker(), RequesterForCaseChecker()),
     ('Task', 'work'): And(Or(AdminChecker(), CompleteInvestigationForTaskChecker()), Not(ArchivedTaskChecker())),
     ('Task', 'assign-self'): And(Or(AdminChecker(), StartInvestigationForTaskChecker()), Not(ArchivedTaskChecker())),
     ('Task', 'assign-other'): And(Or(AdminChecker(), CaseManagerForTaskChecker()), Not(ArchivedTaskChecker())),
@@ -327,8 +328,8 @@ permissions = {
     ('User', 'edit'): Or(AdminChecker(), UserIsCurrentUserChecker()),
     ('User', 'edit-roles'): AdminChecker(),
     ('User', 'add'): AdminChecker(),
-    ('User', 'view-active-roles'): Or(AdminChecker(), UserIsCurrentUserChecker()),
-    ('User', 'view-changes'): Or(AdminChecker(), UserIsCurrentUserChecker()),
+    ('User', 'view-active-roles'): Or(AdminChecker()),
+    ('User', 'view-changes'): Or(AdminChecker()),
     ('User', 'view-all'): AdminChecker(),
     ('User', 'view-history'): Or(AdminChecker(), CaseManagerChecker(), InvestigatorChecker(), QAChecker(),
                                  UserIsCurrentUserChecker())

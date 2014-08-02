@@ -43,6 +43,44 @@
             <th>Surname</th>
             <td>${user.surname|h}</td>
         </tr>
+        <tr>
+            <th>Job Title</th>
+            <td>${user.job_title|h}</td>
+        </tr>
+        <tr>
+            <th>Team</th>
+            <td>${user.team|h}</td>
+        </tr>
+        <tr>
+            <th>Department</th>
+            <td>${user.department|h}</td>
+        </tr>
+    </table>
+
+    <h2>Contact Details</h2>
+    <table class="userdetails">
+        <tr>
+            <th>Email address</th>
+            <td><a href="mailto:${user.email|h}">${user.email|h}</a></td>
+        </tr>
+        % if user.telephone is not None:
+        <tr>
+            <th>Telephone Number</th>
+            <td>${user.telephone|h}</td>
+        </tr>
+        % endif
+        % if user.alt_telephone is not None:
+        <tr>
+            <th>Alternative Telephone Number</th>
+            <td>${user.alt_telephone|h}</td>
+        </tr>
+        % endif
+        % if user.fax is not None:
+        <tr>
+            <th>Fax Number</th>
+            <td>${user.fax|h}</td>
+        </tr>
+        % endif
     </table>
 
     % if check_perms(user, 'edit'):

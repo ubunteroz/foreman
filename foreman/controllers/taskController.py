@@ -3,9 +3,9 @@ from werkzeug import Response
 from werkzeug.utils import redirect
 # local imports
 from baseController import BaseController, lookup, jsonify
-from ..model import Case, User, Task, UserTaskRoles, UserRoles, TaskStatus, TaskHistory, ForemanOptions, TaskType
+from ..model import Task, UserTaskRoles, UserRoles, TaskStatus, TaskHistory, ForemanOptions, TaskType
 from ..utils.utils import multidict_to_dict, session
-from ..forms.forms import AssignInvestigatorForm, EditTaskUsersForm, EditTaskForm, AddTaskForm
+from ..forms.forms import AssignInvestigatorForm, EditTaskUsersForm, EditTaskForm, AddTaskForm, RequesterAddTaskForm
 
 
 class TaskController(BaseController):
@@ -79,11 +79,24 @@ class TaskController(BaseController):
         case = self._validate_case(case_id)
         if case is not None:
             self.check_permissions(self.current_user, case, 'add-task')
+            is_requester = self.current_user.is_requester()
             task_type_options = [(tt.replace(" ", "").lower(), tt) for tt in TaskType.get_task_types()]
-            investigators = [(user.id, user.fullname) for user in UserRoles.get_investigators()]
-            qas = [(user.id, user.fullname) for user in UserRoles.get_qas()]
 
-            if self.validate_form(AddTaskForm()):
+            args = multidict_to_dict(self.request.args)
+            if 'type' in args and args['type'] == "requester" and is_requester:
+                if self.validate_form(RequesterAddTaskForm()):
+                    task_name = ForemanOptions.get_next_task_name(case, self.form_result['task_type'])
+                    new_task = Task(case, self.form_result['task_type'], task_name,
+                                    self.current_user, self.form_result['background'])
+                    session.add(new_task)
+                    session.flush()
+                    new_task.add_change(self.current_user)
+                    session.flush()
+                    return self.return_response('pages', 'task_added.html', task=new_task)
+                else:
+                    return self.return_response('pages', 'add_task.html', task_type_options=task_type_options,
+                                                case=case, errors=self.form_error, is_requester=is_requester)
+            elif self.validate_form(AddTaskForm()):
                 new_task = Task(case, self.form_result['task_type'], self.form_result['task_name'], self.current_user,
                                 self.form_result['background'], self.form_result['location'])
                 session.add(new_task)
@@ -106,8 +119,11 @@ class TaskController(BaseController):
                 return redirect(
                     self.urls.build('case.view', {"case_id": case.case_name}))  # CaseController.view(case.case_name)
             else:
+                investigators = [(user.id, user.fullname) for user in UserRoles.get_investigators()]
+                qas = [(user.id, user.fullname) for user in UserRoles.get_qas()]
                 return self.return_response('pages', 'add_task.html', investigators=investigators, qas=qas,
-                                            task_type_options=task_type_options, case=case, errors=self.form_error)
+                                            task_type_options=task_type_options, case=case, errors=self.form_error,
+                                            is_requester=is_requester)
         else:
             return self.return_404()
 

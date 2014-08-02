@@ -55,6 +55,11 @@ class AddTaskForm(Schema):
     secondary_qa = GetQA()
 
 
+class RequesterAddTaskForm(Schema):
+    task_type = GetTaskTypes(not_empty=True)
+    background = v.UnicodeString(not_empty=True)
+
+
 class LoginForm(Schema):
     username = v.UnicodeString(not_empty=True)
     password = v.UnicodeString(not_empty=True)
@@ -251,6 +256,12 @@ class EditUserForm(Schema):
     middlename = v.UnicodeString()
     username = v.UnicodeString(not_empty=True)
     email = v.UnicodeString(not_empty=True)
+    telephone = v.UnicodeString()
+    alt_telephone = v.UnicodeString()
+    fax = v.UnicodeString()
+    job_title = v.UnicodeString(not_empty=True)
+    team = v.UnicodeString(not_empty=True)
+    department = v.UnicodeString(not_empty=True)
 
 
 class AddUserForm(Schema):
@@ -259,6 +270,12 @@ class AddUserForm(Schema):
     middlename = v.UnicodeString()
     username = v.UnicodeString(not_empty=True)
     email = v.UnicodeString(not_empty=True)
+    telephone = v.UnicodeString()
+    alt_telephone = v.UnicodeString()
+    fax = v.UnicodeString()
+    job_title = v.UnicodeString(not_empty=True)
+    team = v.UnicodeString(not_empty=True)
+    department = v.UnicodeString(not_empty=True)
     administrator = GetBooleanYesNo(not_empty=True)
     casemanager = GetBooleanYesNo(not_empty=True)
     requester = GetBooleanYesNo(not_empty=True)

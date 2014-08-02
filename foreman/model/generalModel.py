@@ -35,8 +35,8 @@ class ForemanOptions(Base, Model):
     CASE_NAME_OPTIONS = ['UserCreated', 'NumericIncrement', 'DateNumericIncrement', 'FromList']
     TASK_NAME_OPTIONS = ['UserCreated', 'NumericIncrement', 'FromList', 'TaskTypeNumericIncrement']
 
-    def __init__(self, date_format, default_location, case_names, task_names, company, department, c_list_location=None, c_leading_zeros=None,
-                 t_list_location=None, t_leading_zeros=None):
+    def __init__(self, date_format, default_location, case_names, task_names, company, department, c_list_location=None,
+                 c_leading_zeros=None, t_list_location=None, t_leading_zeros=None):
         self.date_format = date_format
         self.default_location = default_location
         self.case_names = case_names
@@ -108,13 +108,15 @@ class ForemanOptions(Base, Model):
             return "{}_".format(case.case_name)
         elif options.task_names == 'NumericIncrement':
             options.t_increment += 1
-            return '{case}_{num1:0{width1}}'.format(case=case.case_name, num1=options.t_increment, width1=options.t_leading_zeros)
+            return '{case}_{num1:0{width1}}'.format(case=case.case_name, num1=options.t_increment,
+                                                    width1=options.t_leading_zeros)
         elif options.task_names == "FromList":
             options.t_increment += 1
             return ForemanOptions.get_next_case_name_from_list(options.t_list_name, options.t_increment)
         elif options.task_names == "TaskTypeNumericIncrement":
             options.t_increment += 1
-            return '{task}_{num1:0{width1}}'.format(task=tasktype, num1=options.t_increment, width1=options.t_leading_zeros)
+            return '{task}_{num1:0{width1}}'.format(task=tasktype, num1=options.t_increment,
+                                                    width1=options.t_leading_zeros)
 
     @staticmethod
     def get_next_case_name_from_list(filename, increment):

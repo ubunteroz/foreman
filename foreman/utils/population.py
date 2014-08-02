@@ -95,6 +95,17 @@ def create_test_investigators(admin):
     investigators = [u1, u2, u3, u4, u5, u6, u7, u8, u9, u10, u11, u12, u13, u14, u15]
 
     for u in investigators:
+        sen = randint(0,5)
+        if sen == 5:
+            u.job_title = "Forensic Investigations Manager"
+        elif sen == 3 or sen == 4:
+            u.job_title = "Senior Forensic Investigator"
+        else:
+            u.job_title = "Forensic Investigator"
+        u.team = "Investigations & Digital Forensics"
+        u.department = "IT Security"
+        u.add_change(u)
+
         ur1 = UserRoles(u, "Investigator", False)
         ur2 = UserRoles(u, "QA", False)
         ur3 = UserRoles(u, "Case Manager", True)
@@ -157,6 +168,17 @@ def create_test_case_managers(admin):
     case_managers = [u1, u2, u3, u4, u5, u6, u7, u8, u9, u10]
 
     for u in case_managers:
+        sen = randint(0,5)
+        if sen == 5:
+            u.job_title = "Forensic Case Manager Lead"
+        elif sen == 3 or sen == 4:
+            u.job_title = "Senior Forensic Case Manager"
+        else:
+            u.job_title = "Forensic Case Manager"
+        u.team = "Investigations & Digital Forensics"
+        u.department = "IT Security"
+        u.add_change(u)
+
         ur1 = UserRoles(u, "Investigator", True)
         ur2 = UserRoles(u, "QA", True)
         ur3 = UserRoles(u, "Case Manager", False)
@@ -219,7 +241,20 @@ def create_test_requestors(admin):
     session.commit()
     requestors = [u1, u2, u3, u4, u5, u6, u7, u8, u9, u10]
 
+    job_types = [("Fraud Investigator", "Fraud Prevention", "Financial Audit"),
+                 ("HR Investigator", "HR Complaints", "Human Resources"),
+                 ("First Responder", "Incident Response", "IT Security"),
+                 ("Litigation Analyst", "Litigation", "Legal"),
+                 ("IT Security Consultant", "CERT Team", "IT Security"),
+                 ("Investigation Analyst", "Internal Investigations", "Internal Audit")]
+
     for u in requestors:
+        job = randint(0,5)
+        u.job_title = job_types[job][0]
+        u.team = job_types[job][1]
+        u.department = job_types[job][2]
+
+        u.add_change(u)
         ur1 = UserRoles(u, "Investigator", True)
         ur2 = UserRoles(u, "QA", True)
         ur3 = UserRoles(u, "Case Manager", True)
@@ -339,7 +374,8 @@ def create_test_cases(case_managers, requestors, investigators):
             new_case.set_status(CaseStatus.ARCHIVED, new_case.principle_case_manager)
         print "Case added to Foreman."
 
-        inv = create_test_tasks(new_case, investigators, rand_user)
+        if rand >= 1:
+            inv = create_test_tasks(new_case, investigators, rand_user)
         create_evidence(new_case, inv, rand_user)
     session.commit()
 
