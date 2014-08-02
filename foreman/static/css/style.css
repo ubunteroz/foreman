@@ -55,9 +55,7 @@ img.img_hover:hover {
     cursor:pointer;
 }
 
-#sidebar{
-    float: left;
-	width: 250px;
+#sidebar .sidebar-one-panel{
 	background: url('tinystripes.png');
 	padding: 5px;
 	margin: 0px 10px 20px 0px;
@@ -73,6 +71,20 @@ img.img_hover:hover {
 #sidebar a:hover{
     color: #FFD801;
     text-decoration: None;
+}
+
+#sidebar{
+    float: left;
+	width: 250px;
+}
+
+#sidebar .sidebar-panel{
+	background: url('tinystripes.png');
+	padding: 5px;
+	margin: 0px 10px 20px 0px;
+	border: solid #EEEEEE 1px;
+	border-radius: 5px;
+    clear: both;
 }
 
 #footer_middle a{

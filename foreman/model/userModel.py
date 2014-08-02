@@ -128,16 +128,20 @@ class User(Base, Model):
         session.flush()
 
     def is_investigator(self):
-        return UserRoles.check_user_has_active_role(user=self, role=UserRoles.INV)
+        return UserRoles.check_user_has_active_role(user=self, role=UserRoles.INV) or \
+               UserRoles.check_user_has_active_role(user=self, role=UserRoles.ADMIN)
 
     def is_QA(self):
-        return UserRoles.check_user_has_active_role(user=self, role=UserRoles.QA)
+        return UserRoles.check_user_has_active_role(user=self, role=UserRoles.QA) or \
+               UserRoles.check_user_has_active_role(user=self, role=UserRoles.ADMIN)
 
     def is_case_manager(self):
-        return UserRoles.check_user_has_active_role(user=self, role=UserRoles.CASE_MAN)
+        return UserRoles.check_user_has_active_role(user=self, role=UserRoles.CASE_MAN) or \
+               UserRoles.check_user_has_active_role(user=self, role=UserRoles.ADMIN)
 
     def is_requester(self):
-        return UserRoles.check_user_has_active_role(user=self, role=UserRoles.REQUESTER)
+        return UserRoles.check_user_has_active_role(user=self, role=UserRoles.REQUESTER) or \
+               UserRoles.check_user_has_active_role(user=self, role=UserRoles.ADMIN)
 
     def is_worker(self):
         return self.is_case_manager() or self.is_investigator() or self.is_QA()
