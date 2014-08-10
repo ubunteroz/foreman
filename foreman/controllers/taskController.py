@@ -46,6 +46,10 @@ class TaskController(BaseController):
             change = False
             if "status" in args and args["status"] in TaskStatus.preInvestigation:
                 status = args["status"]
+                all_tasks_created = len(set([task.status for task in case.tasks])) == 1 \
+                                    and case.tasks[0].status == TaskStatus.CREATED
+                if not all_tasks_created:
+                    return self.return_404()
                 if 'confirm' in args and args['confirm'] == "true":
                     for task in case.tasks:
                         task.set_status(status, self.current_user)
@@ -201,23 +205,37 @@ class TaskController(BaseController):
         if task is not None:
             self.check_permissions(self.current_user, task, 'assign-self')
 
+            if task.principle_investigator is not None and task.secondary_investigator is not None:
+                return self.return_404()
+
             first_assignment = multidict_to_dict(self.request.args)
             if "confirm" in first_assignment and first_assignment["confirm"] == "true":
-                if "assign" in first_assignment and first_assignment['assign'] == "principle":
-                    task.assign_task(self.current_user, True)
-                    return self.return_response('pages', 'assign_task.html', task=task, success=True,
+                if "assign" in first_assignment and first_assignment['assign'] == "primary":
+                    if first_assignment['assign'] == "primary" and task.principle_investigator is not None:
+                        return self.return_404()
+                    else:
+                        task.assign_task(self.current_user, True)
+                        return self.return_response('pages', 'assign_task.html', task=task, success=True,
                                                 investigator=first_assignment['assign'])
                 elif "assign" in first_assignment and first_assignment['assign'] == "secondary":
-                    task.assign_task(self.current_user, False)
-                    return self.return_response('pages', 'assign_task.html', task=task, success=True,
+                    if first_assignment['assign'] == "secondary" and task.secondary_investigator is not None:
+                        return self.return_404()
+                    else:
+                        task.assign_task(self.current_user, False)
+                        return self.return_response('pages', 'assign_task.html', task=task, success=True,
                                                 investigator=first_assignment['assign'])
                 else:
                     return self.return_404()
             else:
-                if "assign" in first_assignment and (first_assignment['assign'] == "principle"
+                if "assign" in first_assignment and (first_assignment['assign'] == "primary"
                                                      or first_assignment['assign'] == "secondary"):
-                    return self.return_response('pages', 'assign_task.html', task=task, success=False,
-                                                investigator=first_assignment['assign'])
+                    if first_assignment['assign'] == "primary" and task.principle_investigator is not None:
+                        return self.return_404()
+                    elif first_assignment['assign'] == "secondary" and task.secondary_investigator is not None:
+                        return self.return_404()
+                    else:
+                        return self.return_response('pages', 'assign_task.html', task=task, success=False,
+                                                    investigator=first_assignment['assign'])
                 else:
                     return self.return_404()
         else:
@@ -228,6 +246,9 @@ class TaskController(BaseController):
         if task is not None:
             self.check_permissions(self.current_user, task, 'assign-other')
 
+            if task.principle_investigator is not None and task.secondary_investigator is not None:
+                return self.return_404()
+
             if self.validate_form(AssignInvestigatorForm()):
                 task.assign_task(self.form_result['investigator'], self.form_result['role'], self.current_user)
                 if self.form_result['role']:
@@ -237,8 +258,22 @@ class TaskController(BaseController):
                 return self.return_response('pages', 'assign_task_manager.html', task=task, success=True,
                                             investigator=self.form_result['investigator'], role=role_type)
             else:
-                roles = [(roles, roles) for roles in UserTaskRoles.inv_roles]
-                investigators = [(user.id, user.fullname) for user in UserRoles.get_investigators()]
+                roles = []
+
+                if task.principle_investigator is None:
+                    roles.append((UserTaskRoles.PRINCIPLE_INVESTIGATOR, UserTaskRoles.PRINCIPLE_INVESTIGATOR))
+                if task.secondary_investigator is None:
+                    roles.append((UserTaskRoles.SECONDARY_INVESTIGATOR, UserTaskRoles.SECONDARY_INVESTIGATOR))
+
+                if task.principle_investigator is not None:
+                    investigators = [(user.id, user.fullname) for user in UserRoles.get_investigators() if
+                                     user.id != task.principle_investigator.id]
+                elif task.secondary_investigator is not None:
+                    investigators = [(user.id, user.fullname) for user in UserRoles.get_investigators() if
+                                     user.id != task.secondary_investigator.id]
+                else:
+                    investigators = [(user.id, user.fullname) for user in UserRoles.get_investigators()]
+
                 return self.return_response('pages', 'assign_task_manager.html', investigators=investigators,
                                             roles=roles, errors=self.form_error, task=task)
         else:

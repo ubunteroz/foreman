@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import sys
+import warnings
+from sqlalchemy import exc as sa_exc
 
 from werkzeug.serving import run_simple
 
@@ -38,6 +39,24 @@ def example(args):
     init_database()
     populate_database()
 
+
+def run_tests(args, functional=False, unit=False, urls=False):
+    """ Initialise database, set up example test system and run tests
+    """
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=sa_exc.SAWarning)
+        """from foreman.utils.utils import init_database, drop_database, populate_test_database, setup
+        setup(args.config_file)
+        drop_database()
+        init_database()
+        populate_test_database()
+        """
+        if not (functional or unit or urls):
+            functional = unit = urls = True
+        import foreman.tests
+        foreman.tests.run_tests(args.config_file, unit, functional, urls)
+
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -58,6 +77,10 @@ if __name__ == '__main__':
     setup_parser = subparsers.add_parser('setup_example', help='Initialise and populate database with sample data')
     setup_parser.add_argument('config_file')
     setup_parser.set_defaults(func=example)
+
+    setup_parser = subparsers.add_parser('run_tests', help='Run functional & unit tests')
+    setup_parser.add_argument('config_file')
+    setup_parser.set_defaults(func=run_tests)
 
     args = parser.parse_args()
     args.func(args)

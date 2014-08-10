@@ -4,6 +4,71 @@
     % endif
 </%def>
 
+<%def name="qa_task_table(tasks)" filter="trim">
+% if len(tasks) > 0:
+    <table class="case_table">
+        <tr>
+            <th>Case Name</th>
+            <th>Task Name</th>
+            <th>Principle Forensic Investigator</th>
+            <th>Secondary Forensic Investigator</th>
+            <th>Date QA requested</th>
+            <th>Principle QA assigned to</th>
+            <th>Secondary QA assigned to</th>
+            % if current_user.is_investigator():
+            <th>QA Task</th>
+            % endif
+        </tr>
+    % for task in tasks:
+        <tr>
+            <td><a href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a></td>
+            <td><a href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a></td>
+            <td>
+                % if task.principle_investigator != None:
+                    <a href="${urls.build('user.view', dict(user_id=task.principle_investigator.id))|h}">${task.principle_investigator.fullname|h}</a>
+                % else:
+                    None
+                % endif
+            </td>
+            <td>
+                % if task.secondary_investigator != None:
+                    <a href="${urls.build('user.view', dict(user_id=task.secondary_investigator.id))|h}">${task.secondary_investigator.fullname|h}</a>
+                % else:
+                    None
+                % endif
+            </td>
+            <td>${task.get_status().date|h}</td>
+            <td ${highlight(task, 'principle_QA', current_user)}>
+                % if task.principle_QA != None:
+                    <a href="${urls.build('user.view', dict(user_id=task.principle_QA.id))|h}">${task.principle_QA.fullname|h}</a>
+                % else:
+                    None
+                % endif
+            </td>
+            <td ${highlight(task, 'secondary_QA', current_user)}>
+                % if task.secondary_QA != None:
+                    <a href="${urls.build('user.view', dict(user_id=task.secondary_QA.id))|h}">${task.secondary_QA.fullname|h}</a>
+                % else:
+                    None
+                % endif
+            </td>
+            % if current_user.is_investigator():
+            <td>
+                % if current_user in task.QAs and task.status == task_statuses['qa']:
+                <a href='${urls.build("forensics.qa", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>QA task</a>
+                % else:
+                    X
+                % endif
+            </td>
+            % endif
+        </tr>
+    % endfor
+    </table>
+    % else:
+        <p>None.</p>
+    % endif
+</%def>
+
 <%def name="case_table(cases, highlighted=None)" filter="trim">
     % if len(cases) == 0:
     <p>None.</p>

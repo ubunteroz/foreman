@@ -489,5 +489,10 @@ class UserRoles(Base, Model):
         q = session.query(User).join('roles').filter_by(role=UserRoles.QA, removed=False)
         return q.all()
 
+    @staticmethod
+    def get_admins():
+        q = session.query(User).join('roles').filter_by(role=UserRoles.ADMIN, removed=False)
+        return q.all()
+
     def __repr__(self):
         return "<Role Object[{}] '{}' ({})>".format(self.role, self.user.fullname, self.removed)

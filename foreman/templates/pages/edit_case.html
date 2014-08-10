@@ -1,4 +1,5 @@
 ﻿<%inherit file="/base/base.html"/>
+<%inherit file="/base/base.html"/>
 <%namespace file="/utils/sidebars.html" name="sidebars" />
 <%namespace file="/utils/forms.html" name="forms" />
 <%namespace file="/utils/format.html" name="format" />
@@ -214,7 +215,7 @@
 
             <p>Click on the task name to edit the task.</p>
 
-            ${format.task_table(case, edit=True)}
+            ${format.task_table(case.tasks, edit=True)}
 
             <h2>Remove Task and Assign to Another Case</h2>
 

@@ -6,97 +6,38 @@
 
 <%namespace file="/utils/format.html" name="f" />
 
-<%def name="task_table(tasks)" filter="trim">
-% if len(tasks) > 0:
-    <table>
-        <tr>
-            <th>Case Name</th>
-            <th>Task Name</th>
-            <th>Principle Forensic Investigator</th>
-            <th>Secondary Forensic Investigator</th>
-            <th>Date QA requested</th>
-            <th>Principle QA assigned to</th>
-            <th>Secondary QA assigned to</th>
-            <th>QA Task</th>
-        </tr>
-    % for task in tasks:
-        <tr>
-            <td><a href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a></td>
-            <td><a href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a></td>
-            <td>
-                % if task.principle_investigator != None:
-                ${task.principle_investigator.fullname|h}
-                % else:
-                None
-                % endif
-            </td>
-            <td>
-                % if task.secondary_investigator != None:
-                ${task.secondary_investigator.fullname|h}
-                % else:
-                None
-                % endif
-            </td>
-            <td>${task.get_status().date|h}</td>
-            <td ${f.highlight(task, 'principle_QA', current_user)}>
-                % if task.principle_QA != None:
-                ${task.principle_QA.fullname|h}
-                % else:
-                None
-                % endif
-            </td>
-            <td ${f.highlight(task, 'secondary_QA', current_user)}>
-                % if task.secondary_QA != None:
-                ${task.secondary_QA.fullname|h}
-                % else:
-                None
-                % endif
-            </td>
-            <td>
-                % if current_user in task.QAs and task.status == task_statuses['qa']:
-                <a href='${urls.build("forensics.qa", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>QA task</a>
-                % else:
-                    X
-                % endif
-            </td>
-        </tr>
-    % endfor
-    </table>
-    % else:
-        <p>None.</p>
-    % endif
-</%def>
-
 <div id="sidebar">
     ${sidebars.tasks_menu()}
 </div>
+
 <div id="mainbar">
-    % if completed is False:
-        <h1>Outstanding QAs for ${current_user.fullname|h}</h1>
-    % else:
-        <h1>Completed QAs for ${current_user.fullname|h}</h1>
+    % if current_user.is_investigator():
+        % if completed is False:
+            <h1>Outstanding QAs for ${current_user.fullname|h}</h1>
+        % else:
+            <h1>Completed QAs for ${current_user.fullname|h}</h1>
+        % endif
+
+        % if completed is False:
+        <p><a href='${urls.build("task.view_qas", dict(completed=True))|h}'>Show completed QAs</a></p>
+        <h2>Outstanding QA as principle QA Investigator</h2>
+        % else:
+        <p><a href='${urls.build("task.view_qas")|h}'>Show Outstanding QAs</a></p>
+        <h2>Completed QA as principle QA Investigator</h2>
+        % endif
+
+        ${f.qa_task_table(user_primary_qa)}
+
+        % if completed is False:
+        <h2>Outstanding QA as secondary QA Investigator</h2>
+        % else:
+        <h2>Completed QA as secondary QA Investigator</h2>
+        % endif
+
+        ${f.qa_task_table(user_secondary_qa)}
     % endif
-
-    % if completed is False:
-    <p><a href='${urls.build("task.view_qas", dict(completed=True))|h}'>Show completed QAs</a></p>
-    <h2>Outstanding QA as principle QA Investigator</h2>
-    % else:
-    <p><a href='${urls.build("task.view_qas")|h}'>Show Outstanding QAs</a></p>
-    <h2>Completed QA as principle QA Investigator</h2>
-    % endif
-
-    ${self.task_table(user_primary_qa)}
-
-    % if completed is False:
-    <h2>Outstanding QA as secondary QA Investigator</h2>
-    % else:
-    <h2>Completed QA as secondary QA Investigator</h2>
-    % endif
-
-    ${self.task_table(user_secondary_qa)}
-
     <h1>All Open Tasks in QA stage</h1>
 
-    ${self.task_table(qa_tasks)}
+    ${f.qa_task_table(qa_tasks)}
 
 </div>

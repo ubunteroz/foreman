@@ -3,9 +3,8 @@ from os import path
 from ConfigParser import ConfigParser
 # library imports
 from werkzeug import Local, LocalManager, MultiDict
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, exc as sa_exc
 from sqlalchemy.orm import scoped_session, sessionmaker
-
 
 # Useful variables
 # ================
@@ -83,6 +82,10 @@ def populate_database():
     create_test_data()
     print "Example data populated!"
 
+def populate_test_database():
+    from test_population import create_test_data
+    create_test_data()
+    print "Example data populated!"
 
 def multidict_to_dict(md):
     d = {}

@@ -170,6 +170,8 @@ class CaseController(BaseController):
                     active_tab = int(form_type['active_tab'])
                 except ValueError:
                     active_tab = 0
+            else:
+                active_tab = 0
             if 'form' in form_type and form_type['form'] == "edit_case":
                 if self.validate_form(EditCaseForm()):
                     case.case_name = self.form_result['case_name']

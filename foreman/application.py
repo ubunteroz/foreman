@@ -23,8 +23,8 @@ staticLocations = {
 }
 
 
-def make_app():
-    application = Application()
+def make_app(session_store=None):
+    application = Application(session_store=session_store)
     application = SharedDataMiddleware(application, staticLocations)    
     application = local_manager.make_middleware(application)
 
@@ -34,8 +34,10 @@ def make_app():
 
 
 class Application(object):    
-    def __init__(self):
-        self.session_store = FilesystemSessionStore()
+    def __init__(self, session_store=None):
+        if session_store is None:
+            session_store = FilesystemSessionStore()
+        self.session_store = session_store
         self.url_map = self.make_url_map()
 
     def __call__(self, environ, start_response):
@@ -48,7 +50,10 @@ class Application(object):
             endpoint, vars = adapter.match()
             if 'userid' not in request.session and endpoint != "general.register":
                 endpoint = 'general.login'
-            response = self.dispatch(request, adapter, endpoint, vars)
+                response = self.dispatch(request, adapter, endpoint, {})
+                response.status_code = 401
+            else:
+                response = self.dispatch(request, adapter, endpoint, vars)
         except NotFound:
             b = BaseController(request, adapter)
             response = b.return_404()
