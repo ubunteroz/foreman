@@ -4,7 +4,7 @@ import shutil
 from os import path
 from hashlib import sha256
 # library imports
-from sqlalchemy import Table, Column, Integer, DateTime, Float, Unicode, ForeignKey, asc, desc, func, and_, or_
+from sqlalchemy import Table, Column, Integer, DateTime, Boolean, Unicode, ForeignKey, asc, desc, func, and_, or_
 from sqlalchemy.orm import backref, relation
 # local imports
 from models import Base, Model
@@ -20,37 +20,38 @@ class ForemanOptions(Base, Model):
     c_increment = Column(Integer)
     c_leading_zeros = Column(Integer)
     c_leading_date = Column(Unicode)
-    c_list_loc = Column(Unicode)
     c_list_name = Column(Unicode)
     task_names = Column(Unicode)
     t_increment = Column(Integer)
     t_leading_zeros = Column(Integer)
-    t_leading_date = Column(Unicode)
-    t_list_loc = Column(Unicode)
     t_list_name = Column(Unicode)
     company = Column(Unicode)
     department = Column(Unicode)
     date_created = Column(DateTime)
+    over_limit_case = Column(Boolean)
+    over_limit_task = Column(Boolean)
 
-    CASE_NAME_OPTIONS = ['UserCreated', 'NumericIncrement', 'DateNumericIncrement', 'FromList']
-    TASK_NAME_OPTIONS = ['UserCreated', 'NumericIncrement', 'FromList', 'TaskTypeNumericIncrement']
+    CASE_NAME_OPTIONS = ['NumericIncrement', 'DateNumericIncrement', 'FromList']
+    TASK_NAME_OPTIONS = ['NumericIncrement', 'FromList', 'TaskTypeNumericIncrement']
 
     def __init__(self, date_format, default_location, case_names, task_names, company, department, c_list_location=None,
-                 c_leading_zeros=None, t_list_location=None, t_leading_zeros=None):
+                 c_leading_zeros=3, t_list_location=None, t_leading_zeros=3):
         self.date_format = date_format
         self.default_location = default_location
         self.case_names = case_names
-        self.c_increment = 0
+        self.c_increment = -1
         self.c_leading_zeros = c_leading_zeros
         self.c_leading_date = datetime.now().strftime("%Y%m%d")
         self.c_list_name = self.import_list(c_list_location)
         self.task_names = task_names
-        self.t_increment = 0
+        self.t_increment = -1
         self.t_leading_zeros = t_leading_zeros
         self.t_list_name = self.import_list(t_list_location)
         self.company = company
         self.department = department
         self.date_created = datetime.now()
+        self.over_limit_case = False
+        self.over_limit_task = False
 
         TaskCategory.populate_default()
         TaskType.populate_default()
@@ -59,10 +60,42 @@ class ForemanOptions(Base, Model):
         CaseType.populate_default()
         session.commit()
 
-    def import_list(self, list_location):
+    @staticmethod
+    def import_list(list_location):
         if list_location is not None:
-            shutil.copy(list_location, path.join(ROOT_DIR, 'files'))
-            return path.join(ROOT_DIR, 'files', path.basename(list_location))
+            unique = datetime.now().strftime("%H%M%S-%d%m%Y-%f")
+            filename, ext = path.splitext(path.basename(list_location))
+            full_filename = "{}_{}{}".format(filename, unique, ext)
+            destination = path.join(ROOT_DIR, 'files', full_filename)
+            shutil.copy(list_location, destination)
+            return destination
+
+    @staticmethod
+    def import_names(type_list, list_location):
+        options = session.query(ForemanOptions).first()
+        count = options.check_list_valid(list_location)
+        if count:
+            dest = options.import_list(list_location)
+            # reset
+            if type_list == "case":
+                options.c_increment = -1
+                options.c_list_name = dest
+                options.over_limit_case = False
+            elif type_list == "task":
+                options.t_increment = -1
+                options.t_list_name = dest
+                options.over_limit_task = False
+        return count
+
+    @staticmethod
+    def check_list_valid(list_location):
+        try:
+            with open(list_location, "r") as names:
+                contents = names.readlines()
+            return len(contents)
+        except Exception:
+            # catch all!
+            return None
 
     @staticmethod
     def get_date(date):
@@ -81,11 +114,15 @@ class ForemanOptions(Base, Model):
         return options.date_created
 
     @staticmethod
-    def get_next_case_name():
+    def run_out_of_names():
         options = session.query(ForemanOptions).first()
-        if options.case_names == 'UserCreated':
-            return ""
-        elif options.case_names == 'NumericIncrement':
+        return [options.over_limit_task and options.task_names == "FromList",
+                options.over_limit_case and options.case_names == "FromList"]
+
+    @staticmethod
+    def get_next_case_name(test=False):
+        options = session.query(ForemanOptions).first()
+        if options.case_names == 'NumericIncrement':
             options.c_increment += 1
             return '{num:0{width}}'.format(num=options.c_increment, width=options.c_leading_zeros)
         elif options.case_names == "DateNumericIncrement":
@@ -98,31 +135,59 @@ class ForemanOptions(Base, Model):
                 return '{now}{num:0{width}}'.format(now=now, num=options.c_increment, width=options.c_leading_zeros)
         elif options.case_names == "FromList":
             options.c_increment += 1
-            return ForemanOptions.get_next_case_name_from_list(options.c_list_name, options.c_increment)
+            return ForemanOptions.get_next_case_name_from_list(options.c_list_name, options.c_increment,
+                                                               options, "c", test)
 
     @staticmethod
-    def get_next_task_name(case, tasktype=None):
+    def get_next_task_name(case, tasktype=None, test=False):
         options = session.query(ForemanOptions).first()
-        options.t_increment = len(case.tasks)
-        if options.task_names == 'UserCreated':
-            return "{}_".format(case.case_name)
-        elif options.task_names == 'NumericIncrement':
+        if case is not None:
+            options.t_increment = len(case.tasks)
+        else:
+            options.t_increment = -1
+        if options.task_names == 'NumericIncrement':
             options.t_increment += 1
             return '{case}_{num1:0{width1}}'.format(case=case.case_name, num1=options.t_increment,
                                                     width1=options.t_leading_zeros)
         elif options.task_names == "FromList":
             options.t_increment += 1
-            return ForemanOptions.get_next_case_name_from_list(options.t_list_name, options.t_increment)
+            return ForemanOptions.get_next_case_name_from_list(options.t_list_name, options.t_increment,
+                                                               options, "t", test)
         elif options.task_names == "TaskTypeNumericIncrement":
             options.t_increment += 1
             return '{task}_{num1:0{width1}}'.format(task=tasktype, num1=options.t_increment,
                                                     width1=options.t_leading_zeros)
 
     @staticmethod
-    def get_next_case_name_from_list(filename, increment):
+    def get_next_case_name_from_list(filename, increment, options, content_type, test):
+
+        if filename is None:
+            results = '{num:0{width}}'.format(num=options.c_increment, width=options.c_leading_zeros)
+            if content_type == "t":
+                options.over_limit_task = True
+            elif content_type == "c":
+                options.over_limit_case = True
+            return results
+
         with open(filename, 'r') as contents:
             all = contents.readlines()
-            return all[increment].strip()
+            try:
+                results = all[increment].strip()
+                if test is True:
+                # if it's a test, and there is actually a next one; then reverse the increment otherwise
+                # using one for no reason
+                    if content_type == "t":
+                        options.t_increment -= 1
+                    elif content_type == "c":
+                        options.c_increment -= 1
+            except IndexError:
+                results = '{num:0{width}}'.format(num=options.c_increment, width=options.c_leading_zeros)
+                if content_type == "t":
+                    options.over_limit_task = True
+                elif content_type == "c":
+                    options.over_limit_case = True
+        return results
+
 
     @staticmethod
     def get_task_types():
@@ -137,12 +202,14 @@ class ForemanOptions(Base, Model):
         return session.query(ForemanOptions).first()
 
     @staticmethod
-    def set_options(company, department, folder, date_display):
+    def set_options(company, department, folder, date_display, case_names, task_names):
         opt = ForemanOptions.get_options()
         opt.company = company
         opt.department = department
         opt.default_location = folder
         opt.date_format = date_display
+        opt.case_names = case_names
+        opt.task_names = task_names
 
 
 class TaskType(Base, Model):

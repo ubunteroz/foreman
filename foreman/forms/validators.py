@@ -42,6 +42,44 @@ class Match(v.FancyValidator):
             return False
 
 
+class NotEmptyCaseUpload(v.FancyValidator):
+    """ Checks that there has been a file uploaded if the option was selected to upload a file """
+    validate_partial_form = False
+
+    def validate_python(self, vals, state):
+        if not self.check_upload(vals['case_names'], vals['upload_case_names']):
+            errors = {
+                'case_names': 'Please upload a file or choose a different option',
+                'upload_case_names': 'Please upload a file or choose a different option',
+            }
+            raise Invalid('', vals, state, error_dict=errors)
+
+    def check_upload(self, option, upload):
+        if option == "FromList" and not upload:
+            return False
+        else:
+            return True
+
+
+class NotEmptyTaskUpload(v.FancyValidator):
+    """ Checks that there has been a file uploaded if the option was selected to upload a file """
+    validate_partial_form = False
+
+    def validate_python(self, vals, state):
+        if not self.check_upload(vals['task_names'], vals['upload_task_names']):
+            errors = {
+                'task_names': 'Please upload a file or choose a different option',
+                'upload_task_names': 'Please upload a file or choose a different option',
+            }
+            raise Invalid('', vals, state, error_dict=errors)
+
+    def check_upload(self, option, upload):
+        if option == "FromList" and not upload:
+            return False
+        else:
+            return True
+
+
 class ValidDate(v.UnicodeString):
     messages = {
         'invalid': 'The date was not entered in the correct format DD MMMM YYYY',
@@ -50,7 +88,6 @@ class ValidDate(v.UnicodeString):
 
     def _to_python(self, value, state):
         try:
-            print value
             date = datetime.datetime.strptime(value, "%d %B %Y")
             return datetime.date(date.year, date.month, date.day)
         except ValueError:
@@ -148,6 +185,38 @@ class GetObject(v.UnicodeString):
         raise Exception('Should be implemented by subclass')
 
 
+class GetForemanCaseNameOptions(GetObject):
+    messages = {
+        'invalid': 'Automatic case name option does not exist.',
+        'null': 'Please select an option.'
+    }
+
+    allow_new = False
+    allow_null = False
+
+    def getObject(self, str):
+        if str in ForemanOptions.CASE_NAME_OPTIONS:
+            return str
+        else:
+            return None
+
+
+class GetForemanTaskNameOptions(GetObject):
+    messages = {
+        'invalid': 'Automatic task name option does not exist.',
+        'null': 'Please select an option.'
+    }
+
+    allow_new = False
+    allow_null = False
+
+    def getObject(self, str):
+        if str in ForemanOptions.TASK_NAME_OPTIONS:
+            return str
+        else:
+            return None
+
+
 class GetUsers(GetObject):
     messages = {
         'invalid': 'User does not exist.',
@@ -186,7 +255,6 @@ class GetInvestigator(GetUser):
     null_value = True
 
     def getObject(self, user_id):
-        print user_id, "^"*99
         if user_id.isdigit():
             user = session.query(User).get(int(user_id))
             if user is not None:
@@ -413,6 +481,7 @@ class Upload(v.FieldStorageUploadConverter):
     """ Class to upload things """
     folder = ''  # upload destination
     type = ''   # type of file e.g. css or image
+    accept_iterator = True
 
     def _to_python(self, value, state):
         if not value:
@@ -420,14 +489,14 @@ class Upload(v.FieldStorageUploadConverter):
                 raise Invalid(self.message('empty', state), value, state)
             else:
                 return None
-        file = v.FieldStorageUploadConverter._to_python(self, value, state)
-        if self.type is None or self.type in file.content_type or self.type in \
-                file.filename.split(path.sep)[-1].split('.', 1)[1]:
-            new = path.join(self.folder, self.file_name(file))
-            file.save(new)
+        uploaded_file = value
+        if self.type is None or self.type in uploaded_file.content_type or self.type in \
+                uploaded_file.filename.split(path.sep)[-1].split('.', 1)[1]:
+            new = path.join(self.folder, self.file_name(uploaded_file))
+            uploaded_file.save(new)
         else:
             raise Invalid(self.message('invalid', state), value, state)
-        return file.filename
+        return uploaded_file.filename
 
     def file_name(self, file):
         # make sure filename is just [name].[extension]
@@ -448,3 +517,11 @@ class UploadEvidencePhoto(Upload):
     }
     folder = path.join(ROOT_DIR, 'static', 'evidence_photos')
     type = 'image'
+
+
+class UploadNames(Upload):
+    messages = {
+        'invalid': 'An invalid text file was uploaded.'
+    }
+    folder = path.join(ROOT_DIR, 'static', 'case_names')
+    type = 'txt'

@@ -9,7 +9,7 @@ from formencode import Invalid
 from formencode.variabledecode import variable_decode
 # local imports
 from ..utils.utils import session, ROOT_DIR, multidict_to_dict
-from ..model import User, CaseStatus, Case, Task, TaskStatus, Evidence, has_permissions
+from ..model import User, CaseStatus, Case, Task, TaskStatus, Evidence, has_permissions, ForemanOptions
 
 lookup = TemplateLookup(directories=[path.join(ROOT_DIR, 'templates')], output_encoding='utf-8')
 
@@ -34,6 +34,7 @@ class BaseController():
         self.urls = urls
         self.form_error = {}
         self.form_result = {}
+        self.user_posted = {}
 
     def return_404(self, **vars):
         vars.update(**self._get_base_variables())
@@ -67,6 +68,7 @@ class BaseController():
         try:
             # Convert fields with more than one value into lists
             form_vars = multidict_to_dict(self.request.form)
+            self.user_posted = form_vars
             form_vars.update(multidict_to_dict(self.request.files))
             self.form_result = schema.to_python(variable_decode(form_vars))
             return True
@@ -88,6 +90,10 @@ class BaseController():
         base_vars = dict()
         base_vars['current_user'] = self.current_user
         base_vars['check_perms'] = self.check_view_permissions
+        base_vars['error_message_website_wide'] = []
+        base_vars['help_message_website_wide'] = []
+        base_vars['form_result'] = self.user_posted
+
         if self.current_user:
             base_vars['user_qa_cases'] = Case.get_cases(CaseStatus.OPEN, self.current_user, user=True, QA=True,
                                                         current_user_perms=self.check_view_permissions("Case", "admin"))
@@ -106,8 +112,43 @@ class BaseController():
                                                                            "Case", "admin"),
                                                                        case_perm_checker=self.check_permissions,
                                                                        case_man=True))
+            overload = ForemanOptions.run_out_of_names()
+            if overload[0]:
+                base_vars['error_message_website_wide'].append(
+                    {'title': "Task name issue",
+                     'text': """Foreman has run out of names from your uploaded task names list.
+                     Please ask your administrator to add more.
+                     More details can be found in the admin control panel."""
+                    }
+                )
+            if overload[1]:
+                base_vars['error_message_website_wide'].append(
+                    {'title': "Case name issue",
+                     'text': """Foreman has run out of names from your uploaded case names list.
+                     Please ask your administrator to add more.
+                     More details can be found in the admin control panel."""
+                    }
+                )
+
+            if User.get_amount() == 1:
+                base_vars['help_message_website_wide'].append(
+                    {'title': "Add more users",
+                     'text': """You are currently the only user of Foreman.
+                     <a href='/users/add/'>Add more users here.</a>"""
+                    }
+                )
+
+            if self.current_user.id == 1 and User.check_password(self.current_user.username, "changeme"):
+                base_vars['error_message_website_wide'].append(
+                    {'title': "Change your default password",
+                     'text': """You are currently using the default admin password which is published publicly.
+                     You are advised to change this immediately. """
+                    }
+                )
+
         base_vars['invRoles'] = TaskStatus.invRoles
         base_vars['qaRoles'] = TaskStatus.qaRoles
+
         base_vars['unassigned_tasks'] = len(Task.get_queued_tasks())
         base_vars['task_statuses'] = {'created': TaskStatus.CREATED, 'start': TaskStatus.ALLOCATED,
                                       'progress': TaskStatus.PROGRESS, 'deliver': TaskStatus.DELIVERY,

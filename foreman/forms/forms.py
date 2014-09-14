@@ -87,6 +87,7 @@ class AdminPasswordChangeForm(Schema):
         Match('new_password', 'new_password_2'),
     ]
 
+
 class RegisterForm(Schema):
     forename = v.UnicodeString(not_empty=True)
     surname = v.UnicodeString(not_empty=True)
@@ -100,6 +101,7 @@ class RegisterForm(Schema):
     chained_validators = [
         Match('password', 'password_2'),
     ]
+
 
 class QACheckerForm(Schema):
     notes = v.UnicodeString(not_empty=True)
@@ -174,20 +176,20 @@ class MoveTaskTypeForm(Schema):
 
 
 class AddTaskTypeForm(Schema):
-    task_type = v.UnicodeString(not_empty=True)
-    task_category = GetTaskCategory(not_empty=True)
+    new_task_type = v.UnicodeString(not_empty=True)
+    change_task_category = GetTaskCategory(not_empty=True)
 
 
 class RemoveTaskTypeForm(Schema):
-    task_type = GetTaskTypes(not_empty=True)
+    remove_task_type = GetTaskTypes(not_empty=True)
 
 
 class AddTaskCategoryForm(Schema):
-    task_category = v.UnicodeString(not_empty=True)
+    new_task_category = v.UnicodeString(not_empty=True)
 
 
 class RemoveCategoryForm(Schema):
-    task_category = GetTaskCategory(not_empty=True)
+    remove_task_category = GetTaskCategory(not_empty=True)
 
 
 class AddEvidenceForm(Schema):
@@ -298,3 +300,9 @@ class OptionsForm(Schema):
     department = v.UnicodeString(not_empty=True)
     folder = v.UnicodeString(not_empty=True)
     datedisplay = v.UnicodeString(not_empty=True)
+    case_names = GetForemanCaseNameOptions(not_empty=True)
+    task_names = GetForemanTaskNameOptions(not_empty=True)
+    upload_case_names = UploadNames()
+    upload_task_names = UploadNames()
+
+    # chained_validators = [NotEmptyCaseUpload(), NotEmptyTaskUpload()]

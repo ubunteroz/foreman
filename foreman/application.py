@@ -141,8 +141,8 @@ class Application(object):
         map.add(Rule('/cases/<case_id>/evidence/<evidence_id>/custody/check-out/', endpoint='evidence.custody_out'))
         map.add(Rule('/cases/<case_id>/evidence/<evidence_id>/custody/check-in/', endpoint='evidence.custody_in'))
 
-        map.add(Rule('/cases/<case_id>/<task_id>/notes', endpoint='forensics.work'))
-        map.add(Rule('/cases/<case_id>/<task_id>/qa', endpoint='forensics.qa'))
+        map.add(Rule('/cases/<case_id>/<task_id>/notes/', endpoint='forensics.work'))
+        map.add(Rule('/cases/<case_id>/<task_id>/qa/', endpoint='forensics.qa'))
 
         map.add(Rule('/users/', endpoint='user.view_all'))
         map.add(Rule('/users/<user_id>/', endpoint='user.view'))

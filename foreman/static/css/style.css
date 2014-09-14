@@ -394,7 +394,7 @@ table.casenotes td, table.casenotes th{
     border-top: solid 1px #aaa!important;
 }
 
-div.confirmclosurebox, div.confirmassigninv{
+div.confirmclosurebox, div.confirmassigninv, div.errorbox{
     margin: 0px auto;
     width: 600px;
     padding: 10px 10px 10px 60px;
@@ -405,6 +405,51 @@ div.confirmclosurebox, div.confirmassigninv{
 
 div.confirmassigninv{
     width: 600px;
+}
+
+div.errorbox{
+    border:solid red 3px;
+    background: url('../images/siteimages/icons/orbminus.png');
+    background-repeat: no-repeat;
+    background-color: #FFD5D5;
+}
+
+div#message_list{
+    float: right;
+    width: 400px;
+    position: absolute;
+    z-index: 100;
+    top: 40;
+    right: 0;
+}
+
+div.error_messages, div.help_messages{
+    font-size: 10pt;
+    padding: 5px 5px 5px 60px;
+    min-height: 40px;
+    margin-bottom: 10px;
+}
+
+div.help_messages{
+    border-top:solid #357EC7 3px;
+    border-bottom:solid #357EC7 3px;
+    border-left:solid #357EC7 3px;
+    background: #ADDFFF url('../images/siteimages/icons/orbinfo.png') no-repeat;
+}
+
+div.error_messages{
+    border-top:solid red 3px;
+    border-bottom:solid red 3px;
+    border-left:solid red 3px;
+    background: #FFD5D5 url('../images/siteimages/icons/orbminus.png') no-repeat;
+}
+
+div.error_messages a, div.help_messages a{
+    color: black;
+}
+
+div.error_messages a:hover, div.help_messages a:hover{
+    text-decoration: None;
 }
 
 table.addcase, table.userdetails{

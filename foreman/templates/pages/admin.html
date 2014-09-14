@@ -9,8 +9,27 @@
     <script src="${urls.build('javascript', dict(file='jquery-ui-1.10.4.custom.min.js'))|h}"></script>
     <script>
         $(function() {
-        $( "#tabs" ).tabs();
-        $( "#tabs" ).tabs({ active: ${active_tab}});
+            $("#tabs").tabs();
+            $("#tabs").tabs({ active: ${active_tab}});
+
+            function slide_file_upload(select_box_selector){
+                var select_box = $(select_box_selector);
+                if ($(select_box_selector + " option:selected").val() == "FromList"){
+                    $(select_box).parents('.form_background').find(select_box_selector + "_uploader").slideDown("slow");
+                } else {
+                    $(select_box).parents('.form_background').find(select_box_selector + "_uploader").slideUp("slow");
+                }
+            }
+
+            $("#case_names").change(function() {
+                slide_file_upload('#case_names');
+            });
+
+            $("#task_names").change(function () {
+                slide_file_upload('#task_names');
+            });
+            slide_file_upload('#case_names');
+            slide_file_upload('#task_names');
         });
 
         function populate_icon(icon){
@@ -25,8 +44,6 @@
     </script>
 
 </%def>
-
-
 
 <div id="mainbar_noside">
     <h1>Foreman Administration</h1>
@@ -43,18 +60,36 @@
 
         <div id="tabs-1" class="forensics_work_contents">
 
-            <h2>Options</h2>
+            % if len(errors) == 0 and (number_cases > 0 or number_tasks > 0):
+                <div class="success">
+                <h1>Success!</h1>
+                % if len(errors) == 0 and number_cases > 0:
+                    <p>Uploaded ${number_cases|h} new case names.</p>
+                % endif
+                % if len(errors) == 0 and number_tasks > 0:
+                    <p>Uploaded ${number_tasks|h} new task names.</p>
+                % endif
+                </div>
+            % endif
 
-            <form method="post" action="${urls.build('general.admin', dict(form='options', active_tab=0))|h}">
-                ${forms.formTextField("Company Name", "company", "company", "form_label", "input_long", value=options.company, first=True)}
-                ${forms.formTextField("Department Name", "department", "department", "form_label", "input_long", value=options.department)}
-                ${forms.formTextField("Default folder location", "folder", "folder", "form_label", "input_long", value=options.default_location)}
-                ${forms.formTextField("Date & time display", "datedisplay", "datedisplay", "form_label", "input_long", value=options.date_format)}
-                <p style="clear:both;">For information on the date & time formatting, <a href="http://strftime.org/" target="_blank">please click here</a>.</p>
-                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+            <div class="form_background">
+                <h2>Information About Your Team & Foreman Options</h2>
 
-            </form>
+                <form method="post" enctype='multipart/form-data' action="${urls.build('general.admin', dict(form='options', active_tab=0))|h}">
+                    ${forms.formTextField("Company Name", "company", "company", "form_label", "input_long", value=options.company, first=True)}
+                    ${forms.formTextField("Department Name", "department", "department", "form_label", "input_long", value=options.department)}
+                    <p style="clear:both;">When requester's add cases to Foreman, they are not given an option to pick a case name. The options below specify the automatic case & task names that will be assigned. You can change the case & task names as soon as they are created.</p>
+                    ${forms.formSelectBox("Automatic Case Name Generation", "case_names", "case_names", "form_label", "input_long", case_name_options, value=options.case_names, first=True)}
+                    ${forms.formTextField("Upload Case Names (1 per line)", "upload_case_names", "upload_case_names", "form_label", "input_long", input_type="file", p_id="case_names_uploader")}
+                    ${forms.formSelectBox("Automatic Task Name Generation", "task_names", "task_names", "form_label", "input_long", task_name_options, value=options.task_names)}
+                    ${forms.formTextField("Upload Task Names (1 per line)", "upload_task_names", "upload_task_names", "form_label", "input_long", input_type="file", p_id="task_names_uploader")}
+                    ${forms.formTextField("Default folder location", "folder", "folder", "form_label", "input_long", value=options.default_location)}
+                    <p style="clear:both;">For information on the date & time formatting, <a href="http://strftime.org/" target="_blank">please click here</a>.</p>
+                    ${forms.formTextField("Date & time display", "datedisplay", "datedisplay", "form_label", "input_long", value=options.date_format)}
 
+                    <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+                </form>
+            </div>
         </div>
 
         <div id="tabs-2" class="forensics_work_contents">
@@ -73,7 +108,7 @@
             <h2>Add New Task Category</h2>
 
             <form method="post" action="${urls.build('general.admin', dict(form='add_task_category', active_tab=1))|h}">
-                 ${forms.formTextField("New Task Category", "task_category", "task_category", "form_label", "input_long", first=True)}
+                 ${forms.formTextField("New Task Category", "new_task_category", "new_task_category", "form_label", "input_long", first=True)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Add" /></p>
             </form>
             </div>
@@ -82,8 +117,8 @@
             <h2>Add New Task Type</h2>
 
             <form method="post" action="${urls.build('general.admin', dict(form='add_task_type', active_tab=1))|h}">
-                ${forms.formTextField("New Task Type", "task_type", "task_type", "form_label", "input_long", first=True)}
-                ${forms.formSelectBox("Task Category", "task_category", "task_Category", "form_label", "input_long", task_categories, please_select=True)}
+                ${forms.formTextField("New Task Type", "new_task_type", "new_task_type", "form_label", "input_long", first=True)}
+                ${forms.formSelectBox("Task Category", "change_task_category", "change_task_Category", "form_label", "input_long", task_categories, please_select=True)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Add" /></p>
             </form>
             </div>
@@ -93,7 +128,7 @@
 
             <p>Please note you can only remove Task Categories that are empty, please move all task types from the category into different categories first.</p>
             <form method="post" action="${urls.build('general.admin', dict(form='remove_task_category', active_tab=1))|h}">
-                 ${forms.formSelectBox("Task Category", "task_category", "task_Category", "form_label", "input_long", empty_categories, please_select=True, first=True)}
+                 ${forms.formSelectBox("Task Category", "remove_task_category", "remove_task_Category", "form_label", "input_long", empty_categories, please_select=True, first=True)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Remove" /></p>
             </form>
             </div>
@@ -102,7 +137,7 @@
             <h2>Remove Task Type</h2>
 
             <form method="post" action="${urls.build('general.admin', dict(form='remove_task_type', active_tab=1))|h}">
-                 ${forms.formSelectBox("Task Type", "task_type", "task_type", "form_label", "input_long", task_types, please_select=True)}
+                 ${forms.formSelectBox("Task Type", "remove_task_type", "remove_task_type", "form_label", "input_long", task_types, please_select=True)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Remove" /></p>
             </form>
             </div>

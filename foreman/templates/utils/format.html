@@ -211,9 +211,6 @@
             <th>Principle QA Investigator</th>
             <th>Secondary QA Investigator</th>
             % endif
-            % if work_on:
-            <th>&nbsp;</th>
-            % endif
         </tr>
     % for task in tasks:
         <tr>
@@ -287,19 +284,6 @@
                 <td>None</td>
                 % endif
 
-            % endif
-            % if work_on:
-            <td>
-                % if current_user in task.investigators:
-                    % if task.status == task_statuses['start']:
-                    <a href='${urls.build("forensics.work", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>Start task</a>
-                    % else:
-                    <a href='${urls.build("forensics.work", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>Work on task</a>
-                    % endif
-                % elif current_user in task.QAs and task.status == task_statuses['qa']:
-                    <a href='${urls.build("forensics.qa", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>QA task</a>
-                % endif
-            </td>
             % endif
         </tr>
     % endfor

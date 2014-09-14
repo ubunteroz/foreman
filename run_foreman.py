@@ -43,15 +43,14 @@ def example(args):
 def run_tests(args, functional=False, unit=False, urls=False):
     """ Initialise database, set up example test system and run tests
     """
-
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=sa_exc.SAWarning)
-        """from foreman.utils.utils import init_database, drop_database, populate_test_database, setup
+        from foreman.utils.utils import init_database, drop_database, populate_test_database, setup
         setup(args.config_file)
         drop_database()
         init_database()
         populate_test_database()
-        """
+
         if not (functional or unit or urls):
             functional = unit = urls = True
         import foreman.tests

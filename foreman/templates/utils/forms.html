@@ -26,15 +26,17 @@
 	% endif
 </%def>
 
-
-<%def name="formTextField(label, name, id, labelclass, inputclass, input_type='text', first=False, default='', value='')" filter="trim">
+<%def name="formTextField(label, name, id, labelclass, inputclass, input_type='text', first=False, default='', value='',  p_id='')" filter="trim">
     % if first != True:
-    <p style="clear:both; position:relative">
+    <p style="clear:both; position:relative" id="${p_id|h}">
     % else:
-    <p>
+    <p id="${p_id|h}">
     % endif
 		<label for="${name|h}" class="${labelclass|h}">${label}</label>
-    % if value == None:
+
+    % if form_result and name in form_result:
+        <% value = form_result[name] %>
+    % elif value is None:
         <% value = "" %>
     % endif
 		<input type="${input_type}" class="${inputclass|h} ${isError(name)}" value="${value|h}" placeholder="${default|h}" name="${name|h}" id="${id|h}" />
@@ -49,29 +51,43 @@
     % else:
     <p>
     % endif
-		<label for="${name|h}" class="${labelclass|h}">${label}</label>
-		<select class="${inputclass|h} ${isError(name)}" name="${name|h}" id="${id|h}">
-            % if please_select == True:
-            <option value="null">Please select</option>
+
+    % if form_result and name in form_result:
+        <% value = form_result[name] %>
+    % endif
+
+    <label for="${name|h}" class="${labelclass|h}">${label}</label>
+    <select class="${inputclass|h} ${isError(name)}" name="${name|h}" id="${id|h}">
+        % if please_select == True:
+        <option value="null">Please select</option>
+        % endif
+        % for val, option in options:
+            % if value == option:
+                <option value="${val|h}" selected>${option|h}</option>
+            % elif value == val:
+                <option value="${val|h}" selected>${option|h}</option>
+            % else:
+                <option value="${val|h}">${option|h}</option>
             % endif
-            % for val, option in options:
-                % if value == option:
-                    <option value="${val|h}" selected>${option|h}</option>
-                % else:
-                    <option value="${val|h}">${option|h}</option>
-                % endif
-            % endfor
-        </select>
-		${getError(name)|h}
+        % endfor
+    </select>
+    ${getError(name)|h}
     </p>
 </%def>
 
-<%def name="formTextArea(label, name, id, labelclass, inputclass, value='', first=False)" filter="trim">
+<%def name="formTextArea(label, name, id, labelclass, inputclass, value=None, first=False)" filter="trim">
     % if first != True:
     <p style="clear:both; position:relative">
     % else:
     <p>
     % endif
+
+    % if form_result and name in form_result:
+        <% value = form_result[name] %>
+    % elif value is None:
+        <% value = "" %>
+    % endif
+
 		<label for="${name|h}" class="${labelclass|h}">${label}</label>
         <textarea class="${inputclass|h} ${isError(name)}" name="${name|h}" id="${id|h}">${value|h}</textarea>
 		${getError(name)|h}

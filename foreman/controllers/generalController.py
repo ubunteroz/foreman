@@ -66,11 +66,41 @@ class GeneralController(BaseController):
     def admin(self):
         self.check_permissions(self.current_user, "Case", 'admin')
         icon_path = join(ROOT_DIR, 'static', 'images', 'siteimages', 'evidence_icons_unique')
-
+        over_load = ForemanOptions.run_out_of_names()
         form_type = multidict_to_dict(self.request.args)
+        number_cases = number_tasks = None
         if 'form' in form_type and form_type['form'] == "options" and self.validate_form(OptionsForm()):
-            ForemanOptions.set_options(self.form_result['company'], self.form_result['department'],
-                                       self.form_result['folder'], self.form_result['datedisplay'])
+            error_flag = False
+            check_cases = check_tasks = False
+            if self.form_result['case_names'] == "FromList":
+                if self.form_result['upload_case_names'] is not None:
+                    number_cases = ForemanOptions.import_names("case", join(ROOT_DIR, 'static', 'case_names',
+                                                                            self.form_result['upload_case_names']))
+                    if number_cases is None:
+                        self.form_error['upload_case_names'] = "Error in uploading case names text file."
+                        error_flag = True
+                else:
+                    check_cases = True
+
+            if self.form_result['task_names'] == "FromList":
+                if self.form_result['upload_task_names'] is not None:
+                    number_tasks = ForemanOptions.import_names("task", join(ROOT_DIR, 'static', 'case_names',
+                                                                            self.form_result['upload_task_names']))
+                    if number_tasks is None:
+                        self.form_error['upload_task_names'] = "Error in uploading task names text file."
+                        error_flag = True
+                else:
+                    check_tasks = True
+
+            if error_flag is not True:
+                ForemanOptions.set_options(self.form_result['company'], self.form_result['department'],
+                                           self.form_result['folder'], self.form_result['datedisplay'],
+                                           self.form_result['case_names'], self.form_result['task_names'])
+            if check_cases:
+                ForemanOptions.get_next_case_name(test=True)
+            if check_tasks:
+                ForemanOptions.get_next_task_name(None, test=True)
+
         elif 'form' in form_type and form_type['form'] == "add_evidence_types" and self.validate_form(AddEvidenceTypeForm()):
             new_evidence_type = EvidenceType(self.form_result['evi_type'], self.form_result['icon_input'])
             session.add(new_evidence_type)
@@ -121,11 +151,11 @@ class GeneralController(BaseController):
             task_type.category = self.form_result['task_category']
             session.flush()
         elif 'form' in form_type and form_type['form'] == 'add_task_type' and self.validate_form(AddTaskTypeForm):
-            new_tt = TaskType(self.form_result['task_type'], self.form_result['task_category'])
+            new_tt = TaskType(self.form_result['new_task_type'], self.form_result['change_task_category'])
             session.add(new_tt)
             session.commit()
         elif 'form' in form_type and form_type['form'] == 'remove_task_type' and self.validate_form(RemoveTaskTypeForm):
-            task_type = self.form_result['task_type']
+            task_type = self.form_result['remove_task_type']
             # find all task that have this type and assign it to 'Undefined'
             tasks = Task.get_tasks_with_type(task_type)
             for task in tasks:
@@ -135,11 +165,11 @@ class GeneralController(BaseController):
             session.delete(task_type)
             session.commit()
         elif 'form' in form_type and form_type['form'] == 'add_task_category' and self.validate_form(AddTaskCategoryForm):
-            new_tc = TaskCategory(self.form_result['task_category'])
+            new_tc = TaskCategory(self.form_result['add_task_category'])
             session.add(new_tc)
             session.commit()
         elif 'form' in form_type and form_type['form'] == 'remove_task_category' and self.validate_form(RemoveCategoryForm):
-            category = self.form_result['task_category']
+            category = self.form_result['remove_task_category']
             session.delete(category)
             session.commit()
 
@@ -161,11 +191,15 @@ class GeneralController(BaseController):
         evi_types = [(et.replace(" ", "").lower(), et) for et in evidence_types]
         icons = [f for f in listdir(icon_path) if isfile(join(icon_path,f)) and f != "Thumbs.db"]
         empty_categories = [(ct.replace(" ", "").lower(), ct) for ct in TaskCategory.get_empty_categories()]
+        case_name_options = [(cn, cn) for cn in ForemanOptions.CASE_NAME_OPTIONS]
+        task_name_options = [(tn, tn) for tn in ForemanOptions.TASK_NAME_OPTIONS]
         return self.return_response('pages', 'admin.html', options=options, active_tab=active_tab, icons=icons,
                                     task_types=task_types, evidence_types=evidence_types, users=users,
                                     classifications=classifications, case_types=case_types, evi_types=evi_types,
                                     empty_categories=empty_categories, task_categories=task_categories,
-                                    errors=self.form_error)
+                                    errors=self.form_error, over_load=over_load, case_name_options=case_name_options,
+                                    task_name_options=task_name_options, number_cases=number_cases,
+                                    number_tasks=number_tasks)
 
     def report(self):
         start_date = ForemanOptions.get_date_created()

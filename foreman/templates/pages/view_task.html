@@ -39,9 +39,7 @@
         | <a href='${urls.build("forensics.work", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>Begin work on task</a>
         % endif
     % endif
-    </p>
 
-    <p>
     % if check_perms(task, 'assign-self'):
         % if task.principle_investigator is None and (task.secondary_investigator is None or task.secondary_investigator.id != current_user.id):
             <a href='${urls.build("task.assign_work", dict(task_id=task.task_name, case_id=task.case.case_name, assign="primary"))|h}'>Assign myself as principle investigator</a> |

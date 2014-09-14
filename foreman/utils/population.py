@@ -26,7 +26,7 @@ def create_admin_user():
 
 
 def load_initial_values():
-    opts = ForemanOptions("%d %b %Y %H:%M:%S", r"C:\Foreman", "FromList", "NumericIncrement", "A Large Company",
+    opts = ForemanOptions("%d %b %Y %H:%M:%S", r"C:\Foreman", "DateNumericIncrement", "NumericIncrement", "A Large Company",
                           "Investigations")
     session.add(opts)
     session.flush()

@@ -153,24 +153,27 @@ class UserController(BaseController):
         if user is not None:
             self.check_permissions(self.current_user, user, 'edit-password')
 
-            if self.validate_form(PasswordChangeForm()):
-                if user.check_password(user.username, self.form_result['password']):
-                    # successful password change
-                    user.set_password(self.form_result['new_password'])
+            if user.username == self.current_user.username:
+                if self.validate_form(PasswordChangeForm()):
+                    if user.check_password(user.username, self.form_result['password']):
+                        # successful password change
+                        user.set_password(self.form_result['new_password'])
 
-                    email([user.email], "Your Foreman password has changed",
-                    """
-                        Hello {},
+                        email([user.email], "Your Foreman password has changed",
+                        """
+                            Hello {},
 
-                        Just to let you know your password has been changed. If this is not the case, please inform
-                        your administrator immediately.
+                            Just to let you know your password has been changed. If this is not the case, please inform
+                            your administrator immediately.
 
-                        Thanks,
-                        Foreman
-                    """.format(user.forename), config.get('email', 'from_address'))
-                    return self.return_response('pages', 'edit_password.html', user=user, success=True)
+                            Thanks,
+                            Foreman
+                        """.format(user.forename), config.get('email', 'from_address'))
+                        return self.return_response('pages', 'edit_password.html', user=user, success=True)
+                    else:
+                        self.form_error['password'] = "Current password is not correct"
+                        return self.return_response('pages', 'edit_password.html', user=user, errors=self.form_error)
                 else:
-                    self.form_error['password'] = "Current password is not correct"
                     return self.return_response('pages', 'edit_password.html', user=user, errors=self.form_error)
             elif self.validate_form(AdminPasswordChangeForm()):
                 user.set_password(self.form_result['new_password'])
