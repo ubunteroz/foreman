@@ -14,7 +14,8 @@ from ..model.userModel import UserRoles
 from ..forms.forms import LoginForm, OptionsForm, AddEvidenceTypeForm, RegisterForm, AddClassificationForm
 from ..forms.forms import AddCaseTypeForm, RemoveCaseTypeForm, RemoveClassificationForm, RemoveEvidenceTypeForm
 from ..forms.forms import MoveTaskTypeForm, AddTaskTypeForm, RemoveTaskTypeForm, AddTaskCategoryForm, RemoveCategoryForm
-from ..utils.utils import multidict_to_dict, session, ROOT_DIR
+from ..utils.utils import multidict_to_dict, session, ROOT_DIR, config
+from ..utils.mail import email
 
 
 class GeneralController(BaseController):
@@ -61,6 +62,32 @@ class GeneralController(BaseController):
             session.add(new_user)
             session.flush()
             success = True
+
+            email([new_user.email], "Thanks for registering with Foreman", """
+Hello {},
+
+Thanks for registering! The administrator will validate your account and you will get an email when this occurs.
+
+Thanks,
+Foreman
+{}""".format(new_user.forename, config.get('admin', 'website_domain')), config.get('email', 'from_address'))
+
+            admins = UserRoles.get_admins()
+            for admin in admins:
+                email([admin.email], "A new user has registered with Foreman", """
+Hello {},
+
+A new user has registered with the following details. Please log in and validate their account.
+
+Username: {}
+Name: {}
+Email address: {}
+
+Thanks,
+Foreman
+{}""".format(admin.forename, new_user.username, new_user.fullname, new_user.email,
+             config.get('admin', 'website_domain')), config.get('email', 'from_address'))
+
         return self.return_response('pages', 'register.html', errors=self.form_error, success=success)
 
     def admin(self):
@@ -120,6 +147,17 @@ class GeneralController(BaseController):
                 user.validated = True
                 session.flush()
                 user.add_change(self.current_user)
+
+                email([user.email], "Welcome to Foreman!", """
+Hello {},
+
+The administrator has now validated your account and you can now log into the system. Enjoy!
+
+Thanks,
+Foreman
+{}""".format(user.forename, config.get('admin', 'website_domain')), config.get('email', 'from_address'))
+
+
         elif 'form' in form_type and form_type['form'] == 'remove_classification' and self.validate_form(RemoveClassificationForm):
             classification = CaseClassification.get_filter_by(classification=self.form_result['classification']).first()
             if classification:
