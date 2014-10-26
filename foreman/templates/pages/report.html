@@ -1,8 +1,10 @@
 ﻿<%inherit file="/base/base.html"/>
 <%namespace file="/utils/forms.html" name="forms" />
+<% import datetime %>
+<% today = datetime.datetime.today() %>
 
 <%def name="plot_dimple(svg, chart, cat_axis, measure_axis, series, legend=True)" filter="trim">
-                ${chart} = new dimple.chart(${svg}, data);
+        ${chart} = new dimple.chart(${svg}, data);
                 ${chart}.setBounds(120, 20, "85%", 330);
                 ${chart}.addCategoryAxis("y", "${cat_axis}");
                 ${chart}.addMeasureAxis("x", "${measure_axis}");
@@ -14,6 +16,10 @@
 </%def>
 
 <%def name="javascripts()" filter="trim">
+
+    <% import datetime %>
+    <% today = datetime.datetime.today() %>
+
     <link rel="StyleSheet" href="${urls.build('css', dict(file='jquery-ui-1.10.4.custom.css'))|h}" type="text/css" />
     <script src="${urls.build('javascript', dict(file='jquery-1.10.2.js'))|h}"></script>
     <script src="${urls.build('javascript', dict(file='jquery-ui-1.10.4.custom.min.js'))|h}"></script>
@@ -30,11 +36,12 @@
             $("#case_reports_tabs").tabs();
 
             var svg1 = dimple.newSvg("#cases_assigned_inv", 1500, 400);
-            $.getJSON('${urls.build("report.jason_tasks_assigned_to_inv")|h}?start_date=July 2014', function(data){
-                ${plot_dimple("sgv1", "invChart", "Investigator", "Number of Tasks", "Task Type")}
+            $.getJSON('${urls.build("report.jason_tasks_assigned_to_inv")|h}?start_date=${today.strftime("%B %Y")}', function(data){
+                ${plot_dimple("svg1", "invChart", "Investigator", "Number of Tasks", "Task Type")}
             });
+
             var svg2 = dimple.newSvg("#cases_completed_qa", 1500, 400);
-            $.getJSON('${urls.build("report.jason_tasks_qaed")|h}?start_date=July 2014', function(data){
+            $.getJSON('${urls.build("report.jason_tasks_qaed")|h}?start_date=${today.strftime("%B %Y")}', function(data){
                 ${plot_dimple("svg2", "qaChart", "QA Partner", "Number of QAs", "QA Partner", False)}
             });
 
@@ -104,7 +111,7 @@
                             myChart.addLegend(0, 0, "90%", 400, "right");
                             myChart.addSeries("Status", dimple.plot.bar);
                             myChart.draw();
-                    </script>
+                        </script>
                     </div>
                 </div>
                 <div id="case_reports_tabs-2" class="forensics_work_contents">
@@ -171,15 +178,30 @@
 
         </div>
         <div id="tabs-2" class="forensics_work_contents">
-            <h2>Cases assigned to Investigators for <span id="load_inv_month_heading">July 2014</span></h2>
 
-            <p><a href="#" class="load_inv_month">June 2014</a> | <a href="#" class="load_inv_month">July 2014</a></p>
+            <h2>Cases assigned to Investigators for <span id="load_inv_month_heading">${today.strftime("%B %Y")}</span></h2>
+
+            <p>
+                % for i, month in enumerate(months):
+                    <a href="#" class="load_inv_month">${month|h}</a>
+                    % if i != len(months) - 1:
+                         |
+                    % endif
+                % endfor
+            </p>
 
             <div id="cases_assigned_inv"></div>
 
-            <h2>QAs completed by Investigator for <span id="load_qa_month_heading">July 2014</span></h2>
+            <h2>QAs completed by Investigator for <span id="load_qa_month_heading">${today.strftime("%B %Y")}</span></h2>
 
-            <p><a href="#" class="load_qa_month">June 2014</a> | <a href="#" class="load_qa_month">July 2014</a></p>
+            <p>
+                % for i, month in enumerate(months):
+                    <a href="#" class="load_qa_month">${month|h}</a>
+                    % if i != len(months) - 1:
+                         |
+                    % endif
+                % endfor
+            </p>
 
             <div id="cases_completed_qa"></div>
         </div>

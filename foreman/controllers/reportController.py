@@ -25,6 +25,9 @@ class ReportController(BaseController):
         cases_archived = []
         total_cases = []
         active_tab = 0
+        for status in CaseStatus.all_statuses:
+            total_cases.append([start_date.strftime("%B %Y"), status,
+                                Case.get_num_cases_opened_on_date(start_date, status, case_type=None, by_month=True)])
         for category in categories:
             cases_opened.append([start_date.strftime("%B %Y"), category,
                                  Case.get_num_cases_opened_on_date(start_date, CaseStatus.OPEN, case_type=category,
@@ -70,8 +73,8 @@ class ReportController(BaseController):
             for investigator in UserRoles.get_investigators():
                 tasks_assigned_inv.append({
                     "Investigator": investigator.fullname,
-                    "Task Type": category,
-                    "Number of Tasks": Task.get_num_tasks_by_user(investigator, category, start_date)})
+                    "Number of Tasks": int(Task.get_num_tasks_by_user(investigator, category, start_date)),
+                    "Task Type": category})
         return tasks_assigned_inv
 
     @jsonify
