@@ -46,15 +46,18 @@ def run_tests(config_file, unit_tests=True, functional_tests=True, url_tests=Tru
     setup(config_file)
 
     if unit_tests:
+        print "\n\n~~ Running Unit Tests ~~\n\n"
         pass
         #suite_unit_tests = build_app_suite(test_units)
         #unittest.TextTestRunner(verbosity=2).run(suite_unit_tests)
 
     if functional_tests:
+        print "\n\n~~ Running Functional Tests ~~\n\n"
         pass
         #suite_functional_tests = build_app_suite(test_functions)
         #unittest.TextTestRunner(verbosity=2).run(suite_functional_tests)
 
     if url_tests:
+        print "\n\n~~ Running URL Tests ~~\n\n"
         suite_url_tests = build_app_suite(test_urls)
         unittest.TextTestRunner(verbosity=2).run(suite_url_tests)

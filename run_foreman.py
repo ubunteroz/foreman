@@ -40,19 +40,24 @@ def example(args):
     populate_database()
 
 
-def run_tests(args, functional=False, unit=False, urls=False):
+def run_tests(args):
     """ Initialise database, set up example test system and run tests
     """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=sa_exc.SAWarning)
         from foreman.utils.utils import init_database, drop_database, populate_test_database, setup
+
+        print "\n\n~~ Setting up Test Database ~~\n\n"
+
         setup(args.config_file)
         drop_database()
         init_database()
         populate_test_database()
 
-        if not (functional or unit or urls):
-            functional = unit = urls = True
+        urls = False if args.test_urls == "False" else True
+        unit = False if args.test_unit == "False" else True
+        functional = False if args.test_func == "False" else True
+
         import foreman.tests
         foreman.tests.run_tests(args.config_file, unit, functional, urls)
 
@@ -73,13 +78,17 @@ if __name__ == '__main__':
     setup_parser.add_argument('config_file')
     setup_parser.set_defaults(func=setup)
 
-    setup_parser = subparsers.add_parser('setup_example', help='Initialise and populate database with sample data')
-    setup_parser.add_argument('config_file')
-    setup_parser.set_defaults(func=example)
+    setup_ex_parser = subparsers.add_parser('setup_example', help='Initialise and populate database with sample data')
+    setup_ex_parser.add_argument('config_file')
+    setup_ex_parser.set_defaults(func=example)
 
-    setup_parser = subparsers.add_parser('run_tests', help='Run functional & unit tests')
-    setup_parser.add_argument('config_file')
-    setup_parser.set_defaults(func=run_tests)
+    test_parser = subparsers.add_parser('run_tests', help='Run functional & unit tests',
+                                        description='If all the optional test arguments are False, they will all be run.')
+    test_parser.add_argument('--test_urls', default='False', help='Test the foreman URLs. Default: False. Set TEST_URLS to True')
+    test_parser.add_argument('--test_unit', default='False', help='Run Unit Tests. Default: False. Set TEST_UNIT to True')
+    test_parser.add_argument('--test_func', default='False', help='Run Functional. Default: False. Set TEST_FUNC to True')
+    test_parser.add_argument('config_file')
+    test_parser.set_defaults(func=run_tests)
 
     args = parser.parse_args()
     args.func(args)
