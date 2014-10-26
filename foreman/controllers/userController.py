@@ -78,7 +78,9 @@ Please change this randomly generated password when you first log in.
 
 Thanks,
 Foreman
-            """.format(new_user.forename, new_user.username, new_user_password), config.get('email', 'from_address'))
+{}
+            """.format(new_user.forename, new_user.username, new_user_password, config.get('admin', 'website_domain')),
+            config.get('email', 'from_address'))
             return self.view(new_user.id)
         else:
             role_types = []
@@ -167,7 +169,8 @@ Just to let you know your password has been changed. If this is not the case, pl
 
 Thanks,
 Foreman
-                        """.format(user.forename), config.get('email', 'from_address'))
+{}
+                        """.format(user.forename, config.get('admin', 'website_domain')), config.get('email', 'from_address'))
                         return self.return_response('pages', 'edit_password.html', user=user, success=True)
                     else:
                         self.form_error['password'] = "Current password is not correct"
@@ -188,7 +191,9 @@ Please change this password when you next log in.
 
 Thanks,
 Foreman
-                    """.format(user.forename, user.username, self.form_result['new_password']),
+{}
+                    """.format(user.forename, user.username, self.form_result['new_password'],
+                               config.get('admin', 'website_domain')),
                     config.get('email', 'from_address'))
                 return self.return_response('pages', 'edit_password.html', user=user, success=True, admin=True)
             else:
