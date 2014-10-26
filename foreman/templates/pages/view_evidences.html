@@ -18,7 +18,7 @@
         % for evi in evidence:
             % if evi.case_id is None:
             <div class="evidence">
-                <img alt="${evi.type|h} icon" src="${urls.build("images", dict(file='siteimages/evidence_icons/' + evi.type + '.png'))|h}" style="float:left"/>
+                <img alt="${evi.type|h} icon" src="${urls.build("images", dict(file='siteimages/evidence_icons/' + evi.icon + '.png'))|h}" style="float:left"/>
                 <p>No case associated.
                 <br/><a href='${urls.build("evidence.view_caseless", dict(evidence_id=evi.reference))|h}'>${evi.reference|h}</a></p>
             </div>

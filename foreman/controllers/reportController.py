@@ -16,6 +16,8 @@ from ..model.userModel import UserRoles
 class ReportController(BaseController):
 
     def report(self):
+        self.check_permissions(self.current_user, 'Report', 'view')
+
         start_date = ForemanOptions.get_date_created()
         today_date = datetime.now()
         months = [start_date.strftime("%B %Y")]
@@ -63,6 +65,8 @@ class ReportController(BaseController):
 
     @jsonify
     def jason_tasks_assigned_to_inv(self):
+        self.check_permissions(self.current_user, 'Report', 'view')
+
         try:
             start_date_str = self.request.args.get('start_date', "")
             start_date = datetime.strptime(start_date_str, "%B %Y")
@@ -79,6 +83,8 @@ class ReportController(BaseController):
 
     @jsonify
     def jason_tasks_qaed(self):
+        self.check_permissions(self.current_user, 'Report', 'view')
+
         try:
             start_date_str = self.request.args.get('start_date', "")
             start_date = datetime.strptime(start_date_str, "%B %Y")

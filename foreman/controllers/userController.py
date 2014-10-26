@@ -68,16 +68,16 @@ class UserController(BaseController):
 
             email([new_user.email], "You had been added as a user to Foreman",
             """
-                Hello {},
+Hello {},
 
-                The administrator for Foreman has added an account for you:
-                Username: {}
-                Password: {}
+The administrator for Foreman has added an account for you:
+Username: {}
+Password: {}
 
-                Please change this randomly generated password when you first log in.
+Please change this randomly generated password when you first log in.
 
-                Thanks,
-                Foreman
+Thanks,
+Foreman
             """.format(new_user.forename, new_user.username, new_user_password), config.get('email', 'from_address'))
             return self.view(new_user.id)
         else:
@@ -161,13 +161,12 @@ class UserController(BaseController):
 
                         email([user.email], "Your Foreman password has changed",
                         """
-                            Hello {},
+Hello {},
 
-                            Just to let you know your password has been changed. If this is not the case, please inform
-                            your administrator immediately.
+Just to let you know your password has been changed. If this is not the case, please inform your administrator immediately.
 
-                            Thanks,
-                            Foreman
+Thanks,
+Foreman
                         """.format(user.forename), config.get('email', 'from_address'))
                         return self.return_response('pages', 'edit_password.html', user=user, success=True)
                     else:
@@ -179,16 +178,16 @@ class UserController(BaseController):
                 user.set_password(self.form_result['new_password'])
                 email([user.email], "Your Foreman password has changed",
                     """
-                        Hello {},
+Hello {},
 
-                        Just to let you know the administrator has changed your password:
-                        Username: {}
-                        Password: {}
+Just to let you know the administrator has changed your password:
+Username: {}
+Password: {}
 
-                        Please change this password when you next log in.
+Please change this password when you next log in.
 
-                        Thanks,
-                        Foreman
+Thanks,
+Foreman
                     """.format(user.forename, user.username, self.form_result['new_password']),
                     config.get('email', 'from_address'))
                 return self.return_response('pages', 'edit_password.html', user=user, success=True, admin=True)

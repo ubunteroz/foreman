@@ -48,7 +48,7 @@ def create_test_cases(case_managers, requestors, investigators):
                     'Ann Ackerman','Rodrigo Vanscyoc','Garrett Trudel','Stephenie Hurla','Travis Yokum',
                     'Clara Borkholder','Olin Kyles', 'Heriberto Slye','Ashley Tweed','Shanell Sikora',
                     'Karissa Pompei','Gema Shears']
-    print "Adding 50 cases:"
+    print "Adding 10 cases:"
     for i in xrange(0, 10):
         case_manager = case_managers[i]
         justification = justifications[i%3]
@@ -188,7 +188,7 @@ def create_evidence(case, inv, rand_user, num):
     for i in range(0, numEvidence):
         now = datetime.now()
         evi = EvidenceType.get_evidence_types()[num]
-        e = Evidence(case, "SCH-20140228-HDD_00"+str(ref), evi,
+        e = Evidence(case, case.case_name + "-SCH-20140228-HDD_00" + str(ref), evi,
                      "Hard drive from {}'s main machine".format(rand_user),
                      case.requester.fullname, "Main Evidence Cabinet",
                      case.principle_case_manager, "B0000"+str(i), True)
@@ -200,6 +200,10 @@ def create_evidence(case, inv, rand_user, num):
         e.create_qr_code()
         e.check_in(inv.fullname, inv, now, "Initial check in to the storage cabinet")
 
+def disassociate_evidence():
+    evidence = Evidence.get(4)
+    evidence.case_id = None
+    session.flush()
 
 def create_test_data():
     population.load_initial_values_test()
@@ -208,3 +212,4 @@ def create_test_data():
     case_managers = population.create_test_case_managers(admin)
     requestors = population.create_test_requestors(admin)
     create_test_cases(case_managers, requestors, investigators)
+    disassociate_evidence()

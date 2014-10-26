@@ -58,6 +58,9 @@ def run_tests(args):
         unit = False if args.test_unit == "False" else True
         functional = False if args.test_func == "False" else True
 
+        if urls is False and unit is False and functional is False:
+            urls = unit = functional = True
+
         import foreman.tests
         foreman.tests.run_tests(args.config_file, unit, functional, urls)
 

@@ -30,7 +30,7 @@ class EvidenceController(BaseController):
                 evi.add_change(self.current_user)
                 return self.custody_in(case.case_name, evi.reference, True, initial=True)
             else:
-                evidence_type_options = [(evi.evidence_type.replace(" ", "").lower(), evi.evidence_type) for evi in
+                evidence_type_options = [(evi.replace(" ", "").lower(), evi) for evi in
                                          ForemanOptions.get_evidence_types()]
                 return self.return_response('pages', 'add_evidence.html', case=case, errors=self.form_error,
                                             evidence_type_options=evidence_type_options)
@@ -142,6 +142,7 @@ class EvidenceController(BaseController):
         return self.view(None, evidence_id)
 
     def view_all(self):
+        self.check_permissions(self.current_user, 'Evidence', 'view-all')
         evidence = Evidence.get_all(descending=True)
         return self.return_response('pages', 'view_evidences.html', evidence=evidence)
 

@@ -42,11 +42,14 @@ class CaseManagerForTaskChecker(BaseChecker):
 
 class CaseManagerForEvidenceChecker(BaseChecker):
     def check(self, user, evidence):
-        case_managers = evidence.case.case_managers
-        for case_manager in case_managers:
-            if case_manager and user.id == case_manager.id:
-                return True
-        return False
+        if evidence.case_id is not None:
+            case_managers = evidence.case.case_managers
+            for case_manager in case_managers:
+                if case_manager and user.id == case_manager.id:
+                    return True
+            return False
+        else:
+            return CaseManagerChecker().check(user, "None")
 
 
 class CaseManagerChecker(BaseChecker):
@@ -92,11 +95,14 @@ class InvestigatorForCaseChecker(BaseChecker):
 
 class InvestigatorForEvidenceChecker(BaseChecker):
     def check(self, user, evidence):
-        tasks = evidence.case.tasks
-        for task in tasks:
-            if user.id in [inv.id for inv in task.investigators]:
-                return True
-        return False
+        if evidence.case_id is not None:
+            tasks = evidence.case.tasks
+            for task in tasks:
+                if user.id in [inv.id for inv in task.investigators]:
+                    return True
+            return False
+        else:
+            return InvestigatorChecker().check(user, "None")
 
 
 class InvestigatorChecker(BaseChecker):
@@ -120,11 +126,14 @@ class CompleteQAForTaskChecker(BaseChecker):
 
 class QAForEvidenceChecker(BaseChecker):
     def check(self, user, evidence):
-        tasks = evidence.case.tasks
-        for task in tasks:
-            if user.id in [inv.id for inv in task.QAs]:
-                return True
-        return False
+        if evidence.case_id is not None:
+            tasks = evidence.case.tasks
+            for task in tasks:
+                if user.id in [inv.id for inv in task.QAs]:
+                    return True
+            return False
+        else:
+            return QAChecker().check(user, "None")
 
 
 class QAForCaseChecker(BaseChecker):
@@ -171,14 +180,19 @@ class RequesterForTaskChecker(BaseChecker):
 
 class RequesterForEvidenceChecker(BaseChecker):
     def check(self, user, evidence):
-        requester_role = UserRoles.check_user_has_active_role(user, UserRoles.REQUESTER)
-        requester_user = evidence.case.requester
-        return requester_user.id == user.id and requester_role
-
+        if evidence.case_id is not None:
+            requester_role = UserRoles.check_user_has_active_role(user, UserRoles.REQUESTER)
+            requester_user = evidence.case.requester
+            return requester_user.id == user.id and requester_role
+        else:
+            return False
 
 class PrivateEvidenceChecker(BaseChecker):
     def check(self, user, evidence):
-        return evidence.case.private
+        if evidence.case_id is not None:
+            return evidence.case.private
+        else:
+            return False
 
 
 class PrivateCaseChecker(BaseChecker):
@@ -198,7 +212,10 @@ class ArchivedTaskChecker(BaseChecker):
 
 class ArchivedEvidenceChecker(BaseChecker):
     def check(self, user, evidence):
-        return evidence.case.status == CaseStatus.ARCHIVED
+        if evidence.case_id is not None:
+            return evidence.case.status == CaseStatus.ARCHIVED
+        else:
+            return False
 
 
 class ArchivedCaseChecker(BaseChecker):
@@ -296,11 +313,12 @@ permissions = {
     ('Task', 'assign-self'): And(Or(AdminChecker(), StartInvestigationForTaskChecker()), Not(ArchivedTaskChecker())),
     ('Task', 'assign-other'): And(Or(AdminChecker(), CaseManagerForTaskChecker()), Not(ArchivedTaskChecker())),
     ('Task', 'qa'): And(Or(AdminChecker(), CompleteQAForTaskChecker()), Not(ArchivedTaskChecker())),
+    ('Evidence', 'view-all'): Or(AdminChecker(), InvestigatorChecker(), QAChecker(), CaseManagerChecker()),
     ('Evidence', 'view'): Or(
+                        AdminChecker(),
                         RequesterForEvidenceChecker(),
                         And(
-                            Or(AdminChecker(),
-                                CaseManagerChecker(),
+                            Or(CaseManagerChecker(),
                                 InvestigatorChecker(),
                                 QAChecker()),
                             Not(PrivateEvidenceChecker())),
@@ -332,7 +350,8 @@ permissions = {
     ('User', 'view-changes'): Or(AdminChecker()),
     ('User', 'view-all'): AdminChecker(),
     ('User', 'view-history'): Or(AdminChecker(), CaseManagerChecker(), InvestigatorChecker(), QAChecker(),
-                                 UserIsCurrentUserChecker())
+                                 UserIsCurrentUserChecker()),
+    ('Report', 'view'): Or(AdminChecker(), CaseManagerChecker())
 }
 
 

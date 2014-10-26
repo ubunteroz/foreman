@@ -44,7 +44,7 @@
                    |  <a href='${urls.build("user.case_history", dict(user_id=current_user.id))|h}'>My Cases</a>
                     % endif
 
-                    % if current_user.is_requester() or current_user.is_case_manager():
+                    % if check_perms("Report", 'view'):
                     | <a href='${urls.build("report.report")|h}'>Reports</a>
                     % endif
 
