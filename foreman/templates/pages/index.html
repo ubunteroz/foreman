@@ -20,7 +20,7 @@
         % endif
        <a href='${urls.build("case.view_all")|h}'><div class="pick_a_box">
             View and edit cases <br />
-             <img src="${urls.build("images", dict(file='siteimages/icons/binoculars.png'))|h}" />
+             <img src="${urls.build("images", dict(file='siteimages/icons/Binoculars.png'))|h}" />
         </div></a>
         <a href='${urls.build("report.report")|h}'><div class="pick_a_box">
             Show Reports<br />
@@ -28,7 +28,7 @@
         </div></a>
         <a href='${urls.build("evidence.view_all")|h}'><div class="pick_a_box">
             View evidence locker <br />
-            <img src="${urls.build("images", dict(file='siteimages/icons/cabinet.png'))|h}" />
+            <img src="${urls.build("images", dict(file='siteimages/icons/Cabinet.png'))|h}" />
         </div></a>
     </div>
 
@@ -41,7 +41,7 @@
     <div class="boxes">
         <a href='${urls.build("case.view_all")|h}'><div class="pick_a_box">
             View cases <br />
-             <img src="${urls.build("images", dict(file='siteimages/icons/binoculars.png'))|h}" />
+             <img src="${urls.build("images", dict(file='siteimages/icons/Binoculars.png'))|h}" />
         </div></a>
         <a href='${urls.build("task.view_all")|h}'><div class="pick_a_box">
             <div class="speechbubble">${number_of_tasks|h}</div>
@@ -55,12 +55,12 @@
         </div></a>
         <a href='${urls.build("evidence.add", dict(case_id="k"))|h}'><div class="pick_a_box">
             Add evidence <br />
-            <img src="${urls.build("images", dict(file='siteimages/icons/harddrive.png'))|h}" />
+            <img src="${urls.build("images", dict(file='siteimages/icons/Harddrive.png'))|h}" />
         </div></a>
 
         <a href='${urls.build("evidence.view_all")|h}'><div class="pick_a_box">
             View evidence locker <br />
-            <img src="${urls.build("images", dict(file='siteimages/icons/cabinet.png'))|h}" />
+            <img src="${urls.build("images", dict(file='siteimages/icons/Cabinet.png'))|h}" />
         </div></a>
      </div>
 
@@ -77,7 +77,7 @@
         </div></a>
         <a href='${urls.build("user.case_history", dict(user_id=current_user.id))|h}'><div class="pick_a_box">
             View cases <br />
-             <img src="${urls.build("images", dict(file='siteimages/icons/binoculars.png'))|h}" />
+             <img src="${urls.build("images", dict(file='siteimages/icons/Binoculars.png'))|h}" />
         </div></a>
         <div class="pick_a_box not_used">
             Produce a report <br />
@@ -100,11 +100,11 @@
     % if check_perms('Case', 'admin'):
         <a href='${urls.build("user.view_all")|h}'><div class="pick_a_box">
             Edit users <br />
-            <img src="${urls.build("images", dict(file='siteimages/icons/user.png'))|h}" />
+            <img src="${urls.build("images", dict(file='siteimages/icons/User.png'))|h}" />
         </div></a>
         <a href='${urls.build("general.admin")|h}'><div class="pick_a_box">
             Edit settings <br />
-            <img src="${urls.build("images", dict(file='siteimages/icons/tools.png'))|h}" />
+            <img src="${urls.build("images", dict(file='siteimages/icons/Tools.png'))|h}" />
         </div></a>
      </div>
 
