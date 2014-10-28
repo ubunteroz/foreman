@@ -48,6 +48,14 @@ body{
     vertical-align: bottom;
 }
 
+p.title{
+    font-family: 'Nunito', sans-serif;
+    font-weight: 400;
+    margin:0px;
+    Padding: 5px 0px;
+    font-size: 30pt;
+}
+
 img.img_hover:hover {
     -moz-box-shadow: 0 0 5px #ccc;
     -webkit-box-shadow: 0 0 5px #ccc;
@@ -130,6 +138,10 @@ img.img_hover:hover {
 
 span.side_indent{
     padding-left:30px;
+}
+
+span.validate{
+    color: red;
 }
 
 #mainbar{

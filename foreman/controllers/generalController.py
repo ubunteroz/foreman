@@ -23,14 +23,18 @@ class GeneralController(BaseController):
     def index(self, **vars):
         tasks = len(Task.get_active_tasks(user=self.current_user))
         qas = len(Task.get_active_QAs(user=self.current_user))
-        return self.return_response('pages', 'index.html', number_of_qas=qas, number_of_tasks=tasks)
+        opts = ForemanOptions.get_options()
+        return self.return_response('pages', 'index.html', number_of_qas=qas, number_of_tasks=tasks,
+                                    company=opts.company, department=opts.department)
 
     def login(self):
+        opts = ForemanOptions.get_options()
         if self.validate_form(LoginForm()):
             user = User.get_user_with_username(self.form_result['username'].lower())
             if user is not None:
                 if user.validated is False:
-                    return self.return_response('pages', 'login.html', validated=False)
+                    return self.return_response('pages', 'login.html', validated=False, company=opts.company,
+                                                department=opts.department)
                 else:
                     # successful login
                     self.request.session['userid'] = self.request.session.get('userid', user.id)
@@ -43,16 +47,20 @@ class GeneralController(BaseController):
                 # should not happen that you get a valid form but invalid user
                 return self.return_500()
         else:
-            return self.return_response('pages', 'login.html', errors=self.form_error)
+            return self.return_response('pages', 'login.html', errors=self.form_error, company=opts.company,
+                                        department=opts.department)
 
     def logout(self):
         if 'userid' in self.request.session:
             del self.request.session['userid']
 
-        return self.return_response('pages', 'login.html', errors=self.form_error)
+        opts = ForemanOptions.get_options()
+        return self.return_response('pages', 'login.html', errors=self.form_error, company=opts.company,
+                                        department=opts.department)
 
     def register(self):
         success = False
+        opts = ForemanOptions.get_options()
         if self.validate_form(RegisterForm()):
             if self.form_result['middlename'] == "":
                 self.form_result['middlename'] = None
@@ -88,7 +96,8 @@ Foreman
 {}""".format(admin.forename, new_user.username, new_user.fullname, new_user.email,
              config.get('admin', 'website_domain')), config.get('email', 'from_address'))
 
-        return self.return_response('pages', 'register.html', errors=self.form_error, success=success)
+        return self.return_response('pages', 'register.html', errors=self.form_error, success=success,
+                                    company=opts.company, department=opts.department)
 
     def admin(self):
         self.check_permissions(self.current_user, "Case", 'admin')

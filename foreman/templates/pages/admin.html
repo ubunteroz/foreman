@@ -55,7 +55,11 @@
             <li><a href="#tabs-3">Evidence Types</a></li>
             <li><a href="#tabs-4">Case Types & Classifications</a></li>
             <li><a href="#tabs-5">Notes Export Formatting</a></li>
-            <li><a href="#tabs-6">Validate Users</a></li>
+            <li><a href="#tabs-6">Validate Users
+                % if users:
+                    <span class="validate">(${len(users)|h})</span>
+                % endif
+            </a></li>
         </ul>
 
         <div id="tabs-1" class="forensics_work_contents">
