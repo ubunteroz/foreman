@@ -18,6 +18,12 @@ def create_admin_user():
     session.add(admin_role)
     session.flush()
 
+    for role in UserRoles.roles:
+        if role != "Administrator":
+            new_role = UserRoles(admin, role, True)
+            session.add(new_role)
+            session.flush()
+
     admin.add_change(admin)
     session.flush()
 

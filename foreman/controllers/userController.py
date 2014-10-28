@@ -105,9 +105,14 @@ Foreman
                 active_tab = 1
                 if self.validate_form(EditRolesForm()):
                     for role in UserRoles.roles:
+                        # admin - user id 1 -  cannot remove administrator
                         active_role = UserRoles.check_user_has_active_role(user, role)
                         if active_role != self.form_result[role.lower().replace(" ", "")]:
-                            UserRoles.edit_user_role(user, role, self.current_user)
+                            if not (user.id == 1 and role == "Administrator" and self.form_result['administrator'] is False):
+                                UserRoles.edit_user_role(user, role, self.current_user)
+                            else:
+                                self.form_error['administrator'] = "Cannot remove the admin role."
+                                self.form_result['administrator'] = True
 
             elif 'form' in form_type and form_type['form'] == "edit_user":
                 self.check_permissions(self.current_user, user, 'edit')
