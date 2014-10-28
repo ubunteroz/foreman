@@ -235,6 +235,13 @@
 
             <h2>Validate Users</h2>
 
+            % if validated is True:
+                <div class="success">
+                    <h1>Successfully validated user.</h1>
+                    <p>Please remember to assign <a href='${urls.build("user.edit", dict(user_id=val_user.id, tab="edit_roles"))|h}'>${val_user.forename|h} at least one role</a>.</p>
+                </div>
+            % endif
+
             % if users:
             <table>
                 <tr>

@@ -71,6 +71,13 @@ class GeneralController(BaseController):
             session.flush()
             success = True
 
+            # start with no roles, admin must assign roles
+            for role in UserRoles.roles:
+                new_role = UserRoles(new_user, role, True)
+                session.add(new_role)
+                session.flush()
+                new_role.add_change(new_user)
+
             email([new_user.email], "Thanks for registering with Foreman", """
 Hello {},
 
@@ -104,7 +111,7 @@ Foreman
         icon_path = join(ROOT_DIR, 'static', 'images', 'siteimages', 'evidence_icons_unique')
         over_load = ForemanOptions.run_out_of_names()
         form_type = multidict_to_dict(self.request.args)
-        number_cases = number_tasks = None
+        number_cases = number_tasks = validated = val_user = None
         if 'form' in form_type and form_type['form'] == "options" and self.validate_form(OptionsForm()):
             error_flag = False
             check_cases = check_tasks = False
@@ -156,6 +163,8 @@ Foreman
                 user.validated = True
                 session.flush()
                 user.add_change(self.current_user)
+                validated = True
+                val_user = user
 
                 email([user.email], "Welcome to Foreman!", """
 Hello {},
@@ -246,7 +255,7 @@ Foreman
                                     empty_categories=empty_categories, task_categories=task_categories,
                                     errors=self.form_error, over_load=over_load, case_name_options=case_name_options,
                                     task_name_options=task_name_options, number_cases=number_cases,
-                                    number_tasks=number_tasks)
+                                    number_tasks=number_tasks, validated=validated, val_user=val_user)
 
     def report(self):
         start_date = ForemanOptions.get_date_created()
