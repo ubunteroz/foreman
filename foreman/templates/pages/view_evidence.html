@@ -21,18 +21,19 @@
 
     <h2>Details</h2>
 
+    % if check_perms(evidence, 'edit'):
+            <p><a href='${urls.build("evidence.edit", dict(evidence_id=evidence.reference))|h}'>Edit Evidence</a>
+    % endif
+
     % if evidence.case_id is not None:
-        % if check_perms(evidence, 'edit'):
-            <p><a href='${urls.build("evidence.edit", dict(case_id=evidence.case.case_name, evidence_id=evidence.reference))|h}'>Edit Evidence</a>
-        % endif
         % if check_perms(evidence, 'dis-associate'):
-            | <a href='${urls.build("evidence.disassociate", dict(case_id=evidence.case.case_name, evidence_id=evidence.reference))|h}'>Remove Evidence</a></p>
+            | <a href='${urls.build("evidence.disassociate", dict(case_id=evidence.case.case_name, evidence_id=evidence.reference))|h}'>Remove Evidence from case</a></p>
         % else:
             </p>
         % endif
     % elif evidence.case_id is None:
         % if check_perms(evidence, 'dis-associate'):
-            <p><a href='${urls.build("evidence.associate", dict(evidence_id=evidence.reference))|h}'>Associate evidence with a case</a>
+            | <a href='${urls.build("evidence.associate", dict(evidence_id=evidence.reference))|h}'>Associate evidence with a case</a>
         % endif
         % if check_perms(evidence, 'remove'):
             | <a href='${urls.build("evidence.remove", dict(evidence_id=evidence.reference))|h}'>Remove evidence completely from Foreman</a></p>
@@ -54,7 +55,7 @@
         % endif
         <tr>
             <td>Date Evidence Added</td>
-            <td>${evidence.date_added|h}</td>
+            <td>${evidence.date|h}</td>
         </tr>
          <tr>
             <td>Evidence Type</td>
@@ -73,7 +74,7 @@
             <td>${evidence.evidence_bag_number|h}</td>
         </tr>
          <tr>
-            <td>Storage Location</td>
+            <td>Location Seized From</td>
             <td>${evidence.location|h}</td>
         </tr>
          <tr>
@@ -99,7 +100,7 @@
             <th>Record Date</th>
             <th>User</th>
             <th>Date of Movement</th>
-            <th>Custodian</th>
+            <th>Custodian / Location</th>
             <th>Action</th>
             <th>Comment</th>
             <th>Attachments</th>
@@ -120,30 +121,32 @@
             <td>${chain.comment|h}</td>
             <td>
                 % if chain.custody_receipt is not None:
-                <a href="${urls.build('evidence_custody_receipts', dict(file=chain.custody_receipt))|h}">${chain.custody_receipt_label|h}</a>
+                    <a href="${urls.build('evidence_custody_receipts', dict(file=chain.custody_receipt))|h}">${chain.custody_receipt_label|h}</a>
+                % else:
+                    None.
                 % endif
             </td>
         </tr>
         % endfor
     </table>
 
-    % if evidence.case_id is not None:
-        % if check_perms(evidence, 'check-in-out'):
-            <br />
-            % if evidence.current_status.check_in == True:
-            <p><a href='${urls.build("evidence.custody_out", dict(case_id=evidence.case.case_name, evidence_id=evidence.reference))|h}'>Check out the evidence</a></p>
-            % else:
-            <p><a href='${urls.build("evidence.custody_in", dict(case_id=evidence.case.case_name, evidence_id=evidence.reference))|h}'>Check in the evidence</a></p>
-            % endif
+    % if check_perms(evidence, 'check-in-out'):
+        <br />
+        % if evidence.current_status.check_in == True:
+        <p><a href='${urls.build("evidence.custody_out", dict(evidence_id=evidence.reference))|h}'>Check out the evidence</a></p>
+        % else:
+        <p><a href='${urls.build("evidence.custody_in", dict(evidence_id=evidence.reference))|h}'>Check in the evidence</a></p>
         % endif
     % endif
 
 
     <h2>Photographs</h2>
     % if evidence.photographs:
-    <% import os %>
-    % for file in os.listdir(photo_location):
-        <img src="${urls.build('evidence_photos', dict(file=str(evidence.id) + '//' + file))|h}" height="200px"/>
-    % endfor
+        <% import os %>
+        % for file in os.listdir(photo_location):
+            <img src="${urls.build('evidence_photos', dict(file=str(evidence.id) + '//' + file))|h}" height="200px"/>
+        % endfor
+    % else:
+        <p>No photographs.</p>
     % endif
 </div>

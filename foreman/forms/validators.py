@@ -433,12 +433,9 @@ class GetEvidenceType(GetObject):
     allow_null = False
 
     def getObject(self, evidence_type):
-        evidence_types = {}
         for evi in ForemanOptions.get_evidence_types():
-            evidence_types[evi.evidence_type.replace(" ","").lower()] = evi.evidence_type
-
-        if evidence_type in evidence_types.keys():
-            return evidence_types[evidence_type]
+                if evidence_type == evi.replace(" ","").lower():
+                    return evi
         else:
             return None
 

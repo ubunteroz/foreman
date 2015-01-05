@@ -20,8 +20,14 @@
 </div>
 <div id="mainbar">
     <h1>Edit ${evidence.reference|h}</h1>
-    <p><a href="${urls.build('evidence.view', dict(evidence_id=evidence.reference, case_id=evidence.case.case_name))|h}">Back to Evidence</a> |
+
+    % if evidence.case is not None:
+        <p><a href="${urls.build('evidence.view', dict(evidence_id=evidence.reference, case_id=evidence.case.case_name))|h}">Back to Evidence</a> |
        <a href="${urls.build('case.view', dict(case_id=evidence.case.case_name))|h}">Back to Case</a></p>
+    % else:
+        <p><a href="${urls.build('evidence.view_caseless', dict(evidence_id=evidence.reference))|h}">Back to Evidence</a></p>
+    % endif
+
 
     <div id="tabs">
         <ul>
@@ -64,7 +70,7 @@
             </table>
 
             <h2>Edit Evidence Details</h2>
-            <form method="post" action="${urls.build('evidence.edit', dict(evidence_id=evidence.reference, case_id=evidence.case.case_name, form='edit_evidence'))|h}">
+            <form method="post" action="${urls.build('evidence.edit', dict(evidence_id=evidence.reference, form='edit_evidence'))|h}">
                 ${forms.formTextField("Reference", "reference", "reference", "form_label", "input_long", first=True, value=evidence.reference)}
                 ${forms.formTextField("Bag Number", "bag_num", "bag_num", "form_label", "input_long", value=evidence.evidence_bag_number)}
                 ${forms.formSelectBox("Evidence Type", "type", "type", "form_label", "input_long", evidence_type_options, please_select=True, value=evidence.type)}
@@ -89,7 +95,7 @@
 
             <h2>Edit Photographs</h2>
 
-            <form method="post" enctype="multipart/form-data" action="${urls.build('evidence.edit', dict(evidence_id=evidence.reference, case_id=evidence.case.case_name, form='edit_image'))|h}">
+            <form method="post" enctype="multipart/form-data" action="${urls.build('evidence.edit', dict(evidence_id=evidence.reference, form='edit_image'))|h}">
                 ${forms.formTextField("Upload new photograph", "photo_1", "photo_1", "form_label", "input_long", first=True, input_type="file")}
                 ${forms.formTextField("Upload new photograph", "photo_2", "photo_2", "form_label", "input_long", input_type="file")}
                 ${forms.formTextField("Upload new photograph", "photo_3", "photo_3", "form_label", "input_long", input_type="file")}
@@ -140,7 +146,7 @@
             <img src="${urls.build('evidence_qr_code', dict(file=str(evidence.id) + '.png'))|h}" width="200px"/>
             % endif
 
-            <form method="post" action="${urls.build('evidence.edit', dict(evidence_id=evidence.reference, case_id=evidence.case.case_name, form='edit_qr'))|h}">
+            <form method="post" action="${urls.build('evidence.edit', dict(evidence_id=evidence.reference, form='edit_qr'))|h}">
                 ${forms.formCheckBoxes("Generate QR Code", "qr_code", "qr_code", "qr_code", "form_label", "radio_input_short", checked=evidence.qr_code, first=True)}
                 % if evidence.qr_code:
                     ${forms.formTextArea("QR code text", "qr_code_text", "qr_code_text", "form_label", "addeditcase", value=evidence.qr_code_text)}

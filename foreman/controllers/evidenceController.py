@@ -10,41 +10,49 @@ from ..forms.forms import ChainOfCustodyForm, EditEvidenceForm, EditEvidencePhot
 
 class EvidenceController(BaseController):
 
-    def add(self, case_id):
-        case = self._validate_case(case_id)
-        if case is not None:
-            self.check_permissions(self.current_user, case, 'add-evidence')
-            if self.validate_form(AddEvidenceForm()):
-                for entry in self.form_result['photo']:
-                    if entry is not None:
-                        photos = True
-                        break
-                else:
-                    photos = False
-                evi = Evidence(case, self.form_result['reference'], self.form_result['type'],
-                               self.form_result['comments'], self.form_result['originator'], self.form_result['location'],
-                               self.current_user, self.form_result['bag_num'], photos, self.form_result['qr'])
-                session.add(evi)
-                session.flush()
-                evi.create_qr_code()
-                evi.add_change(self.current_user)
-                return self.custody_in(case.case_name, evi.reference, True, initial=True)
-            else:
-                evidence_type_options = [(evi.replace(" ", "").lower(), evi) for evi in
-                                         ForemanOptions.get_evidence_types()]
-                return self.return_response('pages', 'add_evidence.html', case=case, errors=self.form_error,
-                                            evidence_type_options=evidence_type_options)
-        else:
-            return self.return_404()
+    def add_no_case(self):
+        return self.add(None)
 
-    def edit(self, case_id, evidence_id):
-        evidence = self._validate_evidence(evidence_id, case_id)
+    def add(self, case_id):
+        if case_id is not None:
+            case = self._validate_case(case_id)
+            if case is not None:
+                self.check_permissions(self.current_user, case, 'add-evidence')
+            else:
+                return self.return_404()
+        else:
+            case = None
+            self.check_permissions(self.current_user, 'Evidence', 'add')
+
+        if self.validate_form(AddEvidenceForm()):
+            for entry in self.form_result['photo']:
+                if entry is not None:
+                    photos = True
+                    break
+            else:
+                photos = False
+            evi = Evidence(case, self.form_result['reference'], self.form_result['type'],
+                           self.form_result['comments'], self.form_result['originator'], self.form_result['location'],
+                           self.current_user, self.form_result['bag_num'], photos, self.form_result['qr'])
+            session.add(evi)
+            session.flush()
+            evi.create_qr_code()
+            evi.add_change(self.current_user)
+            return self.custody_in(evi.reference, True, initial=True)
+        else:
+            evidence_type_options = [(evi.replace(" ", "").lower(), evi) for evi in
+                                     ForemanOptions.get_evidence_types()]
+            return self.return_response('pages', 'add_evidence.html', case=case, errors=self.form_error,
+                                        evidence_type_options=evidence_type_options)
+
+    def edit(self, evidence_id):
+        evidence = self._validate_evidence(evidence_id)
         if evidence is not None:
             self.check_permissions(self.current_user, evidence, 'edit')
 
             photo_location = path.join(ROOT_DIR, 'static', 'evidence_photos', str(evidence.id))
             form_type = multidict_to_dict(self.request.args)
-            evidence_type_options = [(evi.evidence_type.replace(" ", "").lower(), evi.evidence_type) for evi in
+            evidence_type_options = [(evi.replace(" ", "").lower(), evi) for evi in
                                          ForemanOptions.get_evidence_types()]
             success = False
             active_tab = 0
@@ -103,6 +111,7 @@ class EvidenceController(BaseController):
             confirm_close = multidict_to_dict(self.request.args)
             if 'confirm' in confirm_close and confirm_close['confirm'] == "true":
                 evidence.disassociate()
+                evidence.add_change(self.current_user)
                 closed = True
 
             return self.return_response('pages', 'disassociate_evidence.html', evidence=evidence, closed=closed, case=case)
@@ -154,6 +163,7 @@ class EvidenceController(BaseController):
             reassign_cases = [(r_case.id, r_case.case_name) for r_case in Case.get_all()]
             if self.validate_form(EvidenceAssociateForm()):
                 evidence.associate(self.form_result['case_reassign'])
+                evidence.add_change(self.current_user)
                 return self.return_response('pages', 'associate_evidence.html', evidence=evidence, success=True,
                                             reassign_cases=reassign_cases)
             else:
@@ -162,8 +172,10 @@ class EvidenceController(BaseController):
         else:
             return self.return_404()
 
-    def custody_in(self, case_id, evidence_id, check_in=True, initial=False):
-        evidence = self._validate_evidence(evidence_id, case_id)
+    def custody_in(self, evidence_id, check_in=True, initial=False):
+
+        evidence = self._validate_evidence(evidence_id)
+
         if evidence is not None:
             self.check_permissions(self.current_user, evidence, 'check-in-out')
 
@@ -178,19 +190,21 @@ class EvidenceController(BaseController):
                     evidence.check_out(self.form_result['user'], self.current_user, full_date,
                                        self.form_result['comments'], self.form_result['attach'],
                                        self.form_result['label'])
-                return self.view(case_id, evidence_id)
+                if evidence.case is not None:
+                    return self.view(evidence.case.case_id, evidence_id)
+                else:
+                    return self.view_caseless(evidence_id)
             else:
                 return self.return_response('pages', 'evidence_custody_change.html', evidence=evidence,
                                             checkin=check_in, errors=self.form_error)
         else:
             return self.return_404()
 
-    def custody_out(self, case_id, evidence_id):
-        return self.custody_in(case_id, evidence_id, False)
+    def custody_out(self, evidence_id):
+        return self.custody_in(evidence_id, False)
 
     @staticmethod
     def _get_evidence_history_changes(evidence):
         history = EvidenceHistory.get_changes(evidence)
         history.sort(key=lambda d: d['date_time'])
         return history
-

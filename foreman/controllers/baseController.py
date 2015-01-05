@@ -183,6 +183,10 @@ class BaseController():
 
     @staticmethod
     def _validate_user(user_id):
+        try:
+            int(user_id)
+        except ValueError:
+            return None
         user = User.get_filter_by(id=user_id).first()
         return user
 

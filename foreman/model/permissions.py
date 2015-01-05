@@ -329,11 +329,19 @@ permissions = {
                             PrivateTaskChecker())),
     ('Evidence', 'dis-associate'): And(Or(AdminChecker(), CaseManagerForEvidenceChecker()), Not(ArchivedEvidenceChecker())),
     ('Evidence', 'remove'): And(Or(AdminChecker(), CaseManagerForEvidenceChecker()), Not(ArchivedEvidenceChecker())),
+    ('Evidence', 'add'): And(Or(AdminChecker(), InvestigatorChecker(), CaseManagerChecker())),
     ('Evidence', 'edit'): And(
                             Or(AdminChecker(),
-                                CaseManagerForEvidenceChecker(),
-                                InvestigatorForEvidenceChecker(),
-                                QAForEvidenceChecker()),
+                            And(
+                                Or(CaseManagerChecker(),
+                                    InvestigatorChecker(),
+                                    QAChecker()),
+                                Not(PrivateEvidenceChecker())),
+                            And(
+                                Or(InvestigatorForEvidenceChecker(),
+                                    QAForEvidenceChecker(),
+                                    CaseManagerForEvidenceChecker()),
+                                PrivateTaskChecker())),
                             Not(ArchivedEvidenceChecker())),
     ('Evidence', 'check-in-out'): And(
                             Or(AdminChecker(),

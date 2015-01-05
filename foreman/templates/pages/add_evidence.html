@@ -10,11 +10,22 @@
     ${sidebars.tasks_menu()}
 </div>
 <div id="mainbar">
-    <h1>Add Evidence to case ${case.case_name|h}: Section 1 of 2</h1>
-    <p><a href="${urls.build('case.view', dict(case_id=case.case_name))|h}">Back to Case</a></p>
+
+    % if case is None:
+        <h1>Add Evidence: Section 1 of 2</h1>
+    % else:
+        <h1>Add Evidence to case ${case.case_name|h}: Section 1 of 2</h1>
+        <p><a href="${urls.build('case.view', dict(case_id=case.case_name))|h}">Back to Case</a></p>
+    % endif
+
 
     <h2>Add Evidence Details</h2>
-    <form method="post" action="${urls.build('evidence.add', dict(case_id=case.case_name, form='add_evidence'))|h}">
+    % if case is None:
+        <form method="post" action="${urls.build('evidence.add_no_case', dict(form='add_evidence'))|h}">
+    % else:
+        <form method="post" action="${urls.build('evidence.add', dict(case_id=case.case_name, form='add_evidence'))|h}">
+    % endif
+
         ${forms.formTextField("Reference", "reference", "reference", "form_label", "input_long", first=True)}
         ${forms.formTextField("Bag Number", "bag_num", "bag_num", "form_label", "input_long")}
         ${forms.formSelectBox("Evidence Type", "type", "type", "form_label", "input_long", evidence_type_options, please_select=True)}

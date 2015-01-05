@@ -438,19 +438,21 @@ class EvidenceHistory(HistoryModel, Base):
 
     evidence = relation('Evidence', backref=backref('history', order_by=asc(date_time)))
     user = relation('User', backref=backref('evidence_history_changes'))
-    case = relation('Case', backref=backref('evidence_history', order_by=asc(reference)))
+    #case = relation('Case', backref=backref('evidence_history', order_by=asc(reference)))
 
     object_name = "Evidence"
     comparable_fields = {'Type': 'type',
                          'Reference': 'reference',
                          'Location': 'location',
                          'Evidence Bag Number': 'evidence_bag_number',
-                         'Originator': 'originator'}
+                         'Originator': 'originator',
+                         'Associated Case': 'case_id'}
     history_name = ("Evidence", "reference")
 
     def __init__(self, evidence, user):
         self.evidence = evidence
-        self.case = evidence.case
+        #self.case = evidence.case
+        self.case_id = evidence.case_id
         self.type = evidence.type
         self.qr_code = evidence.qr_code
         self.qr_code_text = evidence.qr_code_text
@@ -487,9 +489,9 @@ class EvidenceHistory(HistoryModel, Base):
             differences['QR Code Text'] = ("'" + self.qr_code_text + "'", "'" + evidence_history.qr_code_text + "'")
         if self.case_id != evidence_history.case_id:
             if self.case_id is None:
-                differences['Case'] = ("ADD", self.case.case_name)
+                differences['Associated Case'] = ("None", Case.get(evidence_history.case_id))
             else:
-                differences['Case'] = ("DEL", evidence_history.case.case_name)
+                differences['Associated Case'] = (Case.get(self.case_id), "None")
         return differences
 
 
@@ -534,8 +536,13 @@ class Evidence(Base, Model):
             self.qr_code_text = ""
 
     def generate_qr_code_text(self):
-        return "Case: {} | Ref: {} | Date Added: {} | Added by: {}".format(self.case.case_name, self.reference,
+        if self.case is not None:
+            return "Case: {} | Ref: {} | Date Added: {} | Added by: {}".format(self.case.case_name, self.reference,
                                                                            self.date_added, self.user.fullname)
+        else:
+            return "Case: None Assigned | Ref: {} | Date Added: {} | Added by: {}".format(self.reference,
+                                                                                          self.date_added,
+                                                                                          self.user.fullname)
 
     def check_in(self, custodian, user, date, comment, attachment=None, label=None):
         chain = ChainOfCustody(self, user, custodian, date, True, comment)
@@ -565,9 +572,11 @@ class Evidence(Base, Model):
 
     def disassociate(self):
         self.case_id = None
+        session.flush()
 
     def associate(self, case):
         self.case = case
+        session.flush()
 
     @property
     def current_status(self):
@@ -577,6 +586,10 @@ class Evidence(Base, Model):
     @property
     def icon(self):
         return self.type.replace(" ", "").lower()
+
+    @property
+    def date(self):
+        return ForemanOptions.get_date(self.date_added)
 
 
 class TaskStatus(Base, HistoryModel):
