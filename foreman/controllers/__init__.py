@@ -5,6 +5,7 @@ from forensicsController import ForensicsController
 from userController import UserController
 from evidenceController import EvidenceController
 from reportController import ReportController
+from exportController import ExportController
 
 controller_lookup = {
                'general': GeneralController,
@@ -14,4 +15,5 @@ controller_lookup = {
                'user': UserController,
                'evidence': EvidenceController,
                'report': ReportController,
+               'export': ExportController
                }

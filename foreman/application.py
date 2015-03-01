@@ -157,6 +157,10 @@ class Application(object):
         map.add(Rule('/json/jason_tasks_assigned_to_inv/', endpoint='report.jason_tasks_assigned_to_inv'))
         map.add(Rule('/json/jason_tasks_qaed/', endpoint='report.jason_tasks_qaed'))
 
+        map.add(Rule('/export/<case_id>/<task_id>.pdf', endpoint='export.pdf'))
+        map.add(Rule('/export/<case_id>/<task_id>.rtf', endpoint='export.rtf'))
+        map.add(Rule('/export/<case_id>/<task_id>.csv', endpoint='export.csv'))
+
         # Static rules -- these never match, they're only used for building.
         for k in staticLocations:
             map.add(Rule('%s/<file>' % k, endpoint=k.strip('/'), build_only=True))

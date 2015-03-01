@@ -89,16 +89,16 @@
             % if csv_location is not None:
             <p>Export the notes to
                 % if pdf_location is not None:
-                <a href='${pdf_location|h}'>PDF</a>,
+                <a href='${urls.build("export.pdf", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>PDF</a>,
                 % endif
                 % if rtf_location is not None:
-                <a href='${rtf_location|h}'>RTF</a>,
+                <a href='${urls.build("export.rtf", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>RTF</a>,
                 % endif
 
                 % if pdf_location and rtf_location:
                 and
                 % endif
-                <a href='${csv_location|h}'>spreadsheet</a>.</p>
+                <a href='${urls.build("export.csv", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>spreadsheet</a>.</p>
             % endif
 
             % if len(case_note_dates) > 0:

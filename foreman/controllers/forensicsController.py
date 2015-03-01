@@ -6,7 +6,6 @@ from baseController import BaseController, lookup, jsonify
 from ..model import Task, Case, TaskNotes, UserRoles, UserMessage, TaskStatus
 from ..forms.forms import QACheckerForm, AddTaskNotesForm, AssignQAForm, AssignQAFormSingle, AskForQAForm
 from ..utils.utils import session, multidict_to_dict, config
-from ..utils.case_note_renders import render_rtf, render_csv, render_pdf
 from ..utils.mail import email
 
 
@@ -65,21 +64,10 @@ class ForensicsController(BaseController):
             else:
                 qa_partners = None
 
-            rtf_location = csv_location = pdf_location = None
-            if len(task.notes) != 0:
-                pdf = render_rtf(task.notes)
-                if pdf:
-                    pdf_location = r"file:///" + path.abspath(pdf).replace("\\", "/")
-                rtf = render_rtf(task.notes)
-                if rtf:
-                    rtf_location = r"file:///" + path.abspath(rtf).replace("\\", "/")
-                csv_location = r"file:///" + path.abspath(render_csv(task.notes)).replace("\\", "/")
-
             case_note_dates = list(OrderedDict.fromkeys([notes.date_time.strftime("%d %b %Y") for notes in task.notes]))
             return self.return_response('pages', 'update_forensics.html', task=task, success=success, start=start,
                                        qa_partner_list=qa_partner_list, success_qa=success_qa, qa_partners=qa_partners,
-                                       case_note_dates=case_note_dates, rtf_location=rtf_location,
-                                       csv_location=csv_location, pdf_location=pdf_location)
+                                       case_note_dates=case_note_dates)
         else:
             return self.return_404()
 

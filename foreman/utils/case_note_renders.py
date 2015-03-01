@@ -1,3 +1,5 @@
+from cStringIO import StringIO
+
 try:
     from PyRTF import *
     rtf_import = True
@@ -31,7 +33,7 @@ def create_rtf(notes):
 
     title = 'Case Notes for {} - {}'.format(notes[0].task.case.case_name, notes[0].task.task_name)
 
-    logo = path.join(ROOT_DIR, 'static', 'images', 'logo', 'logo.png')
+    logo = path.join(ROOT_DIR, 'static', 'images', 'logo', 'logortf.png')
     image = Image(logo)
     section.Header.append(image)
     section.Header.append(title)
@@ -72,46 +74,35 @@ def rtf_encode(unistr):
     return ''.join(rtf_encode_char(c) for c in unistr)
 
 
-def get_name(notes, ext):
-    location = path.join(ROOT_DIR, 'notes')
-    name = '{} {} Notes'.format(notes[0].task.case.case_name, notes[0].task.task_name)
-    file_location = path.join(location, '{}.{}'.format(name, ext))
-    return file_location, name
+def render_rtf(notes, render_file=None):
+    if render_file is None:
+        render_file = StringIO()
 
-
-def render_rtf(notes):
     if rtf_import:
         dr = Renderer()
         doc = create_rtf(notes)
-        file_location, name = get_name(notes, "rtf")
-        dr.Write(doc, open_file(name))
-        move(name, file_location)
-        return file_location
+        dr.Write(doc, render_file)
+        return render_file
     else:
         return None
 
 
-def render_csv(notes):
-    file_location, name = get_name(notes, "csv")
+def render_csv(notes, render_file=None):
+    if render_file is None:
+        render_file = StringIO()
 
-    with open(file_location, 'wb') as f:
-        writer = csv.writer(f)
-        writer.writerow(["Date", "Author", "Hash", "Note"])
-        for note in notes:
-            writer.writerow([note.date, note.author.fullname, note.hash, note.note.encode("utf-8")])
+    writer = csv.writer(render_file)
+    writer.writerow(["Date", "Author", "Hash", "Note"])
+    for note in notes:
+        writer.writerow([note.date, note.author.fullname, note.hash, note.note.encode("utf-8")])
 
-    return file_location
-
-
-def convert_html_to_pdf(source_html, output_filename):
-    if path.exists(output_filename):
-        remove(output_filename)
-    with open(output_filename, "wb") as result_file:
-        pisa.CreatePDF(source_html, dest=result_file)
+    return render_file
 
 
-def convert_notes_into_html(notes, name):
+def convert_notes_into_html(notes):
     logo = path.abspath(path.join(ROOT_DIR, 'static', 'images', 'logo', 'logo.jpg'))
+    name = '{} {} Notes'.format(notes[0].task.case.case_name, notes[0].task.task_name)
+
     html = u'''<html>
     <head>
     <style>
@@ -151,13 +142,13 @@ def convert_notes_into_html(notes, name):
     return html
 
 
-def render_pdf(notes):
+def render_pdf(notes, render_file=None):
+    if render_file is None:
+        render_file = StringIO()
+
     if pdf_import:
-        file_location, name = get_name(notes, "pdf")
-        convert_html_to_pdf(convert_notes_into_html(notes, name), name)
-        if path.exists(file_location):
-            remove(file_location)
-        move(name, file_location)
-        return file_location
+        html = convert_notes_into_html(notes)
+        pisa.CreatePDF(html.encode("utf-8"), render_file)
+        return render_file
     else:
         return None
