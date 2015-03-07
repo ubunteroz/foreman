@@ -1,6 +1,6 @@
 # python imports
 from datetime import datetime
-from hashlib import sha256
+import hashlib
 from os import path, rename, remove
 import shutil
 import calendar
@@ -13,7 +13,13 @@ from werkzeug.exceptions import Forbidden
 from models import Base, Model, HistoryModel
 from generalModel import ForemanOptions, TaskCategory, TaskType
 from userModel import UserTaskRoles, User, UserCaseRoles
-from ..utils.utils import session, ROOT_DIR
+from ..utils.utils import session, ROOT_DIR, config
+
+hash_algorithm = config.get('forensics', 'hash_type').lower()
+if hash_algorithm not in hashlib.algorithms:
+    raise Exception('\n\nUnknown hash algorithm: {} in your config file.\n\n Please choose from: \n{}'.format(
+        hash_algorithm, hashlib.algorithms))
+hash_library = getattr(hashlib, hash_algorithm)
 
 
 class LinkedCase(Base, Model):
@@ -693,7 +699,7 @@ class TaskUpload(Base, Model):
 
     def compute_hash(self):
         f = open(path.join(self.ROOT, self.upload_location, self.file_name), "rb")
-        d = sha256()
+        d = hash_library()
         for buf in f.read(128):
             d.update(buf)
         return d.hexdigest()
@@ -722,14 +728,14 @@ class TaskNotes(Base, Model):
         self.author_id = author_id
         self.task_id = task_id
         self.date_time = datetime.now()
-        self.hash = sha256(self.note.encode("utf-8")).hexdigest()
+        self.hash = hash_library(self.note.encode("utf-8")).hexdigest()
 
     @property
     def date(self):
         return ForemanOptions.get_date(self.date_time)
 
     def check_hash(self):
-        return self.hash == sha256(self.note.encode("utf-8")).hexdigest()
+        return self.hash == hash_library(self.note.encode("utf-8")).hexdigest()
 
 
 class TaskHistory(Base, HistoryModel):
