@@ -208,4 +208,26 @@
         <p>No notes have been added yet. </p>
     % endif
 
+    <h2>File Uploads</h2>
+
+    % if check_perms(task, 'work'):
+        <p><a href='${urls.build("forensics.work", dict(task_id=task.task_name, case_id=task.case.case_name, active_tab=2))|h}'>Upload a File</a></p>
+    % endif
+
+    <% count = 0 %>
+    % for upload in task.task_uploads:
+        % if upload.deleted is False:
+            <% count += 1 %>
+            <div class="task_uploads">
+                <img src='${urls.build("images", dict(file="siteimages/icons/document.png"))|h}' class='evidenceicon' />
+                <p><a href='${urls.build("task.view_upload", dict(task_id=task.task_name,case_id=task.case.case_name, upload_id=upload.id))|h}'>${upload.file_title|h}</a>
+                <br/>Uploaded: ${upload.date|h}</p>
+            </div>
+        % endif
+    % endfor
+
+    % if count == 0:
+        <p>No uploaded files.</p>
+    % endif
+
 </div>

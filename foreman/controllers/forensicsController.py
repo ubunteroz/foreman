@@ -1,10 +1,13 @@
 from collections import OrderedDict
 from os import path
+import random
+import string
 
 # local imports
 from baseController import BaseController, lookup, jsonify
-from ..model import Task, Case, TaskNotes, UserRoles, UserMessage, TaskStatus
+from ..model import Task, Case, TaskNotes, UserRoles, UserMessage, TaskUpload
 from ..forms.forms import QACheckerForm, AddTaskNotesForm, AssignQAForm, AssignQAFormSingle, AskForQAForm
+from ..forms.forms import UploadTaskFile
 from ..utils.utils import session, multidict_to_dict, config
 from ..utils.mail import email
 
@@ -21,6 +24,8 @@ class ForensicsController(BaseController):
             success = False
             start = False
             success_qa = False
+            success_upload = False
+            active_tab = int(form_type['active_tab']) if 'active_tab' in form_type else 0
 
             if 'add_notes' in form_type and form_type['add_notes'] == "true" and self.validate_form(AddTaskNotesForm()):
                 task.add_note(self.form_result['notes'], self.current_user)
@@ -50,6 +55,29 @@ class ForensicsController(BaseController):
                     session.add(mail)
                     email([qa_partners.email], self.form_result['subject'], self.form_result['body'],
                           config.get('email', 'from_address'))
+            elif 'upload_file' in form_type and form_type['upload_file'] == "true":
+                if self.validate_form(UploadTaskFile()):
+                    f = self.form_result['file']
+
+                    unused_file_name, file_ext = path.splitext(f.filename.split(path.sep)[-1])
+                    # make random file name that is 15 characters/numbers long to prevent 2 users uploading same
+                    # file at same time
+                    file_name = ''.join(random.SystemRandom().choice(
+                        string.ascii_uppercase + string.digits) for _ in range(15)) + file_ext
+
+                    new_directory = path.join(TaskUpload.ROOT, TaskUpload.DEFAULT_FOLDER,
+                                              str(task.case.id) + "_" + str(task.id))
+                    new_location = path.join(new_directory, file_name)
+
+                    f.save(new_location)
+                    f.close()
+
+                    upload = TaskUpload(self.current_user.id, task.id, task.case.id, file_name,
+                                        self.form_result['comments'], self.form_result['file_title'])
+                    session.add(upload)
+                    session.commit()
+                    success_upload = True
+                active_tab = 2
             elif "status" in form_type:
                 if form_type["status"] == "start_work":
                     task.start_work(self.current_user)
@@ -67,7 +95,8 @@ class ForensicsController(BaseController):
             case_note_dates = list(OrderedDict.fromkeys([notes.date_time.strftime("%d %b %Y") for notes in task.notes]))
             return self.return_response('pages', 'update_forensics.html', task=task, success=success, start=start,
                                        qa_partner_list=qa_partner_list, success_qa=success_qa, qa_partners=qa_partners,
-                                       case_note_dates=case_note_dates)
+                                       case_note_dates=case_note_dates, success_upload=success_upload,
+                                       active_tab=active_tab, errors=self.form_error)
         else:
             return self.return_404()
 

@@ -305,4 +305,8 @@ class OptionsForm(Schema):
     upload_case_names = UploadNames()
     upload_task_names = UploadNames()
 
-    # chained_validators = [NotEmptyCaseUpload(), NotEmptyTaskUpload()]
+
+class UploadTaskFile(Schema):
+    file_title = v.UnicodeString(not_empty=True)
+    comments = v.UnicodeString(not_empty=True)
+    file = UploadTaskFiles(not_empty=True)

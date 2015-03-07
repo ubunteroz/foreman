@@ -8,7 +8,8 @@
     <script src="${urls.build('javascript', dict(file='jquery-ui-1.10.4.custom.min.js'))|h}"></script>
     <script>
         $(function() {
-        $( "#tabs" ).tabs();
+            $( "#tabs" ).tabs();
+            $( "#tabs" ).tabs({ active: ${active_tab}});
         });
 
          $(function() {
@@ -84,21 +85,10 @@
             % else:
                 % if len(task.notes) != 0:
                     <h2>Case Notes</h2>
-                % endif
 
-            % if csv_location is not None:
-            <p>Export the notes to
-                % if pdf_location is not None:
-                <a href='${urls.build("export.pdf", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>PDF</a>,
-                % endif
-                % if rtf_location is not None:
-                <a href='${urls.build("export.rtf", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>RTF</a>,
-                % endif
-
-                % if pdf_location and rtf_location:
-                and
-                % endif
-                <a href='${urls.build("export.csv", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>spreadsheet</a>.</p>
+                    <p>Export the notes to <a href='${urls.build("export.pdf", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>PDF</a>,
+                        <a href=""></a><a href='${urls.build("export.rtf", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>RTF</a>, and
+                        <a href='${urls.build("export.csv", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>spreadsheet</a>.</p>
             % endif
 
             % if len(case_note_dates) > 0:
@@ -205,9 +195,25 @@
             % if task.status == task_statuses['start']:
             ${not_yet_begun()}
             % else:
+
+            % if success_upload:
+            <div class="success">
+                <h1>Success!</h1>
+                <p>The file has been successfully uploaded. Please go to the
+                    <a href='${urls.build("task.view", dict(case_id=task.case.case_name, task_id=task.task_name))|h}'>task overview</a> to see the uploaded files.</p>
+            </div>
+            % endif
+
             <h2>Upload file</h2>
 
-            <p>Upload file...</p>
+            <form method="post" enctype="multipart/form-data" action="${urls.build('forensics.work', dict(task_id=task.task_name,case_id=task.case.case_name, upload_file='true'))|h}">
+                ${forms.formTextField("File Title", "file_title", "file_title", "form_label", "input_long", first=True)}
+                ${forms.formTextArea("Comments", "comments", "comments", "form_label", "addeditcase")}
+                ${forms.formTextField("File", "file", "file", "form_label", "input_long", input_type="file")}
+
+                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+            </form>
+
             % endif
         </div>
         % endif

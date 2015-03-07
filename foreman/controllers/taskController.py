@@ -1,10 +1,11 @@
 # library imports
+from os import path, listdir
 from werkzeug import Response
 from werkzeug.utils import redirect
 # local imports
 from baseController import BaseController, lookup, jsonify
 from ..model import Task, UserTaskRoles, UserRoles, TaskStatus, TaskHistory, ForemanOptions, TaskType
-from ..utils.utils import multidict_to_dict, session
+from ..utils.utils import multidict_to_dict, session, ROOT_DIR
 from ..forms.forms import AssignInvestigatorForm, EditTaskUsersForm, EditTaskForm, AddTaskForm, RequesterAddTaskForm
 
 
@@ -35,6 +36,29 @@ class TaskController(BaseController):
         if task is not None:
             self.check_permissions(self.current_user, task, 'view')
             return self.return_response('pages', 'view_task.html', task=task)
+        else:
+            return self.return_404()
+
+    def view_upload(self, case_id, task_id, upload_id):
+        upload = self._validate_upload(case_id, task_id, upload_id)
+        if upload is not None:
+            self.check_permissions(self.current_user, upload.task, 'view')
+            return self.return_response('pages', 'view_upload.html', upload=upload)
+        else:
+            return self.return_404()
+
+    def delete_upload(self, case_id, task_id, upload_id):
+        upload = self._validate_upload(case_id, task_id, upload_id)
+        if upload is not None:
+            self.check_permissions(self.current_user, upload.task, 'edit')
+
+            closed = False
+            confirm_close = multidict_to_dict(self.request.args)
+            if 'confirm' in confirm_close and confirm_close['confirm'] == "true":
+                upload.delete()
+                closed = True
+
+            return self.return_response('pages', 'delete_upload.html', upload=upload, closed=closed)
         else:
             return self.return_404()
 

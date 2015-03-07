@@ -15,6 +15,7 @@ sys.path.append('foreman')
 
 staticLocations = {
     '/css': path.join(ROOT_DIR, 'static', 'css'),
+    '/files': path.join(ROOT_DIR, 'files'),
     '/images': path.join(ROOT_DIR, 'static', 'images'),
     '/javascript': path.join(ROOT_DIR, 'static', 'javascript'),
     '/evidence_photos': path.join(ROOT_DIR, 'static', 'evidence_photos'),
@@ -160,6 +161,9 @@ class Application(object):
         map.add(Rule('/export/<case_id>/<task_id>.pdf', endpoint='export.pdf'))
         map.add(Rule('/export/<case_id>/<task_id>.rtf', endpoint='export.rtf'))
         map.add(Rule('/export/<case_id>/<task_id>.csv', endpoint='export.csv'))
+
+        map.add(Rule('/cases/<case_id>/<task_id>/uploads/<upload_id>', endpoint='task.view_upload'))
+        map.add(Rule('/cases/<case_id>/<task_id>/uploads/<upload_id>/delete/', endpoint='task.delete_upload'))
 
         # Static rules -- these never match, they're only used for building.
         for k in staticLocations:

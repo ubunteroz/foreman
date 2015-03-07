@@ -9,7 +9,7 @@ from formencode import Invalid
 from formencode.variabledecode import variable_decode
 # local imports
 from ..utils.utils import session, ROOT_DIR, multidict_to_dict
-from ..model import User, CaseStatus, Case, Task, TaskStatus, Evidence, has_permissions, ForemanOptions
+from ..model import User, CaseStatus, Case, Task, TaskStatus, Evidence, has_permissions, ForemanOptions, TaskUpload
 
 lookup = TemplateLookup(directories=[path.join(ROOT_DIR, 'templates')], output_encoding='utf-8')
 
@@ -173,6 +173,22 @@ class BaseController():
         if case is not None:
             task = Task.get_filter_by(task_name=task_id, case_id=case.id).first()
             return task
+        else:
+            return None
+
+    @staticmethod
+    def _validate_upload(case_id, task_id, upload_id):
+        task = BaseController._validate_task(case_id, task_id)
+        if task is not None:
+            try:
+                int(upload_id)
+            except ValueError:
+                return None
+            upload = TaskUpload.get_filter_by(task_id=task.id, id=upload_id).first()
+            if upload is not None and upload.deleted is False:
+                return upload
+            else:
+                return None
         else:
             return None
 

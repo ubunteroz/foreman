@@ -242,6 +242,14 @@ div.evidence{
     width: 200px;
 }
 
+div.task_uploads{
+    border: solid lightslategrey 1px;
+    padding: 2px;
+    margin: 5px;
+    float:left;
+    width: 275px;
+}
+
 .speechbubble{
     width: 40px;
     height:36px;

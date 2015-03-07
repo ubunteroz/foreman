@@ -486,6 +486,10 @@ class Upload(v.FieldStorageUploadConverter):
                 raise Invalid(self.message('empty', state), value, state)
             else:
                 return None
+
+        # Formencode annoyingly checks whether the value is iterable by trying to iterate over it, which consumes
+        # the first line of the file. Rewind it again.
+        value.seek(0)
         uploaded_file = value
         if self.type is None or self.type in uploaded_file.content_type or self.type in \
                 uploaded_file.filename.split(path.sep)[-1].split('.', 1)[1]:
@@ -500,6 +504,24 @@ class Upload(v.FieldStorageUploadConverter):
         return file.filename.split(path.sep)[-1]
 
 
+class UploadWithoutStorage(v.FieldStorageUploadConverter):
+    """ Class to upload things """
+
+    accept_iterator = True
+
+    def _to_python(self, value, state):
+        if not value:
+            if self.not_empty is True:
+                raise Invalid(self.message('empty', state), value, state)
+            else:
+                return None
+
+        # Formencode annoyingly checks whether the value is iterable by trying to iterate over it, which consumes
+        # the first line of the file. Rewind it again.
+        value.seek(0)
+        return value
+
+
 class UploadCustodyAttachment(Upload):
     messages = {
         'invalid': 'An invalid file was uploaded.'
@@ -507,6 +529,12 @@ class UploadCustodyAttachment(Upload):
     folder = path.join(ROOT_DIR, 'static', 'evidence_custody_receipts')
     type = None  # allow all types
 
+
+class UploadTaskFiles(UploadWithoutStorage):
+    messages = {
+        'invalid': 'An invalid file was uploaded.'
+    }
+    type = None  # allow all types
 
 class UploadEvidencePhoto(Upload):
     messages = {

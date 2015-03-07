@@ -1,6 +1,6 @@
 # foreman imports
 from foreman.model import User, ForemanOptions, UserRoles, Case, UserCaseRoles, CaseType, CaseClassification, CaseStatus
-from foreman.model import TaskType, Task, TaskStatus, UserTaskRoles, EvidenceType, Evidence
+from foreman.model import TaskType, Task, TaskStatus, UserTaskRoles, EvidenceType, Evidence, TaskUpload
 from utils import session, config, ROOT_DIR
 from random import randint
 from os import path, mkdir, stat
@@ -382,7 +382,7 @@ def create_test_cases(case_managers, requestors, investigators):
 
         if rand >= 1:
             inv = create_test_tasks(new_case, investigators, rand_user)
-        create_evidence(new_case, inv, rand_user)
+            create_evidence(new_case, inv, rand_user)
     session.commit()
 
 
@@ -467,6 +467,18 @@ def create_test_tasks(case, investigators, rand_user):
             if rand == 1 or case.status == CaseStatus.ARCHIVED or case.status == CaseStatus.CLOSED:
                 new_task.set_status(TaskStatus.PROGRESS, new_task.principle_investigator)
                 rand = randint(0, 1)
+                rand1 = randint(0, 1)
+                if rand1 == 1:
+                    d = path.join(TaskUpload.ROOT, TaskUpload.DEFAULT_FOLDER, str(new_task.case_id) + "_" + str(new_task.id))
+                    if not path.exists(d):
+                        mkdir(d)
+                    with open(path.join(d, "example_upload.txt"), "w") as f:
+                        f.write("The ACPO guidelines!")
+
+                    upload = TaskUpload(inv.id, new_task.id, new_task.case_id, "example_upload.txt",
+                                        "Added to remind other investigators of the ACPO guidelines", "ACPO Guidelines")
+                    session.add(upload)
+                    session.commit()
                 if rand == 1 or case.status == CaseStatus.ARCHIVED or case.status == CaseStatus.CLOSED:
                     new_task.set_status(TaskStatus.QA, new_task.principle_investigator)
                     rand = randint(0, 1)

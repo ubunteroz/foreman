@@ -1,7 +1,7 @@
 # python imports
 from datetime import datetime
 from hashlib import sha256
-from os import path, rename
+from os import path, rename, remove
 import shutil
 import calendar
 # library imports
@@ -647,6 +647,61 @@ class TaskStatus(Base, HistoryModel):
     @property
     def task_name(self):
         return self.task.task_name
+
+
+class TaskUpload(Base, Model):
+    __tablename__ = 'task_uploads'
+
+    id = Column(Integer, primary_key=True)
+    task_id = Column(Integer, ForeignKey('tasks.id'))
+    date_time = Column(DateTime)
+    file_note = Column(Unicode)
+    file_hash = Column(Unicode)
+    uploader_id = Column(Integer, ForeignKey('users.id'))
+    file_name = Column(Unicode)
+    upload_location = Column(Unicode)
+    file_title = Column(Unicode)
+    deleted = Column(Boolean)
+
+    task = relation('Task', backref=backref('task_uploads', order_by=asc(date_time)))
+    uploader = relation('User', backref=backref('tasks_uploaded', order_by=asc(id)))
+
+    DEFAULT_FOLDER = 'task_uploads'
+    ROOT = path.join(ROOT_DIR, 'files')
+
+    def __init__(self, uploader_id, task_id, case_id, file_name, file_note, title):
+        self.uploader_id = uploader_id
+        self.task_id = task_id
+        self.date_time = datetime.now()
+        self.file_name = file_name
+        self.file_note = file_note
+        self.file_title = title
+        self.upload_location = path.join(TaskUpload.DEFAULT_FOLDER, str(case_id) + "_" + str(task_id))
+        self.file_hash = self.compute_hash()
+        self.deleted = False
+
+    @property
+    def date(self):
+        return ForemanOptions.get_date(self.date_time)
+
+    @property
+    def file_path(self):
+        return path.join(self.upload_location, self.file_name)
+
+    def check_hash(self):
+        return self.file_hash == self.compute_hash()
+
+    def compute_hash(self):
+        f = open(path.join(self.ROOT, self.upload_location, self.file_name), "rb")
+        d = sha256()
+        for buf in f.read(128):
+            d.update(buf)
+        return d.hexdigest()
+
+    def delete(self):
+        if path.exists(path.join(self.ROOT, self.upload_location, self.file_name)):
+            remove(path.join(self.ROOT, self.upload_location, self.file_name))
+        self.deleted = True
 
 
 class TaskNotes(Base, Model):

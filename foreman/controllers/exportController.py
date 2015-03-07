@@ -12,12 +12,15 @@ from ..utils.case_note_renders import render_rtf, render_csv, render_pdf
 
 class ExportController(BaseController):
 
+    error_msg = "Sorry, your administrator has not installed the package to render this type of file."
+
     def pdf(self, case_id, task_id):
         task = self._validate_task(case_id, task_id)
         if task is not None:
             self.check_permissions(self.current_user, task, 'view')
             stringio = render_pdf(task.notes)
-            return Response(stringio.getvalue(), direct_passthrough=True, mimetype='application/pdf', status=200)
+            if stringio is None:
+                return Response(self.error_msg, mimetype='text/html', status=200)
             return Response(stringio.getvalue(), direct_passthrough=True, mimetype='application/pdf', status=200)
         else:
             return self.return_404()
@@ -27,6 +30,8 @@ class ExportController(BaseController):
         if task is not None:
             self.check_permissions(self.current_user, task, 'view')
             stringio = render_rtf(task.notes)
+            if stringio is None:
+                return Response(self.error_msg, mimetype='text/html', status=200)
             return Response(stringio.getvalue(), direct_passthrough=True, mimetype='application/rtf', status=200)
         else:
             return self.return_404()

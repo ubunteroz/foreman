@@ -1,0 +1,69 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+
+<%def name="javascripts()" filter="trim">
+
+</%def>
+
+
+<div id="sidebar">
+    ${sidebars.tasks_menu()}
+</div>
+<div id="mainbar">
+    <h1>${upload.task.task_name|h}: ${upload.file_title|h}</h1>
+
+    <p>Download file: <a href='${urls.build("files", dict(file=upload.file_path))|h}'>${upload.file_title|h}</a></p>
+
+    <p>
+    % if check_perms(upload.task, 'edit'):
+        <a href='${urls.build("task.delete_upload", dict(upload_id=upload.id, task_id=upload.task.task_name,case_id=upload.task.case.case_name))|h}'>Delete Upload</a>
+    % endif
+
+    % if check_perms(upload.task, 'edit') and check_perms(upload.task, 'work'):
+        |
+    % endif
+
+    % if check_perms(upload.task, 'work'):
+        <a href='${urls.build("forensics.work", dict(task_id=upload.task.task_name, case_id=upload.task.case.case_name, active_tab=2))|h}'>Upload Another</a>
+    % endif
+    </p>
+
+    <h2>Upload Details</h2>
+    <table>
+        <tr>
+            <th>Case</th>
+            <td>
+                % if upload.task.case.private:
+                <a class="highlight" href='${urls.build("case.view", dict(case_id=upload.task.case.case_name))|h}'>${upload.task.case.case_name|h}</a>
+                % else:
+                <a href='${urls.build("case.view", dict(case_id=upload.task.case.case_name))|h}'>${upload.task.case.case_name|h}</a>
+                % endif
+            </td>
+        </tr>
+        <tr>
+            <th>Task</th>
+            <td><a href='${urls.build("task.view", dict(case_id=upload.task.case.case_name, task_id=upload.task.task_name))|h}'>${upload.task.task_name|h}</a></td>
+        </tr>
+        <tr>
+            <th>File title</th>
+            <td>${upload.file_title|h}</td>
+        </tr>
+        <tr>
+            <th>Date uploaded</th>
+            <td>${upload.date|h}</td>
+        </tr>
+        <tr>
+            <th>File hash</th>
+            <td>${upload.file_hash|h}</td>
+        </tr>
+        <tr>
+            <th>Uploader</th>
+            <td><a href='${urls.build("user.view", dict(user_id=upload.uploader.id))|h}'>${upload.uploader.fullname|h}</a></td>
+        </tr>
+        <tr>
+            <th>Notes</th>
+            <td>${upload.file_note|h}</td>
+        </tr>
+    </table>
+
+</div>
