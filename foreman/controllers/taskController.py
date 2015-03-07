@@ -42,7 +42,7 @@ class TaskController(BaseController):
     def view_upload(self, case_id, task_id, upload_id):
         upload = self._validate_upload(case_id, task_id, upload_id)
         if upload is not None:
-            self.check_permissions(self.current_user, upload.task, 'view')
+            self.check_permissions(self.current_user, upload.task, 'add_file')
             return self.return_response('pages', 'view_upload.html', upload=upload)
         else:
             return self.return_404()
@@ -50,12 +50,12 @@ class TaskController(BaseController):
     def delete_upload(self, case_id, task_id, upload_id):
         upload = self._validate_upload(case_id, task_id, upload_id)
         if upload is not None:
-            self.check_permissions(self.current_user, upload.task, 'edit')
+            self.check_permissions(self.current_user, upload.task, 'delete_file')
 
             closed = False
             confirm_close = multidict_to_dict(self.request.args)
             if 'confirm' in confirm_close and confirm_close['confirm'] == "true":
-                upload.delete()
+                upload.delete(self.current_user)
                 closed = True
 
             return self.return_response('pages', 'delete_upload.html', upload=upload, closed=closed)

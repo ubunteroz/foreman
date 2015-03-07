@@ -668,9 +668,12 @@ class TaskUpload(Base, Model):
     upload_location = Column(Unicode)
     file_title = Column(Unicode)
     deleted = Column(Boolean)
+    date_deleted = Column(DateTime)
+    deleter_id = Column(Integer, ForeignKey('users.id'))
 
     task = relation('Task', backref=backref('task_uploads', order_by=asc(date_time)))
-    uploader = relation('User', backref=backref('tasks_uploaded', order_by=asc(id)))
+    uploader = relation('User', backref=backref('files_uploaded_to_tasks', order_by=asc(id)), foreign_keys=uploader_id)
+    deleter = relation('User', backref=backref('files_deleted_from_tasks', order_by=asc(id)), foreign_keys=deleter_id)
 
     DEFAULT_FOLDER = 'task_uploads'
     ROOT = path.join(ROOT_DIR, 'files')
@@ -691,6 +694,10 @@ class TaskUpload(Base, Model):
         return ForemanOptions.get_date(self.date_time)
 
     @property
+    def deleted_date(self):
+        return ForemanOptions.get_date(self.date_deleted)
+
+    @property
     def file_path(self):
         return path.join(self.upload_location, self.file_name)
 
@@ -704,10 +711,32 @@ class TaskUpload(Base, Model):
             d.update(buf)
         return d.hexdigest()
 
-    def delete(self):
+    def delete(self, user):
         if path.exists(path.join(self.ROOT, self.upload_location, self.file_name)):
             remove(path.join(self.ROOT, self.upload_location, self.file_name))
         self.deleted = True
+        self.deleter = user
+        self.date_deleted = datetime.now()
+
+    @staticmethod
+    def get_changes_for_user(user):
+        q_added = session.query(TaskUpload).filter_by(uploader_id=user.id)
+        q_removed = session.query(TaskUpload).filter_by(deleter_id=user.id)
+
+        change_log = []
+        for entry in q_added.all():
+            change_log.append({'date': entry.date,
+                               'date_time': entry.date_time,
+                               'object': ("Task", entry.task.task_name),
+                               'change_log': "File '{}' was uploaded".format(entry.file_title)})
+
+        for entry in q_removed.all():
+            change_log.append({'date': entry.deleted_date,
+                               'date_time': entry.date_deleted,
+                               'object': ("Task", entry.task.task_name),
+                               'change_log': "File '{}' was deleted".format(entry.file_title)})
+        return change_log
+
 
 
 class TaskNotes(Base, Model):

@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from os import path
+from os import path, mkdir
 import random
 import string
 
@@ -69,6 +69,8 @@ class ForensicsController(BaseController):
                                               str(task.case.id) + "_" + str(task.id))
                     new_location = path.join(new_directory, file_name)
 
+                    if not path.exists(new_directory):
+                        mkdir(new_directory)
                     f.save(new_location)
                     f.close()
 
