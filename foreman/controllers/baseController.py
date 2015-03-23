@@ -211,12 +211,12 @@ class BaseController():
         if case_id:
             case = Case.get_filter_by(case_name=case_id).first()
             if case is not None:
-                evidence = Evidence.get_filter_by(case_id=case.id, reference=evidence_id).first()
+                evidence = Evidence.get_filter_by(case_id=case.id, id=evidence_id).first()
                 return evidence
             else:
                 return None
         else:
-            evidence = Evidence.get_filter_by(reference=evidence_id).first()
+            evidence = Evidence.get_filter_by(id=evidence_id).first()
             return evidence
 
     @staticmethod

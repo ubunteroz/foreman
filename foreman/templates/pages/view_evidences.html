@@ -21,7 +21,7 @@
             <div class="evidence">
                 <img alt="${evi.type|h} icon" src="${urls.build("images", dict(file='siteimages/evidence_icons/' + evi.icon + '.png'))|h}" style="float:left"/>
                 <p>No case associated.
-                <br/><a href='${urls.build("evidence.view_caseless", dict(evidence_id=evi.reference))|h}'>${evi.reference|h}</a></p>
+                <br/><a href='${urls.build("evidence.view_caseless", dict(evidence_id=evi.id))|h}'>${evi.reference|h}</a></p>
             </div>
 
         <div class="clear"/>
@@ -54,10 +54,10 @@
                 <img alt="${evi.type|h} icon" src="${urls.build("images", dict(file='siteimages/evidence_icons/' + evi.icon + '.png'))|h}" class="evidenceicon"/>
                 % if evi.case_id is not None:
                 <p><a href='${urls.build("case.view", dict(case_id=evi.case.case_name))|h}'>${evi.case.case_name|h}</a>
-                <br /><a href='${urls.build("evidence.view", dict(evidence_id=evi.reference, case_id=evi.case.case_name))|h}'>${evi.reference|h}</a></p>
+                <br /><a href='${urls.build("evidence.view", dict(evidence_id=evi.id, case_id=evi.case.case_name))|h}'>${evi.reference|h}</a></p>
                 % else:
                 <p>No case associated.
-                <br/><a href='${urls.build("evidence.view_caseless", dict(evidence_id=evi.reference))|h}'>${evi.reference|h}</a></p>
+                <br/><a href='${urls.build("evidence.view_caseless", dict(evidence_id=evi.id))|h}'>${evi.reference|h}</a></p>
                 % endif
             </div>
         % endfor

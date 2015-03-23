@@ -22,21 +22,21 @@
     <h2>Details</h2>
 
     % if check_perms(evidence, 'edit'):
-            <p><a href='${urls.build("evidence.edit", dict(evidence_id=evidence.reference))|h}'>Edit Evidence</a>
+            <p><a href='${urls.build("evidence.edit", dict(evidence_id=evidence.id))|h}'>Edit Evidence</a>
     % endif
 
     % if evidence.case_id is not None:
         % if check_perms(evidence, 'dis-associate'):
-            | <a href='${urls.build("evidence.disassociate", dict(case_id=evidence.case.case_name, evidence_id=evidence.reference))|h}'>Remove Evidence from case</a></p>
+            | <a href='${urls.build("evidence.disassociate", dict(case_id=evidence.case.case_name, evidence_id=evidence.id))|h}'>Remove Evidence from case</a></p>
         % else:
             </p>
         % endif
     % elif evidence.case_id is None:
         % if check_perms(evidence, 'dis-associate'):
-            | <a href='${urls.build("evidence.associate", dict(evidence_id=evidence.reference))|h}'>Associate evidence with a case</a>
+            | <a href='${urls.build("evidence.associate", dict(evidence_id=evidence.id))|h}'>Associate evidence with a case</a>
         % endif
         % if check_perms(evidence, 'remove'):
-            | <a href='${urls.build("evidence.remove", dict(evidence_id=evidence.reference))|h}'>Remove evidence completely from Foreman</a></p>
+            | <a href='${urls.build("evidence.remove", dict(evidence_id=evidence.id))|h}'>Remove evidence completely from Foreman</a></p>
         % else:
             </p>
         % endif
@@ -133,9 +133,9 @@
     % if check_perms(evidence, 'check-in-out'):
         <br />
         % if evidence.current_status.check_in == True:
-        <p><a href='${urls.build("evidence.custody_out", dict(evidence_id=evidence.reference))|h}'>Check out the evidence</a></p>
+        <p><a href='${urls.build("evidence.custody_out", dict(evidence_id=evidence.id))|h}'>Check out the evidence</a></p>
         % else:
-        <p><a href='${urls.build("evidence.custody_in", dict(evidence_id=evidence.reference))|h}'>Check in the evidence</a></p>
+        <p><a href='${urls.build("evidence.custody_in", dict(evidence_id=evidence.id))|h}'>Check in the evidence</a></p>
         % endif
     % endif
 

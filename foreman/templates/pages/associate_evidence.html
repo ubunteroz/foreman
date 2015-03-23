@@ -12,18 +12,18 @@
 <div id="mainbar">
     <h1>Associate ${evidence.reference|h} with Case</h1>
 
-    <p><a href="${urls.build('evidence.view_caseless', dict(evidence_id=evidence.reference))|h}">Back to Evidence</a></p>
+    <p><a href="${urls.build('evidence.view_caseless', dict(evidence_id=evidence.id))|h}">Back to Evidence</a></p>
 
      % if success == True:
     <div class="success">
         <h1>Success!</h1>
         <p>${evidence.reference|h} has successfully been associated with ${evidence.case.case_name|h}.</p>
-        <p><a href="${urls.build('evidence.view', dict(evidence_id=evidence.reference, case_id=evidence.case.case_name))|h}">Back to Evidence</a> |
+        <p><a href="${urls.build('evidence.view', dict(evidence_id=evidence.id, case_id=evidence.case.case_name))|h}">Back to Evidence</a> |
        <a href="${urls.build('case.view', dict(case_id=evidence.case.case_name))|h}">Back to Case</a></p>
     </div>
     % endif
 
-    <form method="post" action="${urls.build('evidence.associate', dict(evidence_id=evidence.reference))|h}">
+    <form method="post" action="${urls.build('evidence.associate', dict(evidence_id=evidence.id))|h}">
         ${forms.formSelectBox("Associate with Case", "case_reassign", "case_reassign", "form_label", "input_long", reassign_cases, please_select=True)}
         <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
     </form>
