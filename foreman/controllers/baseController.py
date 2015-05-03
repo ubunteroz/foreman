@@ -113,6 +113,12 @@ class BaseController():
                                                                            "Case", "admin"),
                                                                        case_perm_checker=self.check_permissions,
                                                                        case_man=True))
+            if self.current_user.is_case_manager:
+                base_vars['my_cases'] = len(Case.get_current_cases(self.current_user, self.check_permissions,
+                                                               self.current_user))
+            else:
+                base_vars['my_cases'] = 0
+
             overload = ForemanOptions.run_out_of_names()
             if overload[0]:
                 base_vars['error_message_website_wide'].append(

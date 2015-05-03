@@ -70,6 +70,7 @@
             <td>
                 % if case.private:
                     <span class="highlight">Yes</span>
+                    <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
                 % else:
                     No
                 % endif

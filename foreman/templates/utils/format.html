@@ -92,6 +92,7 @@
             <td>
                 % if case.private is True:
                     <a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'><span class="highlight">${case.case_name|h}</span></a>
+                    <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
                 % else:
                     <a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a>
                 % endif
@@ -145,6 +146,7 @@
                             <td rowspan="${case_length|h}">
                                 % if case.private is True:
                                     <a class="highlight" href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a>
+                                    <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
                                 % else:
                                     <a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a>
                                 % endif
@@ -216,20 +218,29 @@
         <tr>
             % if case_tasks:
                 % if task.case.private is True:
-                    <td><a class="highlight" href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a></td>
+                    <td>
+                        <a class="highlight" href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a>
+                        <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
+                    </td>
                 % else:
                     <td><a href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a></td>
                 % endif
             % endif
             % if edit is True:
                 % if task.case.private is True:
-                    <td><a class="highlight" href='${urls.build("task.edit", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a></td>
+                    <td>
+                        <a class="highlight" href='${urls.build("task.edit", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a>
+                        <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
+                    </td>
                 % else:
                     <td><a href='${urls.build("task.edit", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a></td>
                 % endif
             % else:
                 % if task.case.private is True:
-                    <td><a class="highlight" href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a></td>
+                    <td>
+                        <a class="highlight" href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a>
+                        <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
+                    </td>
                 % else:
                     <td><a href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a></td>
                 % endif

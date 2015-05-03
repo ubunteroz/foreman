@@ -11,15 +11,16 @@
 
         <h1>${case_status|h} Cases</h1>
 
-         <p>View All Cases<br/>
-            <a href='${urls.build("case.view_all", dict(view="Unassigned"))|h}'>View Unassigned Cases</a> |
-            <a href='${urls.build("case.view_all", dict(view="Created"))|h}'>View Created Cases</a> |
-            <a href='${urls.build("case.view_all", dict(view="Queued"))|h}'>View Open Cases with Unassigned Tasks</a> |
-            <a href='${urls.build("case.view_all", dict(view="Open"))|h}'>View Open Cases</a> |
-            <a href='${urls.build("case.view_all", dict(view="Closed"))|h}'>View Closed Cases</a> |
-            <a href='${urls.build("case.view_all", dict(view="Archived"))|h}'>View Archived Cases</a> |
-            <a href='${urls.build("case.view_all", dict(view="All"))|h}'>View All Cases</a>
-            </p>
+         <p>
+            <a href='${urls.build("case.view_all", dict(view="My"))|h}'>View my cases</a> |
+            <a href='${urls.build("case.view_all", dict(view="Unassigned"))|h}'>View unassigned cases</a> |
+            <a href='${urls.build("case.view_all", dict(view="Created"))|h}'>View created cases</a> |
+            <a href='${urls.build("case.view_all", dict(view="Queued"))|h}'>View open cases with unassigned tasks</a> |
+            <a href='${urls.build("case.view_all", dict(view="Open"))|h}'>View open cases</a> |
+            <a href='${urls.build("case.view_all", dict(view="Closed"))|h}'>View closed cases</a> |
+            <a href='${urls.build("case.view_all", dict(view="Archived"))|h}'>View archived cases</a> |
+            <a href='${urls.build("case.view_all", dict(view="All"))|h}'>View all cases</a>
+         </p>
 
 
         % if len(cases) > 0 :
@@ -27,6 +28,8 @@
         % else:
             % if case_status == "All":
             <p>There are no cases.</p>
+            % elif case_status == "My":
+            <p>You do not manage any cases.</p>
             % else:
             <p>There are no ${case_status.lower()|h} cases.</p>
             % endif

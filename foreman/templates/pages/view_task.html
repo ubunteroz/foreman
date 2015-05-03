@@ -70,6 +70,7 @@
             <td>
                 % if task.case.private:
                 <a class="highlight" href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a>
+                    <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
                 % else:
                 <a href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a>
                 % endif

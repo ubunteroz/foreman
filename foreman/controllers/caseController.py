@@ -19,18 +19,23 @@ class CaseController(BaseController):
         allowed.append("All")
         allowed.append("Queued")
         if 'view' in view:
-            if self.request.args['view'] in CaseStatus.all_statuses:
+            if self.request.args['view'].title() in CaseStatus.all_statuses:
                 all_cases = Case.get_cases(view['view'].title(), self.current_user,
                                            current_user_perms=self.check_view_permissions("Case", "admin"),
                                            case_perm_checker=self.check_permissions)
-            elif self.request.args['view'] == "All":
+            elif self.request.args['view'].title() == "All":
                 all_cases = Case.get_cases("All",  self.current_user,
                                            current_user_perms=self.check_view_permissions("Case", "admin"),
                                            case_perm_checker=self.check_permissions)
-            elif self.request.args['view'] == "Unassigned":
+            elif self.request.args['view'].title() == "Unassigned":
                 all_cases = Case.get_cases("Created",  self.current_user,
                                            current_user_perms=self.check_view_permissions("Case", "admin"),
                                            case_perm_checker=self.check_permissions, case_man=True)
+            elif self.request.args['view'].title() == "My":
+                if self.current_user.is_case_manager:
+                    all_cases = Case.get_current_cases(self.current_user, self.check_permissions, self.current_user)
+                else:
+                    all_cases = []
             else:
                 all_cases = Case.get_cases('Open',  self.current_user,
                                            current_user_perms=self.check_view_permissions("Case", "admin"),
