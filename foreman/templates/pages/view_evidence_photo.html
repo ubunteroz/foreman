@@ -1,0 +1,64 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+
+<%def name="javascripts()" filter="trim">
+
+</%def>
+
+
+<div id="sidebar">
+    ${sidebars.tasks_menu()}
+</div>
+<div id="mainbar">
+    <h1>${upload.evidence.reference|h}: ${upload.file_title|h}</h1>
+
+    <img src="${urls.build("files", dict(file=upload.file_path))|h}" style="max-width: 100%" />
+
+    <p>
+    % if check_perms(upload.evidence, 'delete_file'):
+        <a href='${urls.build("evidence.delete_photo", dict(upload_id=upload.id, evidence_id=upload.evidence.id))|h}'>Delete Upload</a>
+    % endif
+
+    % if check_perms(upload.evidence, 'delete_file') and check_perms(upload.evidence, 'add_file'):
+        |
+    % endif
+
+    % if check_perms(upload.evidence, 'add_file'):
+        <a href='${urls.build("evidence.add_photo", dict(evidence_id=upload.evidence.id))|h}'>Upload Another</a>
+    % endif
+    </p>
+
+    <h2>Upload Details</h2>
+    <table>
+        <tr>
+            <th>Evidence</th>
+            <td>
+                % if upload.evidence.case_id is not None:
+                <a href='${urls.build("evidence.view", dict(evidence_id=upload.evidence.id, case_id=upload.evidence.case.case_name))|h}'>${upload.evidence.reference|h}</a>
+                % else:
+                <a href='${urls.build("evidence.view_caseless", dict(evidence_id=upload.evidence.id))|h}'>${upload.evidence.reference|h}</a>
+                % endif
+        </tr>
+        <tr>
+            <th>File title</th>
+            <td>${upload.file_title|h}</td>
+        </tr>
+        <tr>
+            <th>Date uploaded</th>
+            <td>${upload.date|h}</td>
+        </tr>
+        <tr>
+            <th>File hash</th>
+            <td>${upload.file_hash|h}</td>
+        </tr>
+        <tr>
+            <th>Uploader</th>
+            <td><a href='${urls.build("user.view", dict(user_id=upload.uploader.id))|h}'>${upload.uploader.fullname|h}</a></td>
+        </tr>
+        <tr>
+            <th>Notes</th>
+            <td>${upload.file_note|h}</td>
+        </tr>
+    </table>
+
+</div>

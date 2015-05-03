@@ -6,6 +6,7 @@ import shutil
 import calendar
 # library imports
 from sqlalchemy import Table, Column, Integer, Boolean, Unicode, ForeignKey, DateTime, asc, desc, and_, or_, func
+from sqlalchemy.ext.declarative import as_declarative, declared_attr
 from sqlalchemy.orm import backref, relation
 from qrcode import *
 from werkzeug.exceptions import Forbidden
@@ -403,7 +404,7 @@ class ChainOfCustody(Base, Model):
     def upload_custody_receipt(self, custody_receipt, label):
 
         if custody_receipt is not None:
-            new_directory = path.join(ROOT_DIR, 'static', 'evidence_custody_receipts')
+            new_directory = path.join(ROOT_DIR, 'files', 'evidence_custody_receipts')
             file_name = upload_file(custody_receipt, new_directory)
             self.custody_receipt = file_name
             self.custody_receipt_label = label
@@ -434,7 +435,6 @@ class EvidenceHistory(HistoryModel, Base):
     qr_code_text = Column(Unicode)
     comment = Column(Unicode)
     originator = Column(Unicode)
-    photographs = Column(Boolean)
     evidence_bag_number = Column(Unicode)
     location = Column(Unicode)
 
@@ -460,7 +460,6 @@ class EvidenceHistory(HistoryModel, Base):
         self.qr_code_text = evidence.qr_code_text
         self.comment = evidence.comment
         self.originator = evidence.originator
-        self.photographs = evidence.photographs
         self.evidence_bag_number = evidence.evidence_bag_number
         self.location = evidence.location
         self.reference = evidence.reference
@@ -479,9 +478,6 @@ class EvidenceHistory(HistoryModel, Base):
 
     def difference(self, evidence_history):
         differences = HistoryModel.difference(self, evidence_history)
-        if self.photographs != evidence_history.photographs:
-            differences['Private Setting'] = ("having photographs", "no photographs") if self.photographs else (
-                "no photographs", "having photographs")
         if self.qr_code != evidence_history.qr_code:
             differences['QR Code'] = ("has QR Code", "has no QR Code") if self.qr_code else (
                 "has no QR Code", "has QR Code")
@@ -509,7 +505,6 @@ class Evidence(Base, Model):
     qr_code_text = Column(Unicode)
     comment = Column(Unicode)
     originator = Column(Unicode)
-    photographs = Column(Boolean)
     evidence_bag_number = Column(Unicode)
     location = Column(Unicode)
     date_added = Column(DateTime)
@@ -518,13 +513,12 @@ class Evidence(Base, Model):
     user = relation('User', backref=backref('evidence_added', order_by=asc(reference)))
 
     def __init__(self, case, reference, evidence_type, comment, originator, location, user_added,
-                 evidence_bag_number=None, photographs=False, qr=True):
+                 evidence_bag_number=None, qr=True):
         self.case = case
         self.reference = reference
         self.type = evidence_type
         self.comment = comment
         self.originator = originator
-        self.photographs = photographs
         self.evidence_bag_number = evidence_bag_number
         self.location = location
         self.date_added = datetime.now()
@@ -569,7 +563,7 @@ class Evidence(Base, Model):
         qr.make()
         img = qr.make_image()
 
-        qr_image_location = path.abspath(path.join(ROOT_DIR, 'static', 'evidence_QR_codes', str(self.id) + '.png'))
+        qr_image_location = path.abspath(path.join(ROOT_DIR, 'files', 'evidence_QR_codes', str(self.id) + '.png'))
         img.save(qr_image_location, "PNG")
 
     def disassociate(self):
@@ -651,37 +645,37 @@ class TaskStatus(Base, HistoryModel):
         return self.task.task_name
 
 
-class TaskUpload(Base, Model):
-    __tablename__ = 'task_uploads'
+class UploadModel(Model):
 
     id = Column(Integer, primary_key=True)
-    task_id = Column(Integer, ForeignKey('tasks.id'))
+
     date_time = Column(DateTime)
     file_note = Column(Unicode)
     file_hash = Column(Unicode)
-    uploader_id = Column(Integer, ForeignKey('users.id'))
+
+    @declared_attr
+    def uploader_id(cls):
+        return Column(Integer, ForeignKey('users.id'))
+
     file_name = Column(Unicode)
     upload_location = Column(Unicode)
     file_title = Column(Unicode)
     deleted = Column(Boolean)
     date_deleted = Column(DateTime)
-    deleter_id = Column(Integer, ForeignKey('users.id'))
 
-    task = relation('Task', backref=backref('task_uploads', order_by=asc(date_time)))
-    uploader = relation('User', backref=backref('files_uploaded_to_tasks', order_by=asc(id)), foreign_keys=uploader_id)
-    deleter = relation('User', backref=backref('files_deleted_from_tasks', order_by=asc(id)), foreign_keys=deleter_id)
+    @declared_attr
+    def deleter_id(cls):
+        return Column(Integer, ForeignKey('users.id'))
 
-    DEFAULT_FOLDER = 'task_uploads'
     ROOT = path.join(ROOT_DIR, 'files')
+    CLASSNAME = None
 
-    def __init__(self, uploader_id, task_id, case_id, file_name, file_note, title):
+    def __init__(self, uploader_id, file_name, file_note, title):
         self.uploader_id = uploader_id
-        self.task_id = task_id
         self.date_time = datetime.now()
         self.file_name = file_name
         self.file_note = file_note
         self.file_title = title
-        self.upload_location = path.join(TaskUpload.DEFAULT_FOLDER, str(case_id) + "_" + str(task_id))
         self.file_hash = self.compute_hash()
         self.deleted = False
 
@@ -714,6 +708,55 @@ class TaskUpload(Base, Model):
         self.deleter = user
         self.date_deleted = datetime.now()
 
+
+class EvidencePhotoUpload(UploadModel, Base):
+    __tablename__ = 'evidence_photo_uploads'
+
+    evidence_id = Column(Integer, ForeignKey('evidence.id'))
+    evidence = relation('Evidence', backref=backref('evidence_photos'))
+    uploader = relation('User', backref=backref('evidence_photos_uploaded'), foreign_keys='EvidencePhotoUpload.uploader_id')
+    deleter = relation('User', backref=backref('evidence_photos_deleted'), foreign_keys='EvidencePhotoUpload.deleter_id')
+    DEFAULT_FOLDER = 'evidence_photos'
+
+    def __init__(self, uploader_id, evidence_id, file_name, file_note, title):
+        self.evidence_id = evidence_id
+        self.upload_location = path.join(EvidencePhotoUpload.DEFAULT_FOLDER, str(evidence_id))
+        UploadModel.__init__(self, uploader_id, file_name, file_note, title)
+
+    @staticmethod
+    def get_changes_for_user(user):
+        q_added = session.query(EvidencePhotoUpload).filter_by(uploader_id=user.id)
+        q_removed = session.query(EvidencePhotoUpload).filter_by(deleter_id=user.id)
+
+        change_log = []
+        for entry in q_added.all():
+            change_log.append({'date': entry.date,
+                               'date_time': entry.date_time,
+                               'object': ("Evidence", entry.evidence.reference),
+                               'change_log': "File '{}' was uploaded".format(entry.file_title)})
+
+        for entry in q_removed.all():
+            change_log.append({'date': entry.deleted_date,
+                               'date_time': entry.date_deleted,
+                               'object': ("Evidence", entry.evidence.reference),
+                               'change_log': "File '{}' was deleted".format(entry.file_title)})
+        return change_log
+
+
+class TaskUpload(UploadModel, Base):
+    __tablename__ = 'task_uploads'
+
+    task_id = Column(Integer, ForeignKey('tasks.id'))
+    task = relation('Task', backref=backref('task_uploads'))
+    uploader = relation('User', backref=backref('files_uploaded_to_tasks'), foreign_keys='TaskUpload.uploader_id')
+    deleter = relation('User', backref=backref('files_deleted_from_tasks'), foreign_keys='TaskUpload.deleter_id')
+    DEFAULT_FOLDER = 'task_uploads'
+
+    def __init__(self, uploader_id, task_id, case_id, file_name, file_note, title):
+        self.task_id = task_id
+        self.upload_location = path.join(TaskUpload.DEFAULT_FOLDER, str(case_id) + "_" + str(task_id))
+        UploadModel.__init__(self, uploader_id, file_name, file_note, title)
+
     @staticmethod
     def get_changes_for_user(user):
         q_added = session.query(TaskUpload).filter_by(uploader_id=user.id)
@@ -732,8 +775,6 @@ class TaskUpload(Base, Model):
                                'object': ("Task", entry.task.task_name),
                                'change_log': "File '{}' was deleted".format(entry.file_title)})
         return change_log
-
-
 
 class TaskNotes(Base, Model):
     __tablename__ = 'notes'

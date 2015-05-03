@@ -536,11 +536,10 @@ class UploadTaskFiles(UploadWithoutStorage):
     type = None  # allow all types
 
 
-class UploadEvidencePhoto(Upload):
+class UploadEvidencePhoto(UploadWithoutStorage):
     messages = {
         'invalid': 'An invalid image file was uploaded.'
     }
-    folder = path.join(ROOT_DIR, 'static', 'evidence_photos')
     type = 'image'
 
 

@@ -110,7 +110,7 @@ img.img_hover:hover {
 
 
 #footer_middle a{
-    color: white;
+    color: white!important;
 }
 
 #footer_middle a:hover{
@@ -307,6 +307,11 @@ p{
 span.archived, span.highlight{
     font-weight: bold;
     color: red;
+}
+
+span.archived a, span.highlight a{
+    font-weight: bold;
+    color: red!important;
 }
 
 div.case_background, div.task_background, div.form_background{

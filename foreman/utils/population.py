@@ -1,6 +1,6 @@
 # foreman imports
 from foreman.model import User, ForemanOptions, UserRoles, Case, UserCaseRoles, CaseType, CaseClassification, CaseStatus
-from foreman.model import TaskType, Task, TaskStatus, UserTaskRoles, EvidenceType, Evidence, TaskUpload
+from foreman.model import TaskType, Task, TaskStatus, UserTaskRoles, EvidenceType, Evidence, TaskUpload, EvidencePhotoUpload
 from utils import session, config, ROOT_DIR
 from random import randint
 from os import path, mkdir, stat
@@ -515,10 +515,10 @@ def create_evidence(case, inv, rand_user):
         e.create_qr_code()
         e.check_in(inv.fullname, inv, now, "Initial check in to the storage cabinet")
         try:
-            mkdir(path.abspath(path.join(ROOT_DIR, "static", "evidence_photos")))
+            mkdir(path.abspath(path.join(ROOT_DIR, "files", "evidence_photos")))
         except:
             pass
-        photo_location = path.abspath(path.join(ROOT_DIR, "static", "evidence_photos", str(e.id)))
+        photo_location = path.abspath(path.join(ROOT_DIR, "files", "evidence_photos", str(e.id)))
         try:
             stat(photo_location)
         except:
@@ -526,10 +526,11 @@ def create_evidence(case, inv, rand_user):
         amount = randint(1, 3)
         for x in xrange(0, amount):
             rand1 = randint(1, 10)
-            try:
-                shutil.copy("C:\Users\Sarah\Programming\photos\hdd{}.jpg".format(rand1), photo_location)
-            except:
-                pass
+            shutil.copy("C:\Users\Sarah\Programming\photos\hdd{}.jpg".format(rand1), photo_location)
+            upload = EvidencePhotoUpload(inv.id, e.id, "hdd{}.jpg".format(rand1), "A comment", "Image " + str(x))
+            session.add(upload)
+            session.commit()
+
 
 
 def create_test_data():

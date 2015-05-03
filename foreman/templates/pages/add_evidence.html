@@ -18,8 +18,6 @@
         <p><a href="${urls.build('case.view', dict(case_id=case.case_name))|h}">Back to Case</a></p>
     % endif
 
-
-    <h2>Add Evidence Details</h2>
     % if case is None:
         <form method="post" action="${urls.build('evidence.add_no_case', dict(form='add_evidence'))|h}">
     % else:
@@ -34,11 +32,6 @@
         ${forms.formTextArea("Comments", "comments", "comments", "form_label", "addeditcase")}
         ${forms.formCheckBoxes("Generate QR Code", "qr", "qr", "qr", "form_label", "radio_input_short")}
 
-    <h2>Add Photographs</h2>
-
-        ${forms.formTextField("Upload new photograph", "photo-1", "photo-1", "form_label", "input_long", first=True, input_type="file")}
-        ${forms.formTextField("Upload new photograph", "photo-2", "photo-2", "form_label", "input_long", input_type="file")}
-        ${forms.formTextField("Upload new photograph", "photo-3", "photo-3", "form_label", "input_long", input_type="file")}
         <p style="clear:both; text-align:center"><input type="submit" value="Next" /></p>
     </form>
 </div>

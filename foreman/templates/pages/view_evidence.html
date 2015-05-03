@@ -141,12 +141,22 @@
 
 
     <h2>Photographs</h2>
-    % if evidence.photographs:
-        <% import os %>
-        % for file in os.listdir(photo_location):
-            <img src="${urls.build('evidence_photos', dict(file=str(evidence.id) + '//' + file))|h}" height="200px"/>
-        % endfor
-    % else:
-        <p>No photographs.</p>
+
+
+    % if check_perms(evidence, 'add_file'):
+    <p><a href='${urls.build("evidence.add_photo", dict(evidence_id=evidence.id))|h}'>Add a photo</a></p>
+    % endif
+
+    <% count = 0 %>
+    % for upload in evidence.evidence_photos:
+        % if upload.deleted is False:
+            <% count += 1 %>
+            <a href="${urls.build("evidence.view_photo", dict(evidence_id=evidence.id, upload_id=upload.id))|h}">
+                <img src="${urls.build("files", dict(file=upload.file_path))|h}" height="200px"/></a>
+        % endif
+    % endfor
+
+    % if count == 0:
+        <p>No uploaded photos.</p>
     % endif
 </div>

@@ -29,7 +29,7 @@
             % endif
         % endfor
 
-        <h2>Timeline of added evidence<h2>
+        <h2>Timeline of added evidence</h2>
         <% current_year = None %>
         <% current_month = None %>
         <% current_day = None %>
@@ -53,8 +53,14 @@
             <div class="evidence">
                 <img alt="${evi.type|h} icon" src="${urls.build("images", dict(file='siteimages/evidence_icons/' + evi.icon + '.png'))|h}" class="evidenceicon"/>
                 % if evi.case_id is not None:
+                    % if evi.case.status == "Archived":
+                        <span class="archived">
+                    % endif
                 <p><a href='${urls.build("case.view", dict(case_id=evi.case.case_name))|h}'>${evi.case.case_name|h}</a>
                 <br /><a href='${urls.build("evidence.view", dict(evidence_id=evi.id, case_id=evi.case.case_name))|h}'>${evi.reference|h}</a></p>
+                        % if evi.case.status == "Archived":
+                            </span>
+                        % endif
                 % else:
                 <p>No case associated.
                 <br/><a href='${urls.build("evidence.view_caseless", dict(evidence_id=evi.id))|h}'>${evi.reference|h}</a></p>

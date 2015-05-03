@@ -3,9 +3,10 @@ from datetime import datetime
 # local imports
 from baseController import BaseController
 from ..utils.utils import ROOT_DIR, multidict_to_dict, session
-from ..model import Evidence, Case, EvidenceHistory, ForemanOptions
-from ..forms.forms import ChainOfCustodyForm, EditEvidenceForm, EditEvidencePhotosForm, EditEvidenceQRCodesForm, EvidenceAssociateForm, \
-    AddEvidenceForm
+from ..model import Evidence, Case, EvidenceHistory, ForemanOptions, EvidencePhotoUpload
+from ..forms.forms import ChainOfCustodyForm, EditEvidenceForm, EditEvidenceQRCodesForm, EvidenceAssociateForm, \
+    AddEvidenceForm, AddEvidencePhotoForm
+from ..utils.utils import upload_file
 
 
 class EvidenceController(BaseController):
@@ -25,20 +26,13 @@ class EvidenceController(BaseController):
             self.check_permissions(self.current_user, 'Evidence', 'add')
 
         if self.validate_form(AddEvidenceForm()):
-            for entry in self.form_result['photo']:
-                if entry is not None:
-                    photos = True
-                    break
-            else:
-                photos = False
             evi = Evidence(case, self.form_result['reference'], self.form_result['type'],
                            self.form_result['comments'], self.form_result['originator'], self.form_result['location'],
-                           self.current_user, self.form_result['bag_num'], photos, self.form_result['qr'])
+                           self.current_user, self.form_result['bag_num'], self.form_result['qr'])
             session.add(evi)
             session.flush()
             evi.create_qr_code()
             evi.add_change(self.current_user)
-			#changed evi.reference to evi.id to reference evidence items by their primary key as opposed to their reference text
             return self.custody_in(evi.id, True, initial=True)
         else:
             evidence_type_options = [(evi.replace(" ", "").lower(), evi) for evi in
@@ -70,13 +64,8 @@ class EvidenceController(BaseController):
                     evidence.add_change(self.current_user)
                     success = True
 
-            elif 'form' in form_type and form_type['form'] == "edit_image":
-                active_tab = 1
-                if self.validate_form(EditEvidencePhotosForm()):
-                    success = True
-
             elif 'form' in form_type and form_type['form'] == "edit_qr":
-                active_tab = 2
+                active_tab = 1
                 if self.validate_form(EditEvidenceQRCodesForm()):
                     evidence.qr_code_text = self.form_result['qr_code_text']
                     evidence.qr_code = self.form_result['qr_code']
@@ -94,7 +83,7 @@ class EvidenceController(BaseController):
                             len_qr_hist = True
                             break
             return self.return_response('pages', 'edit_evidence.html', evidence=evidence, active_tab=active_tab,
-                                        photo_location=photo_location, evidence_history=evidence_history,
+                                        evidence_history=evidence_history,
                                         success=success, evidence_type_options=evidence_type_options,
                                         default_qr_code_text=default_qr_code_text, qr_evidence_history=len_qr_hist)
         else:
@@ -202,6 +191,52 @@ class EvidenceController(BaseController):
 
     def custody_out(self, evidence_id):
         return self.custody_in(evidence_id, False)
+
+    def view_photo(self, evidence_id, upload_id):
+        upload = self._validate_evidence_photo(evidence_id, upload_id)
+        if upload is not None:
+            self.check_permissions(self.current_user, upload.evidence, 'view')
+            return self.return_response('pages', 'view_evidence_photo.html', upload=upload)
+        else:
+            return self.return_404()
+
+    def delete_photo(self, evidence_id, upload_id):
+        upload = self._validate_evidence_photo(evidence_id, upload_id)
+        if upload is not None:
+            self.check_permissions(self.current_user, upload.evidence, 'delete_file')
+
+            closed = False
+            confirm_close = multidict_to_dict(self.request.args)
+            if 'confirm' in confirm_close and confirm_close['confirm'] == "true":
+                upload.delete(self.current_user)
+                closed = True
+
+            return self.return_response('pages', 'delete_evidence_photo.html', upload=upload, closed=closed)
+        else:
+            return self.return_404()
+
+    def add_photo(self, evidence_id):
+        evidence = self._validate_evidence(evidence_id)
+        if evidence is not None:
+            self.check_permissions(self.current_user, evidence, 'add_file')
+        else:
+            return self.return_404()
+
+        success_upload = False
+        upload = None
+        if self.validate_form(AddEvidencePhotoForm()):
+            f = self.form_result['file']
+            new_directory = path.join(EvidencePhotoUpload.ROOT, EvidencePhotoUpload.DEFAULT_FOLDER, str(evidence.id))
+            file_name = upload_file(f, new_directory)
+
+            upload = EvidencePhotoUpload(self.current_user.id, evidence.id, file_name, self.form_result['comments'],
+                                         self.form_result['file_title'])
+            session.add(upload)
+            session.commit()
+            success_upload = True
+
+        return self.return_response('pages', 'add_evidence_photos.html',errors=self.form_error, evidence=evidence,
+                                    success_upload=success_upload, upload=upload)
 
     @staticmethod
     def _get_evidence_history_changes(evidence):

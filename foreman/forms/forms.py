@@ -157,12 +157,6 @@ class EditEvidenceQRCodesForm(Schema):
     qr_code = v.Bool()
 
 
-class EditEvidencePhotosForm(Schema):
-    photo_1 = UploadEvidencePhoto()
-    photo_2 = UploadEvidencePhoto()
-    photo_3 = UploadEvidencePhoto()
-
-
 class AddEvidenceTypeForm(Schema):
     evi_type = v.UnicodeString(not_empty=True)
     icon_input = AddIcon(not_empty=True)
@@ -202,7 +196,12 @@ class AddEvidenceForm(Schema):
     comments = v.UnicodeString(not_empty=True)
     location = v.UnicodeString(not_empty=True)
     qr = v.Bool()
-    photo = ForEach(UploadEvidencePhoto())
+
+
+class AddEvidencePhotoForm(Schema):
+    file_title = v.UnicodeString(not_empty=True)
+    comments = v.UnicodeString(not_empty=True)
+    file = UploadEvidencePhoto(not_empty=True)
 
 
 class EvidenceAssociateForm(Schema):

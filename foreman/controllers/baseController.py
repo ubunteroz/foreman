@@ -9,7 +9,8 @@ from formencode import Invalid
 from formencode.variabledecode import variable_decode
 # local imports
 from ..utils.utils import session, ROOT_DIR, multidict_to_dict
-from ..model import User, CaseStatus, Case, Task, TaskStatus, Evidence, has_permissions, ForemanOptions, TaskUpload
+from ..model import User, CaseStatus, Case, Task, TaskStatus, Evidence, has_permissions, ForemanOptions
+from ..model import TaskUpload, EvidencePhotoUpload
 
 lookup = TemplateLookup(directories=[path.join(ROOT_DIR, 'templates')], output_encoding='utf-8')
 
@@ -167,6 +168,7 @@ class BaseController():
                                                                              self.current_user, [CaseStatus.ARCHIVED])
         return base_vars
 
+
     @staticmethod
     def _validate_task(case_id, task_id):
         case = Case.get_filter_by(case_name=case_id).first()
@@ -175,6 +177,7 @@ class BaseController():
             return task
         else:
             return None
+
 
     @staticmethod
     def _validate_upload(case_id, task_id, upload_id):
@@ -192,10 +195,29 @@ class BaseController():
         else:
             return None
 
+
+    @staticmethod
+    def _validate_evidence_photo(evidence_id, upload_id):
+        evidence = BaseController._validate_evidence(evidence_id)
+        if evidence is not None:
+            try:
+                int(upload_id)
+            except ValueError:
+                return None
+            upload = EvidencePhotoUpload.get_filter_by(evidence_id=evidence.id, id=upload_id).first()
+            if upload is not None and upload.deleted is False:
+                return upload
+            else:
+                return None
+        else:
+            return None
+
+
     @staticmethod
     def _validate_case(case_id):
         case = Case.get_filter_by(case_name=case_id).first()
         return case
+
 
     @staticmethod
     def _validate_user(user_id):
@@ -205,6 +227,7 @@ class BaseController():
             return None
         user = User.get_filter_by(id=user_id).first()
         return user
+
 
     @staticmethod
     def _validate_evidence(evidence_id, case_id=None):
@@ -219,11 +242,13 @@ class BaseController():
             evidence = Evidence.get_filter_by(id=evidence_id).first()
             return evidence
 
+
     @staticmethod
     def check_permissions(user, obj, action):
         allowed = has_permissions(user, obj, action)
         if not allowed:
             raise Forbidden
+
 
     def check_view_permissions(self, obj, action):
         return has_permissions(self.current_user, obj, action)

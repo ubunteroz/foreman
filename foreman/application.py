@@ -18,9 +18,8 @@ staticLocations = {
     '/files': path.join(ROOT_DIR, 'files'),
     '/images': path.join(ROOT_DIR, 'static', 'images'),
     '/javascript': path.join(ROOT_DIR, 'static', 'javascript'),
-    '/evidence_photos': path.join(ROOT_DIR, 'static', 'evidence_photos'),
-    '/evidence_qr_code': path.join(ROOT_DIR, 'static', 'evidence_QR_codes'),
-    '/evidence_custody_receipts': path.join(ROOT_DIR, 'static', 'evidence_custody_receipts'),
+    '/evidence_qr_code': path.join(ROOT_DIR, 'files', 'evidence_QR_codes'),
+    '/evidence_custody_receipts': path.join(ROOT_DIR, 'files', 'evidence_custody_receipts'),
 }
 
 
@@ -142,6 +141,10 @@ class Application(object):
         map.add(Rule('/cases/<case_id>/evidence/<evidence_id>/remove/', endpoint='evidence.disassociate'))
         map.add(Rule('/evidence/<evidence_id>/custody/check-out/', endpoint='evidence.custody_out'))
         map.add(Rule('/evidence/<evidence_id>/custody/check-in/', endpoint='evidence.custody_in'))
+
+        map.add(Rule('/evidence/<evidence_id>/uploads/<upload_id>', endpoint='evidence.view_photo'))
+        map.add(Rule('/evidence/<evidence_id>/uploads/<upload_id>/delete/', endpoint='evidence.delete_photo'))
+        map.add(Rule('/evidence/<evidence_id>/uploads/add/', endpoint='evidence.add_photo'))
 
         map.add(Rule('/cases/<case_id>/<task_id>/notes/', endpoint='forensics.work'))
         map.add(Rule('/cases/<case_id>/<task_id>/qa/', endpoint='forensics.qa'))

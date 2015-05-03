@@ -5,6 +5,7 @@ from werkzeug import Response, redirect
 from baseController import BaseController
 from ..model import User, UserRoles, Case, CaseHistory, TaskHistory, TaskStatus, CaseStatus, EvidenceHistory
 from ..model import UserHistory, UserRolesHistory, UserTaskRolesHistory, UserCaseRolesHistory, Task, TaskUpload
+from ..model import EvidencePhotoUpload
 from ..forms.forms import PasswordChangeForm, EditUserForm, EditRolesForm, AddUserForm, AdminPasswordChangeForm
 from ..utils.utils import multidict_to_dict, session, config
 from ..utils.mail import email
@@ -291,5 +292,6 @@ def get_user_changes(user):
     results += UserCaseRolesHistory.get_changes_for_user(user)
     results += UserRolesHistory.get_changes_for_user(user)
     results += TaskUpload.get_changes_for_user(user)
+    results += EvidencePhotoUpload.get_changes_for_user(user)
     results.sort(key=lambda d: d['date_time'])
     return results

@@ -1,0 +1,30 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+<%namespace file="/utils/forms.html" name="forms" />
+
+<%def name="javascripts()" filter="trim">
+</%def>
+
+
+<div id="sidebar">
+    ${sidebars.tasks_menu()}
+</div>
+<div id="mainbar">
+
+% if success_upload:
+    <div class="success">
+        <h1>Success!</h1>
+        <p>The file has been successfully uploaded.
+            <a href="${urls.build("evidence.view_photo", dict(evidence_id=evidence.id, upload_id=upload.id))|h}">View the photo here</a>.
+        </p>
+    </div>
+% endif
+
+   <h1>Add Evidence Photo</h1>
+        <form method="post" enctype="multipart/form-data" action="${urls.build('evidence.add_photo', dict(evidence_id=evidence.id))|h}">
+                ${forms.formTextField("Photo Title", "file_title", "file_title", "form_label", "input_long", first=True)}
+                ${forms.formTextArea("Comments", "comments", "comments", "form_label", "addeditcase")}
+                ${forms.formTextField("Photo", "file", "file", "form_label", "input_long", input_type="file")}
+        <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+    </form>
+</div>

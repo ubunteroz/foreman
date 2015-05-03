@@ -32,11 +32,10 @@
     <div id="tabs">
         <ul>
         <li><a href="#tabs-1">Edit Evidence Details</a></li>
-        <li><a href="#tabs-2">Edit Photographs</a></li>
             % if evidence.qr_code:
-        <li><a href="#tabs-3">Edit QR Code</a></li>
+        <li><a href="#tabs-2">Edit QR Code</a></li>
             % else:
-        <li><a href="#tabs-3">Add QR Code</a></li>
+        <li><a href="#tabs-2">Add QR Code</a></li>
             % endif
         </ul>
 
@@ -80,30 +79,8 @@
                 <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
             </form>
         </div>
+
         <div id="tabs-2" class="forensics_work_contents">
-
-
-
-            <h2>Current Photographs:</h2>
-
-            % if evidence.photographs:
-                <% import os %>
-                % for file in os.listdir(photo_location):
-                    <img src="${urls.build('evidence_photos', dict(file=str(evidence.id) + '//' + file))|h}" height="200px"/>
-                % endfor
-            % endif
-
-            <h2>Edit Photographs</h2>
-
-            <form method="post" enctype="multipart/form-data" action="${urls.build('evidence.edit', dict(evidence_id=evidence.id, form='edit_image'))|h}">
-                ${forms.formTextField("Upload new photograph", "photo_1", "photo_1", "form_label", "input_long", first=True, input_type="file")}
-                ${forms.formTextField("Upload new photograph", "photo_2", "photo_2", "form_label", "input_long", input_type="file")}
-                ${forms.formTextField("Upload new photograph", "photo_3", "photo_3", "form_label", "input_long", input_type="file")}
-                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
-            </form>
-
-        </div>
-        <div id="tabs-3" class="forensics_work_contents">
 
             % if qr_evidence_history:
             <h2>QR Code History</h2>
