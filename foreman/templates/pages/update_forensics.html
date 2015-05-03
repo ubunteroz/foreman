@@ -54,12 +54,12 @@
             % endif
         % endif
 
-        % if task.status != task_statuses['start'] and task.status != task_statuses['complete']:
-        <li><a href="#tabs-3">Upload file</a></li>
+        % if task.status == task_statuses['deliver']:
+        <li><a href="#tabs-3">Deliver data</a></li>
         % endif
 
-        % if task.status == task_statuses['deliver']:
-        <li><a href="#tabs-4">Deliver data</a></li>
+        % if task.status != task_statuses['start'] and task.status != task_statuses['complete']:
+        <li><a href="#tabs-4">Upload file</a></li>
         % endif
 
         </ul>
@@ -190,8 +190,20 @@
         </div>
         % endif
 
-        % if task.status != task_statuses['start'] and task.status != task_statuses['complete']:
+        % if task.status == task_statuses['deliver']:
         <div id="tabs-3" class="forensics_work_contents">
+
+             <div class="confirmclosurebox">
+                 <h2>Set Status to Delivered</h2>
+                 <p>Task ${task.task_name|h} has been QA passed and is ready for delivery.</p>
+                 <p><a href="?status=deliver">Click here to set the status to delivered</a>.</p>
+             </div>
+        </div>
+        % endif
+
+
+        % if task.status != task_statuses['start'] and task.status != task_statuses['complete']:
+        <div id="tabs-4" class="forensics_work_contents">
             % if task.status == task_statuses['start']:
             ${not_yet_begun()}
             % else:
@@ -218,16 +230,6 @@
         </div>
         % endif
 
-        % if task.status == task_statuses['deliver']:
-        <div id="tabs-4" class="forensics_work_contents">
-
-             <div class="confirmclosurebox">
-                 <h2>Set Status to Delivered</h2>
-                 <p>Task ${task.task_name|h} has been QA passed and is ready for delivery.</p>
-                 <p><a href="?status=deliver">Click here to set the status to delivered</a>.</p>
-             </div>
-        </div>
-        % endif
 
     </div>
 

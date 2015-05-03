@@ -487,7 +487,7 @@ class Upload(v.FieldStorageUploadConverter):
             else:
                 return None
 
-        # Formencode annoyingly checks whether the value is iterable by trying to iterate over it, which consumes
+        # FormEncode annoyingly checks whether the value is iterable by trying to iterate over it, which consumes
         # the first line of the file. Rewind it again.
         value.seek(0)
         uploaded_file = value
@@ -516,17 +516,16 @@ class UploadWithoutStorage(v.FieldStorageUploadConverter):
             else:
                 return None
 
-        # Formencode annoyingly checks whether the value is iterable by trying to iterate over it, which consumes
+        # FormEncode annoyingly checks whether the value is iterable by trying to iterate over it, which consumes
         # the first line of the file. Rewind it again.
         value.seek(0)
         return value
 
 
-class UploadCustodyAttachment(Upload):
+class UploadCustodyAttachment(UploadWithoutStorage):
     messages = {
         'invalid': 'An invalid file was uploaded.'
     }
-    folder = path.join(ROOT_DIR, 'static', 'evidence_custody_receipts')
     type = None  # allow all types
 
 
@@ -535,6 +534,7 @@ class UploadTaskFiles(UploadWithoutStorage):
         'invalid': 'An invalid file was uploaded.'
     }
     type = None  # allow all types
+
 
 class UploadEvidencePhoto(Upload):
     messages = {

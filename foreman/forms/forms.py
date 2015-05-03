@@ -137,8 +137,10 @@ class ChainOfCustodyForm(Schema):
     time = ValidTime(not_empty=True)
     user = v.UnicodeString(not_empty=True)
     comments = v.UnicodeString(not_empty=True)
-    #attach = UploadCustodyAttachment()
-    label = v.UnicodeString()
+    attach = UploadCustodyAttachment()
+    label = v.UnicodeString(if_missing=None)
+
+    chained_validators = [v.RequireIfMissing('label', present='attach')]
 
 
 class EditEvidenceForm(Schema):

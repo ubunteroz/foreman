@@ -92,7 +92,9 @@
     </div>
     <div style="clear:both"/>
     <div id="footer">
-        <div id="footer_middle">Foreman - Forensic Management Software. Copyright 2014. <a href="https://bitbucket.org/lowmanio/foreman/issues/new">Support</a>
+        <% from datetime import datetime %>
+        <% this_year = datetime.now().strftime("%Y") %>
+        <div id="footer_middle">Foreman - Forensic Management Software. Copyright 2014 - ${this_year|h}. <a href="https://bitbucket.org/lowmanio/foreman/issues/new">Support</a>
             | <a href="https://bitbucket.org/lowmanio/foreman/wiki/Home">Documentation</a>
             | <a href="mailto:admin@foreman-forensics.org">Contact</a></div>
     </div>

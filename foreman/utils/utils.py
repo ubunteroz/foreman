@@ -1,6 +1,8 @@
 # python imports
-from os import path
+from os import path, mkdir
 from ConfigParser import ConfigParser
+import random
+import string
 # library imports
 from werkzeug import Local, LocalManager, MultiDict
 from sqlalchemy import create_engine, exc as sa_exc
@@ -82,10 +84,12 @@ def populate_database():
     create_test_data()
     print "Example data populated!"
 
+
 def populate_test_database():
     from test_population import create_test_data
     create_test_data()
     print "Example data populated!"
+
 
 def multidict_to_dict(md):
     d = {}
@@ -95,3 +99,20 @@ def multidict_to_dict(md):
         else:
             d[k] = a
     return d
+
+
+def upload_file(f, new_directory, rand=15):
+    unused_file_name, file_ext = path.splitext(f.filename.split(path.sep)[-1])
+    # make random file name that is 15 characters/numbers long to prevent 2 users uploading same
+    # file at same time
+    file_name = ''.join(random.SystemRandom().choice(
+        string.ascii_uppercase + string.digits) for _ in range(rand)) + file_ext
+
+    new_location = path.join(new_directory, file_name)
+
+    if not path.exists(new_directory):
+        mkdir(new_directory)
+    f.save(new_location)
+    f.close()
+
+    return file_name

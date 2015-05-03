@@ -42,15 +42,15 @@
 
     % if check_perms(task, 'assign-self'):
         % if task.principle_investigator is None and (task.secondary_investigator is None or task.secondary_investigator.id != current_user.id):
-            <a href='${urls.build("task.assign_work", dict(task_id=task.task_name, case_id=task.case.case_name, assign="primary"))|h}'>Assign myself as principle investigator</a> |
+            | <a href='${urls.build("task.assign_work", dict(task_id=task.task_name, case_id=task.case.case_name, assign="primary"))|h}'>Assign myself as principle investigator</a>
         % endif
         % if task.secondary_investigator is None and (task.principle_investigator is None or task.principle_investigator.id != current_user.id):
-            <a href='${urls.build("task.assign_work", dict(task_id=task.task_name, case_id=task.case.case_name, assign="secondary"))|h}'>Assign myself as secondary investigator</a> |
+            | <a href='${urls.build("task.assign_work", dict(task_id=task.task_name, case_id=task.case.case_name, assign="secondary"))|h}'>Assign myself as secondary investigator</a>
         % endif
     % endif
 
     % if check_perms(task, 'assign-other') and (task.principle_investigator is None or task.secondary_investigator is None):
-    <a href='${urls.build("task.assign_work_manager", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>Assign an Investigator to task</a>
+    | <a href='${urls.build("task.assign_work_manager", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>Assign an Investigator to task</a>
     % endif
 
     % if check_perms(task, 'qa') and task.status == task_statuses['qa']:
@@ -211,7 +211,7 @@
     <h2>File Uploads</h2>
 
     % if check_perms(task, 'work'):
-        <p><a href='${urls.build("forensics.work", dict(task_id=task.task_name, case_id=task.case.case_name, active_tab=2))|h}'>Upload a File</a></p>
+        <p><a href='${urls.build("forensics.work", dict(task_id=task.task_name, case_id=task.case.case_name, active_tab=-1))|h}'>Upload a File</a></p>
     % endif
 
     <% count = 0 %>

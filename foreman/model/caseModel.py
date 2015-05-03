@@ -13,7 +13,7 @@ from werkzeug.exceptions import Forbidden
 from models import Base, Model, HistoryModel
 from generalModel import ForemanOptions, TaskCategory, TaskType
 from userModel import UserTaskRoles, User, UserCaseRoles
-from ..utils.utils import session, ROOT_DIR, config
+from ..utils.utils import session, ROOT_DIR, config, upload_file
 
 hash_algorithm = config.get('forensics', 'hash_type').lower()
 if hash_algorithm not in hashlib.algorithms:
@@ -401,17 +401,13 @@ class ChainOfCustody(Base, Model):
         self.custodian = custodian
 
     def upload_custody_receipt(self, custody_receipt, label):
+
         if custody_receipt is not None:
-            old_file_name = path.split(custody_receipt)[-1]
-            new_file_name = str(self.id) + "_" + old_file_name
-            location = path.join(ROOT_DIR, 'static', 'evidence_custody_receipts', new_file_name)
-            if path.dirname(path.abspath(custody_receipt)) == path.dirname(path.abspath(location)):
-                rename(custody_receipt, location)
-            else:
-                shutil.copy(custody_receipt, location)
-            self.custody_receipt = new_file_name
+            new_directory = path.join(ROOT_DIR, 'static', 'evidence_custody_receipts')
+            file_name = upload_file(custody_receipt, new_directory)
+            self.custody_receipt = file_name
             self.custody_receipt_label = label
-            return new_file_name
+            return file_name
         else:
             return None
 
@@ -876,13 +872,11 @@ class Task(Base, Model):
 
     def assign_task(self, investigator, principle=True, manager=None):
         if principle:
-            inv_type = "Principle"
             role_type = UserTaskRoles.PRINCIPLE_INVESTIGATOR
             self.set_status(TaskStatus.ALLOCATED, investigator)
         else:
-            self.set_status(TaskStatus.QUEUED, investigator)
             role_type = UserTaskRoles.SECONDARY_INVESTIGATOR
-            inv_type = "Secondary"
+
         session.flush()
 
         UserTaskRoles.delete_if_already_exists(self.id, investigator.id, role_type)

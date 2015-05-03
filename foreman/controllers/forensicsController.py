@@ -8,7 +8,7 @@ from baseController import BaseController, lookup, jsonify
 from ..model import Task, Case, TaskNotes, UserRoles, UserMessage, TaskUpload
 from ..forms.forms import QACheckerForm, AddTaskNotesForm, AssignQAForm, AssignQAFormSingle, AskForQAForm
 from ..forms.forms import UploadTaskFile
-from ..utils.utils import session, multidict_to_dict, config
+from ..utils.utils import session, multidict_to_dict, config, upload_file
 from ..utils.mail import email
 
 
@@ -58,21 +58,9 @@ class ForensicsController(BaseController):
             elif 'upload_file' in form_type and form_type['upload_file'] == "true":
                 if self.validate_form(UploadTaskFile()):
                     f = self.form_result['file']
-
-                    unused_file_name, file_ext = path.splitext(f.filename.split(path.sep)[-1])
-                    # make random file name that is 15 characters/numbers long to prevent 2 users uploading same
-                    # file at same time
-                    file_name = ''.join(random.SystemRandom().choice(
-                        string.ascii_uppercase + string.digits) for _ in range(15)) + file_ext
-
                     new_directory = path.join(TaskUpload.ROOT, TaskUpload.DEFAULT_FOLDER,
                                               str(task.case.id) + "_" + str(task.id))
-                    new_location = path.join(new_directory, file_name)
-
-                    if not path.exists(new_directory):
-                        mkdir(new_directory)
-                    f.save(new_location)
-                    f.close()
+                    file_name = upload_file(f, new_directory)
 
                     upload = TaskUpload(self.current_user.id, task.id, task.case.id, file_name,
                                         self.form_result['comments'], self.form_result['file_title'])

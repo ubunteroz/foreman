@@ -181,7 +181,6 @@ class EvidenceController(BaseController):
             self.check_permissions(self.current_user, evidence, 'check-in-out')
 
             if not initial and self.validate_form(ChainOfCustodyForm()):
-                self.form_result['attach'] = None
                 full_date = datetime.combine(self.form_result['date'], self.form_result['time'])
                 if check_in:
                     evidence.check_in(self.form_result['user'], self.current_user, full_date,
@@ -192,7 +191,6 @@ class EvidenceController(BaseController):
                                        self.form_result['comments'], self.form_result['attach'],
                                        self.form_result['label'])
                 if evidence.case is not None:
-					#changed evidence.case.case_id to evidence.case.case_name to resolve errors when adding evidence to case.
                     return self.view(evidence.case.case_name, evidence_id)
                 else:
                     return self.view_caseless(evidence_id)
