@@ -409,7 +409,7 @@ def generate_task_background(task_type, rand_user):
 
 
 def create_test_tasks(case, investigators, rand_user):
-    task_types = TaskType.get_all()
+    task_types = TaskType.get_all().all()
     numTasks = randint(1, 6)
     inv = case.principle_case_manager
     for i in range(0, numTasks):
@@ -525,9 +525,10 @@ def create_evidence(case, inv, rand_user):
             mkdir(photo_location)
         amount = randint(1, 3)
         for x in xrange(0, amount):
-            rand1 = randint(1, 10)
-            shutil.copy("C:\Users\Sarah\Programming\photos\hdd{}.jpg".format(rand1), photo_location)
-            upload = EvidencePhotoUpload(inv.id, e.id, "hdd{}.jpg".format(rand1), "A comment", "Image " + str(x))
+            rand1 = randint(1, 9)
+            shutil.copy(path.join(ROOT_DIR, "static", "example_images", "evidence_example ({}).jpg".format(rand1)),
+                        photo_location)
+            upload = EvidencePhotoUpload(inv.id, e.id, "evidence_example ({}).jpg".format(rand1), "A comment", "Image " + str(x))
             session.add(upload)
             session.commit()
 

@@ -121,7 +121,7 @@ def generate_task_background(task_type, rand_user):
 
 
 def create_test_tasks(case, investigators, rand_user, i, progress=True):
-    task_types = TaskType.get_all()
+    task_types = TaskType.get_all().all()
     numTasks = i
     inv = case.principle_case_manager
     for x in range(0, numTasks):
