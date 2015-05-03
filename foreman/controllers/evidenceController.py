@@ -1,5 +1,6 @@
 from os import path
 from datetime import datetime
+from sqlalchemy import asc, desc
 # local imports
 from baseController import BaseController
 from ..utils.utils import ROOT_DIR, multidict_to_dict, session
@@ -142,8 +143,19 @@ class EvidenceController(BaseController):
 
     def view_all(self):
         self.check_permissions(self.current_user, 'Evidence', 'view-all')
-        evidence = Evidence.get_all(descending=True)
-        return self.return_response('pages', 'view_evidences.html', evidence=evidence)
+
+        sort_by = multidict_to_dict(self.request.args).get('sort_by','date')
+        evidence = Evidence.get_all_evidence(self.current_user, self.check_permissions)
+        if sort_by == "date":
+            evidence = sorted(evidence, key=lambda evidence: evidence.date_added, reverse=True)
+        if sort_by == "date_old":
+            evidence = sorted(evidence, key=lambda evidence: evidence.date_added)
+        elif sort_by == "case":
+            evidence = sorted(evidence, key=lambda evidence: evidence.case_id, reverse=True)
+        elif sort_by == "user":
+            evidence = sorted(evidence, key=lambda evidence: evidence.user_id)
+
+        return self.return_response('pages', 'view_evidences.html', evidence=evidence, sort_by=sort_by)
 
     def associate(self, evidence_id):
         evidence = self._validate_evidence(evidence_id)

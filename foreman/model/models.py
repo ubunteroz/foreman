@@ -17,9 +17,9 @@ class Model(object):
     @classmethod
     def get_all(cls, descending=False):
         if descending:
-            return session.query(cls).order_by(desc(cls.id)).all()
+            return session.query(cls).order_by(desc(cls.id))
         else:
-            return session.query(cls).order_by(asc(cls.id)).all()
+            return session.query(cls).order_by(asc(cls.id))
 
     @classmethod
     def get_amount(cls):

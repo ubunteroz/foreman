@@ -240,6 +240,17 @@ div.evidence{
     margin: 5px;
     float:left;
     width: 200px;
+    height: 75px;
+}
+
+div.evidence_private{
+    border: solid black 3px;
+    padding: 2px;
+    margin: 5px;
+    float:left;
+    width: 200px;
+    height: 71px;
+    background-color: #d3d3d3;
 }
 
 div.task_uploads{

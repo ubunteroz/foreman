@@ -50,6 +50,10 @@
             % if evidence.case.status == "Archived":
                     <span class="archived">[${evidence.case.status|h}]</span>
             % endif
+
+            % if evidence.case.private:
+                    <span class="archived">[Private Case]</span>
+            % endif
             </td>
         </tr>
         % endif

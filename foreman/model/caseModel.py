@@ -6,7 +6,7 @@ import shutil
 import calendar
 # library imports
 from sqlalchemy import Table, Column, Integer, Boolean, Unicode, ForeignKey, DateTime, asc, desc, and_, or_, func
-from sqlalchemy.ext.declarative import as_declarative, declared_attr
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import backref, relation
 from qrcode import *
 from werkzeug.exceptions import Forbidden
@@ -587,6 +587,18 @@ class Evidence(Base, Model):
     def date(self):
         return ForemanOptions.get_date(self.date_added)
 
+    @staticmethod
+    def get_all_evidence(user, case_perm_checker):
+        q = session.query(Evidence)
+        output = []
+        for evi in q:
+            try:
+                case_perm_checker(user, evi, "view")
+                output.append(evi)
+            except Forbidden:
+                pass
+        return output
+
 
 class TaskStatus(Base, HistoryModel):
     __tablename__ = 'task_statuses'
@@ -668,7 +680,6 @@ class UploadModel(Model):
         return Column(Integer, ForeignKey('users.id'))
 
     ROOT = path.join(ROOT_DIR, 'files')
-    CLASSNAME = None
 
     def __init__(self, uploader_id, file_name, file_note, title):
         self.uploader_id = uploader_id

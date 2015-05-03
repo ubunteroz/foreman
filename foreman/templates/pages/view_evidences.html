@@ -17,40 +17,64 @@
         case and add evidence from that case. </p>
         <h2>Evidence that needs associating with a case</h2>
         % for evi in evidence:
+            <% count = False %>
             % if evi.case_id is None:
             <div class="evidence">
                 <img alt="${evi.type|h} icon" src="${urls.build("images", dict(file='siteimages/evidence_icons/' + evi.icon + '.png'))|h}" style="float:left"/>
                 <p>No case associated.
                 <br/><a href='${urls.build("evidence.view_caseless", dict(evidence_id=evi.id))|h}'>${evi.reference|h}</a></p>
             </div>
+            <% count = True %>
 
         <div class="clear"/>
 
             % endif
         % endfor
 
+        % if count is False:
+            <p>No unassociated evidence.</p>
+        % endif
+
         <h2>Timeline of added evidence</h2>
-        <% current_year = None %>
-        <% current_month = None %>
-        <% current_day = None %>
+
+        <p>Sort by:
+            <a href="?sort_by=date">Date evidence added - Newest First</a> |
+            <a href="?sort_by=date_old">Date evidence added - Oldest First</a> |
+            <a href="?sort_by=case">Case evidence associated with</a> |
+            <a href="?sort_by=user">Person who added the evidence</a></p>
+
+        <% from datetime import datetime, timedelta %>
+        <% current_date = datetime.now()+ timedelta(days=1) %>
+        <% current_case_id = -1 %>
+        <% current_user_id = -1 %>
         % for evi in evidence:
-            % if current_year != evi.current_status.date_of_custody.year:
-                <div style="clear:both" />
-                <h2>${evi.current_status.date_of_custody.year|h}</h2>
-                <% current_year = evi.current_status.date_of_custody.year %>
+
+            % if sort_by == "date" or sort_by == "date_old":
+                % if current_date.date() != evi.current_status.date_of_custody.date():
+                    <div style="clear:both" />
+                    <h2>${evi.current_status.date_of_custody.date().strftime("%d %b %Y")|h}</h2>
+                    <% current_date = evi.current_status.date_of_custody %>
+                % endif
+            % elif sort_by == "case":
+                % if evi.case_id != current_case_id:
+                    <div style="clear:both" />
+                    <h2>${evi.case.case_name|h}</h2>
+                    <% current_case_id = evi.case_id %>
+                % endif
+            % elif sort_by == "user":
+                % if evi.user_id != current_user_id:
+                    <div style="clear:both" />
+                    <h2>${evi.user.fullname|h}</h2>
+                    <% current_user_id = evi.user_id %>
+                % endif
             % endif
-            % if current_month != evi.current_status.date_of_custody.month:
-                <div style="clear:both" />
-                <h3>${evi.current_status.date_of_custody.strftime('%B')|h}</h3>
-                <% current_month = evi.current_status.date_of_custody.month %>
-            % endif
-            % if current_day != evi.current_status.date_of_custody.date():
-                <div style="clear:both" />
-                <h4>${evi.current_status.date_of_custody.day|h}</h4>
-                <% current_day = evi.current_status.date_of_custody.date() %>
-                <div style="clear:both" />
-            % endif
+
+            % if evi.case.private:
+            <div class="evidence_private">
+            % else:
             <div class="evidence">
+            % endif
+
                 <img alt="${evi.type|h} icon" src="${urls.build("images", dict(file='siteimages/evidence_icons/' + evi.icon + '.png'))|h}" class="evidenceicon"/>
                 % if evi.case_id is not None:
                     % if evi.case.status == "Archived":

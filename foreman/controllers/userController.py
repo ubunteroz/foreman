@@ -13,7 +13,7 @@ from ..utils.mail import email
 class UserController(BaseController):
     def view_all(self):
         self.check_permissions(self.current_user, "User", 'view-all')
-        all_users = User.get_all()
+        all_users = User.get_all().all()
         return self.return_response('pages', 'view_users.html', users=all_users)
 
     def view(self, user_id):
