@@ -18,9 +18,9 @@
     % endif
 
      % if checkin:
-    <form method="post" enctype="multipart/form-data" action="${urls.build('evidence.custody_in', dict(evidence_id=evidence.reference))|h}">
+    <form method="post" enctype="multipart/form-data" action="${urls.build('evidence.custody_in', dict(evidence_id=evidence.id))|h}">
     % else:
-    <form method="post" enctype="multipart/form-data" action="${urls.build('evidence.custody_out', dict(evidence_id=evidence.reference))|h}">
+    <form method="post" enctype="multipart/form-data" action="${urls.build('evidence.custody_out', dict(evidence_id=evidence.id))|h}">
     % endif
         <% from datetime import datetime %>
         <% text = "Check-In" if checkin is True else "Check-Out" %>

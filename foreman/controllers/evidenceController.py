@@ -38,7 +38,8 @@ class EvidenceController(BaseController):
             session.flush()
             evi.create_qr_code()
             evi.add_change(self.current_user)
-            return self.custody_in(evi.reference, True, initial=True)
+			#changed evi.reference to evi.id to reference evidence items by their primary key as opposed to their reference text
+            return self.custody_in(evi.id, True, initial=True)
         else:
             evidence_type_options = [(evi.replace(" ", "").lower(), evi) for evi in
                                      ForemanOptions.get_evidence_types()]
@@ -191,7 +192,8 @@ class EvidenceController(BaseController):
                                        self.form_result['comments'], self.form_result['attach'],
                                        self.form_result['label'])
                 if evidence.case is not None:
-                    return self.view(evidence.case.case_id, evidence_id)
+					#changed evidence.case.case_id to evidence.case.case_name to resolve errors when adding evidence to case.
+                    return self.view(evidence.case.case_name, evidence_id)
                 else:
                     return self.view_caseless(evidence_id)
             else:

@@ -185,7 +185,7 @@
     % if len(case.evidence) > 0:
         <ol>
         % for evidence in case.evidence:
-            <li><a href='${urls.build("evidence.view", dict(evidence_id=evidence.reference, case_id=case.case_name))|h}'>${evidence.reference|h}</a></li>
+            <li><a href='${urls.build("evidence.view", dict(evidence_id=evidence.id, case_id=case.case_name))|h}'>${evidence.reference|h}</a></li>
         % endfor
         </ol>
     % else:
