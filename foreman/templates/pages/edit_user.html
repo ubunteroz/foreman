@@ -73,14 +73,14 @@
                 ${forms.formTextField("Username", "username", "username", "form_label", "input_long", first=True, value=user.username)}
                 ${forms.formTextField("Email address", "email", "email", "form_label", "input_long", value=user.email)}
                 ${forms.formTextField("Forename", "forename", "forename", "form_label", "input_long", value=user.forename)}
-                ${forms.formTextField("Middle Name", "middlename", "middlename", "form_label", "input_long", value=user.middle)}
+                ${forms.formTextField("Middle Name", "middlename", "middlename", "form_label", "input_long", value=user.middle, required=False)}
                 ${forms.formTextField("Surname", "surname", "surname", "form_label", "input_long", value=user.surname)}
                 ${forms.formTextField("Job Title", "job_title", "job_title", "form_label", "input_long",  value=user.job_title)}
                 ${forms.formTextField("Team", "team", "team", "form_label", "input_long",  value=user.team)}
                 ${forms.formTextField("Department", "department", "department", "form_label", "input_long",  value=user.department)}
-                ${forms.formTextField("Telephone Number (optional)", "telephone", "telephone", "form_label", "input_long",  value=user.telephone)}
-                ${forms.formTextField("Alternative Telephone Number (optional)", "alt_telephone", "alt_telephone", "form_label", "input_long",  value=user.alt_telephone)}
-                ${forms.formTextField("Fax (optional)", "fax", "fax", "form_label", "input_long",  value=user.fax)}
+                ${forms.formTextField("Telephone Number", "telephone", "telephone", "form_label", "input_long",  value=user.telephone, required=False)}
+                ${forms.formTextField("Alternative Telephone Number", "alt_telephone", "alt_telephone", "form_label", "input_long",  value=user.alt_telephone, required=False)}
+                ${forms.formTextField("Fax", "fax", "fax", "form_label", "input_long",  value=user.fax, required=False)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
             </form>
 
@@ -120,9 +120,9 @@
             <form method="post" action="${urls.build('user.edit', dict(user_id=user.id, form='edit_roles'))|h}">
                 % for role_type in role_types:
                     % if role_type[0] in [role.role for role in user.roles if role.removed is False]:
-                        ${forms.formSelectBox(role_type[0], role_type[1], role_type[1], "form_label", "input_long", role_type[2], value="Yes")}
+                        ${forms.formSelectBox(role_type[0], role_type[1], role_type[1], "form_label", "input_long", role_type[2], value="Yes", required=False)}
                     % else:
-                        ${forms.formSelectBox(role_type[0], role_type[1], role_type[1], "form_label", "input_long", role_type[2], value="No")}
+                        ${forms.formSelectBox(role_type[0], role_type[1], role_type[1], "form_label", "input_long", role_type[2], value="No", required=False)}
                     % endif
 
                 % endfor

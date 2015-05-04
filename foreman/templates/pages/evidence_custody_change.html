@@ -27,9 +27,9 @@
         ${forms.formTextField("Date of " + text, "date", "date", "form_label", "input_long", first=True, default=datetime.now().strftime("%d %B %Y"))}
         ${forms.formTextField("Time of " + text, "time", "time", "form_label", "input_long", default=datetime.now().strftime("%H:%M"))}
         ${forms.formTextField("Person/Location evidence is going to", "user", "user", "form_label", "input_long")}
-        ${forms.formTextArea("Comments", "comments", "comments", "form_label", "addeditcase")}
-        ${forms.formTextField("Upload Attachment", "attach", "attach", "form_label", "input_long", input_type="file")}
-        ${forms.formTextField("Attachment Description", "label", "label", "form_label", "input_long")}
+        ${forms.formTextArea("Comments", "comments", "comments", "form_label", "addeditcase", required=False)}
+        ${forms.formTextField("Upload Attachment", "attach", "attach", "form_label", "input_long", input_type="file", required=False)}
+        ${forms.formTextField("Attachment Description", "label", "label", "form_label", "input_long", required=False)}
         <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
     </form>
 </div>

@@ -178,7 +178,7 @@ class EvidenceController(BaseController):
 
         evidence = self._validate_evidence(evidence_id)
 
-        if evidence is not None and evidence.current_status.check_in != check_in:
+        if evidence is not None and (evidence.current_status is None or evidence.current_status.check_in != check_in):
             self.check_permissions(self.current_user, evidence, 'check-in-out')
 
             if not initial and self.validate_form(ChainOfCustodyForm()):

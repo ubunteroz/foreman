@@ -87,7 +87,7 @@ Foreman
             role_types = []
             for role in UserRoles.roles:
                 role_types.append((role, role.lower().replace(" ", ""), [("yes", "Yes"), ("no", "No")]))
-            return self.return_response('pages','add_user.html', role_types=role_types)
+            return self.return_response('pages','add_user.html', role_types=role_types, errors=self.form_error)
 
     def edit(self, user_id):
         user = self._validate_user(user_id)

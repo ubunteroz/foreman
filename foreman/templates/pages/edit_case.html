@@ -71,7 +71,7 @@
                 ${forms.formTextField("Case Files Location", "location", "location", "form_label", "input_long", value=case.location)}
                 ${forms.formTextArea("Case Background", "background", "background", "form_label", "addeditcase", value=case.background)}
                 ${forms.formTextArea("Case Justification", "justification", "justification", "form_label", "addeditcase_short", value=case.justification)}
-                ${forms.formTextField("Reference", "reference", "reference", "form_label", "input_long", value=case.reference)}
+                ${forms.formTextField("Reference", "reference", "reference", "form_label", "input_long", value=case.reference, required=False)}
                 ${forms.formSelectBox("Classification", "classification", "classification", "form_label", "input_long", classifications, please_select=True, value=case.classification)}
                 ${forms.formSelectBox("Case Type", "case_type", "case_type", "form_label", "input_long", case_types, please_select=True, value=case.case_type)}
                 ${forms.formCheckBoxes("Private", "private", "private", "private", "form_label", "radio_input_short", checked=case.private)}
@@ -201,8 +201,8 @@
 
             <h2>Edit Case Managers</h2>
             <form method="post" action="${urls.build('case.edit', dict(case_id=case.case_name, form='edit_case_managers'))|h}">
-                ${forms.formSelectBox("Principle Case Manager", "primary_case_manager", "primary_case_manager", "form_label", "input_long", managers, first=True, please_select=True, value=principle_man)}
-                ${forms.formSelectBox("Secondary Case Manager", "secondary_case_manager", "secondary_case_manager", "form_label", "input_long", managers, please_select=True, value=secondary_man)}
+                ${forms.formSelectBox("Principle Case Manager", "primary_case_manager", "primary_case_manager", "form_label", "input_long", managers, first=True, please_select=True, value=principle_man, required=False)}
+                ${forms.formSelectBox("Secondary Case Manager", "secondary_case_manager", "secondary_case_manager", "form_label", "input_long", managers, please_select=True, value=secondary_man, required=False)}
 
                 <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
             </form>

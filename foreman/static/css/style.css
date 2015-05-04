@@ -56,6 +56,21 @@ p.title{
     font-size: 30pt;
 }
 
+#breadcrumbs{
+    font-family: 'Nunito', sans-serif;
+    margin:0px;
+    Padding: 5px 5px;
+    font-size: 10pt;
+}
+
+#breadcrumbs a{
+    color: darkslategray;
+}
+
+#breadcrumbs a:hover{
+    color: #FFD801;
+}
+
 img.img_hover:hover {
     -moz-box-shadow: 0 0 5px #ccc;
     -webkit-box-shadow: 0 0 5px #ccc;
@@ -543,6 +558,10 @@ textarea.addeditcase{
     height: 200px;
 }
 
+input:focus, select:focus, textarea:focus{
+    border: solid #FFD801 2px;
+}
+
 div.icon_input{
     float: left;
     border: red;
@@ -577,6 +596,11 @@ label.form_label{
 
 .required{
     border: solid red 1px!important;
+}
+
+span.require_label{
+    color: red;
+    font-weight: bold;
 }
 
 div.error{

@@ -26,13 +26,18 @@
 	% endif
 </%def>
 
-<%def name="formTextField(label, name, id, labelclass, inputclass, input_type='text', first=False, default='', value='',  p_id='')" filter="trim">
+<%def name="formTextField(label, name, id, labelclass, inputclass, input_type='text', first=False, default='', value='',  p_id='', required=True)" filter="trim">
     % if first != True:
     <p style="clear:both; position:relative" id="${p_id|h}">
     % else:
     <p id="${p_id|h}">
     % endif
-		<label for="${name|h}" class="${labelclass|h}">${label}</label>
+		<label for="${name|h}" class="${labelclass|h}">
+            ${label}
+            % if required is True:
+                <span class="require_label">*</span>
+            % endif
+        </label>
 
     % if form_result and name in form_result:
         <% value = form_result[name] %>
@@ -45,7 +50,7 @@
 </%def>
 
 
-<%def name="formSelectBox(label, name, id, labelclass, inputclass, options, first=False, value=None, please_select=False)" filter="trim">
+<%def name="formSelectBox(label, name, id, labelclass, inputclass, options, first=False, value=None, please_select=False, required=True)" filter="trim">
     % if first != True:
     <p style="clear:both; position:relative">
     % else:
@@ -56,7 +61,12 @@
         <% value = form_result[name] %>
     % endif
 
-    <label for="${name|h}" class="${labelclass|h}">${label}</label>
+    <label for="${name|h}" class="${labelclass|h}">
+        ${label}
+        % if required is True:
+            <span class="require_label">*</span>
+        % endif
+    </label>
     <select class="${inputclass|h} ${isError(name)}" name="${name|h}" id="${id|h}">
         % if please_select == True:
         <option value="null">Please select</option>
@@ -75,7 +85,7 @@
     </p>
 </%def>
 
-<%def name="formTextArea(label, name, id, labelclass, inputclass, value=None, first=False)" filter="trim">
+<%def name="formTextArea(label, name, id, labelclass, inputclass, value=None, first=False, required=True)" filter="trim">
     % if first != True:
     <p style="clear:both; position:relative">
     % else:
@@ -88,19 +98,30 @@
         <% value = "" %>
     % endif
 
-		<label for="${name|h}" class="${labelclass|h}">${label}</label>
+		<label for="${name|h}" class="${labelclass|h}">
+            ${label}
+            % if required is True:
+                <span class="require_label">*</span>
+            % endif
+        </label>
         <textarea class="${inputclass|h} ${isError(name)}" name="${name|h}" id="${id|h}">${value|h}</textarea>
 		${getError(name)|h}
     </p>
 </%def>
 
-<%def name="formRadioButtons(label, options, name, id, labelclass, inputclass, radiodivclass, first=False)" filter="trim">
+<%def name="formRadioButtons(label, options, name, id, labelclass, inputclass, radiodivclass, first=False, required=True)" filter="trim">
     % if first != True:
     <p style="clear:both; position:relative">
     % else:
     <p>
     % endif
-		<label for="${name|h}" class="${labelclass|h}">${label}</label></p>
+		<label for="${name|h}" class="${labelclass|h}">
+            ${label}
+            % if required is True:
+                <span class="require_label">*</span>
+            % endif
+            <br/>${getError(name)|h}
+        </label></p>
         <div class="${radiodivclass|h}">
         % for opt, desc in options:
             <p>
@@ -109,7 +130,7 @@
             </p>
         % endfor
         </div>
-        ${getError(name)|h}
+
 
 </%def>
 

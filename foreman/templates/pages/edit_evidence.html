@@ -71,7 +71,7 @@
             <h2>Edit Evidence Details</h2>
             <form method="post" action="${urls.build('evidence.edit', dict(evidence_id=evidence.id, form='edit_evidence'))|h}">
                 ${forms.formTextField("Reference", "reference", "reference", "form_label", "input_long", first=True, value=evidence.reference)}
-                ${forms.formTextField("Bag Number", "bag_num", "bag_num", "form_label", "input_long", value=evidence.evidence_bag_number)}
+                ${forms.formTextField("Bag Number", "bag_num", "bag_num", "form_label", "input_long", value=evidence.evidence_bag_number, required=False)}
                 ${forms.formSelectBox("Evidence Type", "type", "type", "form_label", "input_long", evidence_type_options, please_select=True, value=evidence.type)}
                 ${forms.formTextField("Location Seized From", "location", "location", "form_label", "input_long", value=evidence.location)}
                 ${forms.formTextField("Originator", "originator", "originator", "form_label", "input_long", value=evidence.originator)}

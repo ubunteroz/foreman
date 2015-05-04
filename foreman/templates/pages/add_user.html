@@ -21,19 +21,19 @@
             ${forms.formTextField("Username", "username", "username", "form_label", "input_long", first=True)}
             ${forms.formTextField("Email address", "email", "email", "form_label", "input_long")}
             ${forms.formTextField("Forename", "forename", "forename", "form_label", "input_long")}
-            ${forms.formTextField("Middle Name (optional)", "middlename", "middlename", "form_label", "input_long")}
+            ${forms.formTextField("Middle Name", "middlename", "middlename", "form_label", "input_long", required=False)}
             ${forms.formTextField("Surname", "surname", "surname", "form_label", "input_long")}
             ${forms.formTextField("Job Title", "job_title", "job_title", "form_label", "input_long")}
             ${forms.formTextField("Team", "team", "team", "form_label", "input_long")}
             ${forms.formTextField("Department", "department", "department", "form_label", "input_long")}
-            ${forms.formTextField("Telephone Number (optional)", "telephone", "telephone", "form_label", "input_long")}
-            ${forms.formTextField("Alternative Telephone Number (optional)", "alt_telephone", "alt_telephone", "form_label", "input_long")}
-            ${forms.formTextField("Fax (optional)", "fax", "fax", "form_label", "input_long")}
+            ${forms.formTextField("Telephone Number", "telephone", "telephone", "form_label", "input_long", required=False)}
+            ${forms.formTextField("Alternative Telephone Number", "alt_telephone", "alt_telephone", "form_label", "input_long", required=False)}
+            ${forms.formTextField("Fax", "fax", "fax", "form_label", "input_long", required=False)}
 
         <div style="clear:both"></div>
         <h1>Add User Roles</h1>
             % for role_type in role_types:
-                ${forms.formSelectBox(role_type[0], role_type[1], role_type[1], "form_label", "input_long", role_type[2], value="No")}
+                ${forms.formSelectBox(role_type[0], role_type[1], role_type[1], "form_label", "input_long", role_type[2], value="No", required=False)}
             % endfor
             <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
         </form>
