@@ -237,6 +237,11 @@ class BaseController():
 
     @staticmethod
     def _validate_evidence(evidence_id, case_id=None):
+        try:
+            int(evidence_id)
+        except ValueError:
+            return None
+
         if case_id:
             case = Case.get_filter_by(case_name=case_id).first()
             if case is not None:

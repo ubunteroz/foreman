@@ -265,11 +265,8 @@ class And(BaseChecker):
 
 permissions = {
     ('Case', 'admin'): AdminChecker(),
-    ('Case', 'request'): Or(AdminChecker(), RequesterChecker()),
     ('Case', 'view-all'): Or(AdminChecker(), InvestigatorChecker(), QAChecker(), CaseManagerChecker()),
-    ('Case', 'examiner'): Or(AdminChecker(), InvestigatorChecker(), QAChecker()),
     ('Case', 'edit'): And(Or(AdminChecker(), CaseManagerForCaseChecker()), Not(ArchivedCaseChecker())),
-    ('Case', 'manage'): Or(AdminChecker(), CaseManagerChecker()),
     ('Case', 'close'): And(
                         Or(AdminChecker(),
                             CaseManagerForCaseChecker()),
@@ -331,12 +328,15 @@ permissions = {
                                 QAForEvidenceChecker(),
                                 CaseManagerForEvidenceChecker()),
                             PrivateTaskChecker())),
-    ('Evidence', 'add_file'): And(Or(AdminChecker(), InvestigatorForCaseChecker(), QAForEvidenceChecker(),
+    ('Evidence', 'add_file'): And(Or(AdminChecker(), InvestigatorForEvidenceChecker(), QAForEvidenceChecker(),
                                     CaseManagerForEvidenceChecker()), Not(ArchivedEvidenceChecker())),
-    ('Evidence', 'delete_file'): And(Or(AdminChecker(), InvestigatorForCaseChecker(), QAForEvidenceChecker(),
+    ('Evidence', 'delete_file'): And(Or(AdminChecker(), InvestigatorForEvidenceChecker(), QAForEvidenceChecker(),
                                     CaseManagerForTaskChecker()), Not(ArchivedEvidenceChecker())),
-    ('Evidence', 'dis-associate'): And(Or(AdminChecker(), CaseManagerForEvidenceChecker()), Not(ArchivedEvidenceChecker())),
-    ('Evidence', 'remove'): And(Or(AdminChecker(), CaseManagerForEvidenceChecker()), Not(ArchivedEvidenceChecker())),
+    ('Evidence', 'associate'): And(Or(AdminChecker(), CaseManagerChecker(), InvestigatorChecker()),
+                                   Not(ArchivedEvidenceChecker())),
+    ('Evidence', 'dis-associate'): And(Or(AdminChecker(), CaseManagerForEvidenceChecker(),
+                                          InvestigatorForEvidenceChecker()), Not(ArchivedEvidenceChecker())),
+    ('Evidence', 'remove'): And(Or(AdminChecker(), CaseManagerChecker()), Not(ArchivedEvidenceChecker())),
     ('Evidence', 'add'): And(Or(AdminChecker(), InvestigatorChecker(), CaseManagerChecker())),
     ('Evidence', 'edit'): And(
                             Or(AdminChecker(),

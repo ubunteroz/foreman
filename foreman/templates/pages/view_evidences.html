@@ -12,12 +12,12 @@
 <div id="mainbar">
     <h1>Evidence</h1>
 
+    <% count = False %>
     % if evidence:
         <p><a href='${urls.build("evidence.add_no_case")|h}'>Add more evidence without a case</a>, otherwise please go to a
         case and add evidence from that case. </p>
         <h2>Evidence that needs associating with a case</h2>
         % for evi in evidence:
-            <% count = False %>
             % if evi.case_id is None:
             <div class="evidence">
                 <img alt="${evi.type|h} icon" src="${urls.build("images", dict(file='siteimages/evidence_icons/' + evi.icon + '.png'))|h}" style="float:left"/>
@@ -69,7 +69,7 @@
                 % endif
             % endif
 
-            % if evi.case.private:
+            % if evi.case_id is not None and evi.case.private:
             <div class="evidence_private">
             % else:
             <div class="evidence">

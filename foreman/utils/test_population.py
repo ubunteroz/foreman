@@ -1,12 +1,15 @@
 # foreman imports
 from foreman.model import User, ForemanOptions, UserRoles, Case, UserCaseRoles, CaseType, CaseClassification, CaseStatus
-from foreman.model import TaskType, Task, TaskStatus, UserTaskRoles, EvidenceType, Evidence
+from foreman.model import TaskType, Task, TaskStatus, UserTaskRoles, EvidenceType, Evidence, EvidencePhotoUpload
 from utils import session, config, ROOT_DIR
 from random import randint
 from os import path, mkdir, stat
 import shutil
 from datetime import datetime
 import population
+
+now = datetime.now()
+
 
 def create_test_cases(case_managers, requestors, investigators):
     backgrounds = [
@@ -186,7 +189,6 @@ def create_evidence(case, inv, rand_user, num):
     numEvidence = num % 3
     ref = 1
     for i in range(0, numEvidence):
-        now = datetime.now()
         evi = EvidenceType.get_evidence_types()[num]
         e = Evidence(case, case.case_name + "-SCH-20140228-HDD_00" + str(ref), evi,
                      "Hard drive from {}'s main machine".format(rand_user),
@@ -200,10 +202,19 @@ def create_evidence(case, inv, rand_user, num):
         e.create_qr_code()
         e.check_in(inv.fullname, inv, now, "Initial check in to the storage cabinet")
 
-def disassociate_evidence():
+        photo_location = path.abspath(path.join(ROOT_DIR, "files", "evidence_photos", str(e.id)))
+        shutil.copy(path.join(ROOT_DIR, "static", "example_images", "evidence_example (1).jpg"), photo_location)
+        upload = EvidencePhotoUpload(inv.id, e.id, "evidence_example (1).jpg", "A comment", "Image")
+        session.add(upload)
+        session.commit()
+
+def disassociate_evidence(inv):
     evidence = Evidence.get(4)
     evidence.case_id = None
     session.flush()
+
+    evidence = Evidence.get(5)
+    evidence.check_out(inv.fullname, inv, now, "out")
 
 def create_test_data():
     population.load_initial_values_test()
@@ -212,4 +223,4 @@ def create_test_data():
     case_managers = population.create_test_case_managers(admin)
     requestors = population.create_test_requestors(admin)
     create_test_cases(case_managers, requestors, investigators)
-    disassociate_evidence()
+    disassociate_evidence(investigators[1])

@@ -9,7 +9,7 @@
 
     <p class="title">${company|h} - ${department|h}</p>
 
-    % if check_perms('Case', 'manage'):
+    % if current_user.is_case_manager():
     <h1>Case Manager</h1>
 
     <div class="boxes">
@@ -37,7 +37,7 @@
     <div style="clear:both" />
     % endif
 
-    % if check_perms('Case', 'examiner'):
+    % if current_user.is_examiner():
     <h1>Forensic Examiner</h1>
 
     <div class="boxes">
@@ -69,7 +69,7 @@
     <div style="clear:both" />
     % endif
 
-    % if check_perms('Case', 'request'):
+    % if current_user.is_requester():
     <h1>Case Requester</h1>
 
     <div class="boxes">

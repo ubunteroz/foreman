@@ -67,7 +67,7 @@
 </%def>
 
 <%def name="tasks_menu()" filter="trim">
-    % if check_perms("Case", 'manage'):
+    % if current_user.is_case_manager():
         <div class="sidebar-panel">
             <a href="#"><img class="show-hide-sidepanel-up-button" src="${urls.build("images", dict(file='siteimages/up-arrow.png'))|h}" /></a>
             <a href="#"><img class="show-hide-sidepanel-down-button" src="${urls.build("images", dict(file='siteimages/down-arrow.png'))|h}" /></a>
@@ -83,7 +83,7 @@
         </div>
     % endif
 
-    % if check_perms("Case", 'request'):
+    % if current_user.is_requester():
         <div class="sidebar-panel">
         <a href="#"><img class="show-hide-sidepanel-up-button" src="${urls.build("images", dict(file='siteimages/up-arrow.png'))|h}" /></a>
         <a href="#"><img class="show-hide-sidepanel-down-button" src="${urls.build("images", dict(file='siteimages/down-arrow.png'))|h}" /></a>
@@ -149,7 +149,7 @@
         </div>
     % endif
 
-    % if check_perms("Case", 'examiner'):
+    % if current_user.is_examiner():
         <div class="sidebar-panel">
             <a href="#"><img class="show-hide-sidepanel-up-button" src="${urls.build("images", dict(file='siteimages/up-arrow.png'))|h}" /></a>
             <a href="#"><img class="show-hide-sidepanel-down-button" src="${urls.build("images", dict(file='siteimages/down-arrow.png'))|h}" /></a>

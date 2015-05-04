@@ -27,6 +27,8 @@ test_urls = [
     'url_tests.test_task_pages',
     'url_tests.test_user_pages',
     'url_tests.test_forensics_pages',
+    'url_tests.test_reporting_pages',
+    'url_tests.test_evidence_pages',
 ]
 
 

@@ -159,8 +159,8 @@ class EvidenceController(BaseController):
 
     def associate(self, evidence_id):
         evidence = self._validate_evidence(evidence_id)
-        if evidence is not None:
-            self.check_permissions(self.current_user, evidence, 'dis-associate')
+        if evidence is not None and evidence.case_id is None:
+            self.check_permissions(self.current_user, evidence, 'associate')
 
             reassign_cases = [(r_case.id, r_case.case_name) for r_case in Case.get_all()]
             if self.validate_form(EvidenceAssociateForm()):
@@ -178,7 +178,7 @@ class EvidenceController(BaseController):
 
         evidence = self._validate_evidence(evidence_id)
 
-        if evidence is not None:
+        if evidence is not None and evidence.current_status.check_in != check_in:
             self.check_permissions(self.current_user, evidence, 'check-in-out')
 
             if not initial and self.validate_form(ChainOfCustodyForm()):

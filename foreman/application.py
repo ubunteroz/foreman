@@ -142,7 +142,7 @@ class Application(object):
         map.add(Rule('/evidence/<evidence_id>/custody/check-out/', endpoint='evidence.custody_out'))
         map.add(Rule('/evidence/<evidence_id>/custody/check-in/', endpoint='evidence.custody_in'))
 
-        map.add(Rule('/evidence/<evidence_id>/uploads/<upload_id>', endpoint='evidence.view_photo'))
+        map.add(Rule('/evidence/<evidence_id>/uploads/<upload_id>/', endpoint='evidence.view_photo'))
         map.add(Rule('/evidence/<evidence_id>/uploads/<upload_id>/delete/', endpoint='evidence.delete_photo'))
         map.add(Rule('/evidence/<evidence_id>/uploads/add/', endpoint='evidence.add_photo'))
 
