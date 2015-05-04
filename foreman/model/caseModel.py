@@ -854,7 +854,7 @@ class TaskHistory(Base, HistoryModel):
         return ForemanOptions.get_date(self.date_time)
 
     def difference(self, previous_object):
-        self.difference(previous_object)
+
         differences = HistoryModel.difference(self, previous_object)
         if self.task_type.task_type != previous_object.task_type.task_type:
             differences['Task Type'] = (self.task_type.task_type, previous_object.task_type.task_type)

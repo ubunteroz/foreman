@@ -177,8 +177,6 @@ class TaskController(BaseController):
                         task.location = self.form_result['location']
                         task.background = self.form_result['background']
                         task.add_change(self.current_user)
-                    if task.status != self.form_result['status']:
-                        task.set_status(self.form_result['status'], self.current_user)
             elif 'form' in form_type and form_type['form'] == "edit_users":
                 active_tab = 1
                 if self.validate_form(EditTaskUsersForm()):

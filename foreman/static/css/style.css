@@ -558,7 +558,7 @@ textarea.addeditcase{
     height: 200px;
 }
 
-input:focus, select:focus, textarea:focus{
+input[type=input]:focus, input[type=file]:focus, select:focus, textarea:focus{
     border: solid #FFD801 2px;
 }
 
