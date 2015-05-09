@@ -124,11 +124,11 @@ class Application(object):
         map.add(Rule('/cases/<case_id>/<task_id>/assign_me/', endpoint='task.assign_work'))
         map.add(Rule('/cases/<case_id>/<task_id>/assign/', endpoint='task.assign_work_manager'))
         map.add(Rule('/cases/<case_id>/<task_id>/', endpoint='task.view'))
-        map.add(Rule('/cases/<case_id>/tasks/add/', endpoint='task.add'))
+        map.add(Rule('/cases/<case_id>/tasks/add/', endpoint='case.add_task'))
         map.add(Rule('/cases/<case_id>/<task_id>/edit/', endpoint='task.edit'))
         map.add(Rule('/cases/<case_id>/<task_id>/close/', endpoint='task.close'))
         map.add(Rule('/cases/<case_id>/<task_id>/change_status/', endpoint='task.change_status'))
-        map.add(Rule('/cases/<case_id>/change_statuses/', endpoint='task.change_statuses'))
+        map.add(Rule('/cases/<case_id>/change_statuses/', endpoint='case.change_task_statuses'))
 
         map.add(Rule('/evidence/', endpoint='evidence.view_all'))
         map.add(Rule('/evidence/<evidence_id>/associate/', endpoint='evidence.associate'))

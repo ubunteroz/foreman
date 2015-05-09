@@ -86,6 +86,16 @@
         % endif
     </div>
 
+    <div id="breadcrumbs">
+        % if breadcrumbs:
+        % for i, crumb in enumerate(breadcrumbs):
+            <a href="${crumb['path']}">${crumb['title']|h}</a>
+            % if i != len(breadcrumbs) - 1:
+                &raquo;
+            % endif
+        % endfor
+        % endif
+    </div>
     <div id="middle">
 
             ${self.body()}

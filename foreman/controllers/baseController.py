@@ -36,6 +36,10 @@ class BaseController():
         self.form_error = {}
         self.form_result = {}
         self.user_posted = {}
+        self._create_breadcrumbs()
+
+    def _create_breadcrumbs(self):
+        self.breadcrumbs = [{'title': 'Home', 'path': self.urls.build('general.index')}]
 
     def return_404(self, **vars):
         vars.update(**self._get_base_variables())
@@ -57,7 +61,7 @@ class BaseController():
         """ Return the rendered template with variables """
         vars.update(**self._get_base_variables())
         template = lookup.get_template(path.join(*location))
-        html = template.render(urls=self.urls, **vars)
+        html = template.render(urls=self.urls, breadcrumbs=self.breadcrumbs, **vars)
         return Response(html, mimetype='text/html', status=vars.get('_status', 200))
 
     def validate_form(self, schema):

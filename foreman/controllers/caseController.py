@@ -3,14 +3,19 @@ from werkzeug import Response, redirect
 # local imports
 from baseController import BaseController
 from taskController import TaskController
-from ..model import Case, User, CaseStatus, UserCaseRoles, Task, UserTaskRoles, LinkedCase, UserRoles, \
-    CaseHistory, TaskHistory, TaskStatus, ForemanOptions, CaseClassification, CaseType
+from ..model import Case, CaseStatus, UserCaseRoles, Task, UserTaskRoles, LinkedCase, UserRoles, \
+    CaseHistory, TaskHistory, TaskStatus, ForemanOptions, CaseClassification, CaseType, TaskType
 from ..utils.utils import multidict_to_dict, session
-from ..forms.forms import AddCaseForm, EditCaseForm, AddCaseLinkForm, RemoveCaseLinkForm
-from ..forms.forms import EditCaseManagersForm, ReAssignTasksForm, RequesterAddCaseForm
+from ..forms.forms import AddCaseForm, EditCaseForm, AddCaseLinkForm, RemoveCaseLinkForm, RequesterAddTaskForm
+from ..forms.forms import EditCaseManagersForm, ReAssignTasksForm, RequesterAddCaseForm, AddTaskForm
 
 
 class CaseController(BaseController):
+
+    def _create_breadcrumbs(self):
+        BaseController._create_breadcrumbs(self)
+        self.breadcrumbs.append({'title': 'Cases', 'path': self.urls.build('case.view_all')})
+
     def view_all(self):
         self.check_permissions(self.current_user, 'Case', 'view-all')
 
@@ -59,6 +64,8 @@ class CaseController(BaseController):
                                     and case.tasks[0].status == TaskStatus.CREATED
             else:
                 all_tasks_created = False
+            self.breadcrumbs.append({'title': case.case_name,
+                                     'path': self.urls.build('case.view', dict(case_id=case.case_name))})
             return self.return_response('pages', 'view_case.html', case=case, all_tasks_created=all_tasks_created)
         else:
             return self.return_404(reason="The case you are trying to view does not exist.")
@@ -67,6 +74,12 @@ class CaseController(BaseController):
         case = self._validate_case(case_id)
         if case is not None:
             self.check_permissions(self.current_user, case, 'edit')
+
+            self.breadcrumbs.append({'title': case.case_name,
+                                     'path': self.urls.build('case.view', dict(case_id=case.case_name))})
+            self.breadcrumbs.append({'title': "Change Status",
+                                     'path': self.urls.build('case.change_status', dict(case_id=case.case_name))})
+
             args = multidict_to_dict(self.request.args)
             change = False
             if "status" in args and args["status"] in CaseStatus.all_statuses:
@@ -89,6 +102,7 @@ class CaseController(BaseController):
 
     def add(self):
         self.check_permissions(self.current_user, "Case", 'add')
+        self.breadcrumbs.append({'title': "Add new case", 'path': self.urls.build('case.add')})
         is_requester = self.current_user.is_requester()
         case_loc = ForemanOptions.get_default_location()
         managers = [(user.id, user.fullname) for user in UserRoles.get_managers()]
@@ -138,6 +152,91 @@ class CaseController(BaseController):
                                     managers=managers, errors=self.form_error, classifications=classifications,
                                     case_types=case_types, next_case_name=next_case_name)
 
+    def add_task(self, case_id):
+        case = self._validate_case(case_id)
+        if case is not None:
+            self.check_permissions(self.current_user, case, 'add-task')
+            self.breadcrumbs.append({'title': case.case_name,
+                                     'path': self.urls.build('case.view', dict(case_id=case.case_name))})
+            self.breadcrumbs.append({'title': "Add new task", 'path': self.urls.build('case.add_task',
+                                                                                      dict(case_id=case.case_name))})
+
+            is_requester = self.current_user.is_requester()
+            task_type_options = [(tt.replace(" ", "").lower(), tt) for tt in TaskType.get_task_types()]
+
+            args = multidict_to_dict(self.request.args)
+            if 'type' in args and args['type'] == "requester" and is_requester:
+                if self.validate_form(RequesterAddTaskForm()):
+                    task_name = ForemanOptions.get_next_task_name(case, self.form_result['task_type'])
+                    new_task = Task(case, self.form_result['task_type'], task_name,
+                                    self.current_user, self.form_result['background'])
+                    session.add(new_task)
+                    session.flush()
+                    new_task.add_change(self.current_user)
+                    session.flush()
+                    return self.return_response('pages', 'task_added.html', task=new_task)
+                else:
+                    return self.return_response('pages', 'add_task.html', task_type_options=task_type_options,
+                                                case=case, errors=self.form_error, is_requester=is_requester)
+            elif self.validate_form(AddTaskForm()):
+                new_task = Task(case, self.form_result['task_type'], self.form_result['task_name'], self.current_user,
+                                self.form_result['background'], self.form_result['location'])
+                session.add(new_task)
+                session.flush()
+                new_task.add_change(self.current_user)
+                session.flush()
+
+                if self.form_result['primary_investigator']:
+                    self._create_new_user_role(UserTaskRoles.PRINCIPLE_INVESTIGATOR, new_task,
+                                               self.form_result['primary_investigator'])
+                if self.form_result['secondary_investigator']:
+                    self._create_new_user_role(UserTaskRoles.SECONDARY_INVESTIGATOR, new_task,
+                                               self.form_result['secondary_investigator'])
+                if self.form_result['primary_qa']:
+                    self._create_new_user_role(UserTaskRoles.PRINCIPLE_QA, new_task, self.form_result['primary_qa'])
+                if self.form_result['secondary_qa']:
+                    self._create_new_user_role(UserTaskRoles.SECONDARY_QA, new_task, self.form_result['secondary_qa'])
+
+                session.commit()
+                return redirect(
+                    self.urls.build('case.view', {"case_id": case.case_name}))  # CaseController.view(case.case_name)
+            else:
+                investigators = [(user.id, user.fullname) for user in UserRoles.get_investigators()]
+                qas = [(user.id, user.fullname) for user in UserRoles.get_qas()]
+                return self.return_response('pages', 'add_task.html', investigators=investigators, qas=qas,
+                                            task_type_options=task_type_options, case=case, errors=self.form_error,
+                                            is_requester=is_requester)
+        else:
+            return self.return_404()
+
+    def change_task_statuses(self, case_id):
+        case = self._validate_case(case_id)
+        if case is not None:
+            self.check_permissions(self.current_user, case, 'edit')
+            self.breadcrumbs.append({'title': case.case_name,
+                                     'path': self.urls.build('case.view', dict(case_id=case.case_name))})
+            self.breadcrumbs.append({'title': "Change Task Statuses",
+                                     'path': self.urls.build('case.change_task_statuses',
+                                                             dict(case_id=case.case_name))})
+            args = multidict_to_dict(self.request.args)
+            change = False
+            if "status" in args and args["status"] in TaskStatus.preInvestigation:
+                status = args["status"]
+                all_tasks_created = len(set([task.status for task in case.tasks])) == 1 \
+                                    and case.tasks[0].status == TaskStatus.CREATED
+                if not all_tasks_created:
+                    return self.return_404()
+                if 'confirm' in args and args['confirm'] == "true":
+                    for task in case.tasks:
+                        task.set_status(status, self.current_user)
+                        change = True
+                return self.return_response('pages', 'confirm_task_statuses_change.html', case=case, change=change,
+                                            status=status)
+            else:
+                return self.return_404(reason="The case or status change you are trying to make does not exist.")
+        else:
+            return self.return_404(reason="The case or status change you are trying to make is incorrect.")
+
     def _return_edit_response(self, case, active_tab, errors=None):
         managers = [(user.id, user.fullname) for user in UserRoles.get_managers()]
         reassign_cases = [(r_case.id, r_case.case_name) for r_case in Case.get_all() if r_case.id != case.id]
@@ -170,6 +269,12 @@ class CaseController(BaseController):
         if case is not None:
             self.check_permissions(self.current_user, case, 'edit')
             form_type = multidict_to_dict(self.request.args)
+
+            self.breadcrumbs.append({'title': case.case_name,
+                                     'path': self.urls.build('case.view', dict(case_id=case.case_name))})
+            self.breadcrumbs.append({'title': "Edit",
+                                     'path': self.urls.build('case.edit', dict(case_id=case.case_name))})
+
             if 'active_tab' in form_type:
                 try:
                     active_tab = int(form_type['active_tab'])
@@ -241,6 +346,10 @@ class CaseController(BaseController):
         if case is not None:
             self.check_permissions(self.current_user, case, 'close')
 
+            self.breadcrumbs.append({'title': case.case_name,
+                                     'path': self.urls.build('case.view', dict(case_id=case.case_name))})
+            self.breadcrumbs.append({'title': "Close",
+                                     'path': self.urls.build('case.close', dict(case_id=case.case_name))})
             closed = False
             confirm_close = multidict_to_dict(self.request.args)
 

@@ -125,7 +125,7 @@
             % endif
             <td colspan="4">
                 % if check_perms(case, 'edit'):
-                <a href='${urls.build("task.add", dict(case_id=case.case_name))|h}'>Add Tasks</a>
+                <a href='${urls.build("case.add_task", dict(case_id=case.case_name))|h}'>Add Tasks</a>
                 % else:
                 No Tasks added.
                 % endif

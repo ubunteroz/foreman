@@ -11,6 +11,12 @@ from ..utils.utils import multidict_to_dict, session, config
 from ..utils.mail import email
 
 class UserController(BaseController):
+
+    def _create_breadcrumbs(self):
+        BaseController._create_breadcrumbs(self)
+        if self.current_user.is_admin():
+            self.breadcrumbs.append({'title': 'Users', 'path': self.urls.build('user.view_all')})
+
     def view_all(self):
         self.check_permissions(self.current_user, "User", 'view-all')
         all_users = User.get_all().all()
@@ -20,6 +26,8 @@ class UserController(BaseController):
         user = self._validate_user(user_id)
         if user is not None:
             # no permissions check, all logged in users can view a user profile
+            self.breadcrumbs.append({'title': user.fullname,
+                                     'path': self.urls.build('user.view', dict(user_id=user.id))})
             role_groups = UserRoles.roles
             user_roles = UserRoles.get_role_names(user_id)
             cases_worked_on = Case.cases_with_user_involved(user_id)
@@ -32,6 +40,8 @@ class UserController(BaseController):
 
     def add(self):
         self.check_permissions(self.current_user, "User", 'add')
+        self.breadcrumbs.append({'title': "Add User", 'path': self.urls.build('user.add')})
+
         if self.validate_form(AddUserForm):
             new_user_password = User.make_random_password()
             if self.form_result['middlename'] == "":
@@ -91,8 +101,8 @@ Foreman
 
     def edit(self, user_id):
         user = self._validate_user(user_id)
-        if user is not None:
 
+        if user is not None:
             form_type = multidict_to_dict(self.request.args)
             if 'tab' in form_type and form_type['tab'] == "edit_roles":
                 self.check_permissions(self.current_user, user, 'edit-roles')
@@ -100,6 +110,9 @@ Foreman
             else:
                 active_tab = 0
 
+            self.breadcrumbs.append({'title': user.fullname, 'path': self.urls.build('user.view', dict(user_id=user.id))})
+            self.breadcrumbs.append({'title': "Edit", 'path': self.urls.build('user.edit', dict(user_id=user.id))})
+            
             if 'form' in form_type and form_type['form'] == "edit_roles":
                 self.check_permissions(self.current_user, user, 'edit-roles')
 
@@ -160,6 +173,10 @@ Foreman
         user = self._validate_user(user_id)
         if user is not None:
             self.check_permissions(self.current_user, user, 'edit-password')
+            self.breadcrumbs.append({'title': user.fullname,
+                                     'path': self.urls.build('user.view', dict(user_id=user.id))})
+            self.breadcrumbs.append({'title': "Edit Password",
+                                     'path': self.urls.build('user.edit_password', dict(user_id=user.id))})
 
             if user.username == self.current_user.username:
                 if self.validate_form(PasswordChangeForm()):
@@ -211,6 +228,11 @@ Foreman
         user = self._validate_user(user_id)
         if user is not None:
             self.check_permissions(self.current_user, user, "view-history")
+            self.breadcrumbs.append({'title': user.fullname,
+                                     'path': self.urls.build('user.view', dict(user_id=user.id))})
+            self.breadcrumbs.append({'title': "Case History",
+                                     'path': self.urls.build('user.case_history', dict(user_id=user.id))})
+
             if user.is_investigator() or user.is_QA():
                 current_tasks_qaed = Task.get_current_qas(user, self.check_permissions, self.current_user)
                 old_tasks_qaed = Task.get_completed_qas(user, self.check_permissions, self.current_user)

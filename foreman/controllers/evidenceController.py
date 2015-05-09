@@ -12,6 +12,20 @@ from ..utils.utils import upload_file
 
 class EvidenceController(BaseController):
 
+    def _create_task_specific_breadcrumbs(self, evidence, case):
+        if case is not None:
+            self.breadcrumbs.append({'title': 'Cases', 'path': self.urls.build('case.view_all')})
+            self.breadcrumbs.append({'title': case.case_name,
+                                     'path': self.urls.build('case.view', dict(case_id=case.case_name))})
+            self.breadcrumbs.append({'title': evidence.reference,
+                                 'path': self.urls.build('evidence.view', dict(case_id=case.case_name,
+                                                                           evidence_id=evidence.id))})
+        else:
+            self.breadcrumbs.append({'title': "Evidence",
+                                     'path': self.urls.build('evidence.view_all')})
+            self.breadcrumbs.append({'title': evidence.reference,
+                                 'path': self.urls.build('evidence.view_caseless', dict(evidence_id=evidence.id))})
+
     def add_no_case(self):
         return self.add(None)
 
@@ -45,8 +59,9 @@ class EvidenceController(BaseController):
         evidence = self._validate_evidence(evidence_id)
         if evidence is not None:
             self.check_permissions(self.current_user, evidence, 'edit')
-
-            photo_location = path.join(ROOT_DIR, 'static', 'evidence_photos', str(evidence.id))
+            self._create_task_specific_breadcrumbs(evidence, evidence.case)
+            self.breadcrumbs.append({'title': "Edit", 'path': self.urls.build('evidence.edit',
+                                                                              dict(evidence_id=evidence_id))})
             form_type = multidict_to_dict(self.request.args)
             evidence_type_options = [(evi.replace(" ", "").lower(), evi) for evi in
                                          ForemanOptions.get_evidence_types()]
@@ -96,6 +111,10 @@ class EvidenceController(BaseController):
         evidence = self._validate_evidence(evidence_id, case_id)
         if evidence is not None:
             self.check_permissions(self.current_user, evidence, 'dis-associate')
+            self._create_task_specific_breadcrumbs(evidence, evidence.case)
+            self.breadcrumbs.append({'title': "Disassociate from case",
+                                     'path': self.urls.build('evidence.disassociate',
+                                                             dict(evidence_id=evidence_id, case_id=case_id))})
             closed = False
 
             case = evidence.case
@@ -113,6 +132,9 @@ class EvidenceController(BaseController):
         evidence = self._validate_evidence(evidence_id)
         if evidence is not None:
             self.check_permissions(self.current_user, evidence, 'remove')
+            self._create_task_specific_breadcrumbs(evidence, evidence.case)
+            self.breadcrumbs.append({'title': "Remove", 'path': self.urls.build('evidence.remove',
+                                                                              dict(evidence_id=evidence_id))})
 
             closed = False
             reference = evidence.reference
@@ -132,7 +154,7 @@ class EvidenceController(BaseController):
         evidence = self._validate_evidence(evidence_id, case_id)
         if evidence is not None:
             self.check_permissions(self.current_user, evidence, 'view')
-
+            self._create_task_specific_breadcrumbs(evidence, evidence.case)
             photo_location = path.join(ROOT_DIR, 'static', 'evidence_photos', str(evidence.id))
             return self.return_response('pages', 'view_evidence.html', evidence=evidence, photo_location=photo_location)
         else:
@@ -143,6 +165,7 @@ class EvidenceController(BaseController):
 
     def view_all(self):
         self.check_permissions(self.current_user, 'Evidence', 'view-all')
+        self.breadcrumbs.append({'title': 'Evidence', 'path': self.urls.build('evidence.view_all')})
 
         sort_by = multidict_to_dict(self.request.args).get('sort_by','date')
         evidence = Evidence.get_all_evidence(self.current_user, self.check_permissions)
@@ -161,6 +184,9 @@ class EvidenceController(BaseController):
         evidence = self._validate_evidence(evidence_id)
         if evidence is not None and evidence.case_id is None:
             self.check_permissions(self.current_user, evidence, 'associate')
+            self._create_task_specific_breadcrumbs(evidence, evidence.case)
+            self.breadcrumbs.append({'title': "Associate with case",
+                                     'path': self.urls.build('evidence.associate', dict(evidence_id=evidence_id))})
 
             reassign_cases = [(r_case.id, r_case.case_name) for r_case in Case.get_all()]
             if self.validate_form(EvidenceAssociateForm()):
@@ -196,6 +222,14 @@ class EvidenceController(BaseController):
                 else:
                     return self.view_caseless(evidence_id)
             else:
+                self._create_task_specific_breadcrumbs(evidence, evidence.case)
+                if check_in:
+                    self.breadcrumbs.append({'title': "Check in evidence",
+                                             'path': self.urls.build('evidence.custody_in', dict(evidence_id=evidence_id))})
+                else:
+                    self.breadcrumbs.append({'title': "Check out evidence",
+                                             'path': self.urls.build('evidence.custody_out',
+                                                                 dict(evidence_id=evidence_id))})
                 return self.return_response('pages', 'evidence_custody_change.html', evidence=evidence,
                                             checkin=check_in, errors=self.form_error)
         else:
@@ -208,6 +242,10 @@ class EvidenceController(BaseController):
         upload = self._validate_evidence_photo(evidence_id, upload_id)
         if upload is not None:
             self.check_permissions(self.current_user, upload.evidence, 'view')
+            self._create_task_specific_breadcrumbs(upload.evidence, upload.evidence.case)
+            self.breadcrumbs.append({'title': upload.file_title,
+                                     'path': self.urls.build('evidence.view_photo',
+                                                             dict(evidence_id=evidence_id, upload_id=upload_id))})
             return self.return_response('pages', 'view_evidence_photo.html', upload=upload)
         else:
             return self.return_404()
@@ -216,7 +254,13 @@ class EvidenceController(BaseController):
         upload = self._validate_evidence_photo(evidence_id, upload_id)
         if upload is not None:
             self.check_permissions(self.current_user, upload.evidence, 'delete_file')
-
+            self._create_task_specific_breadcrumbs(upload.evidence, upload.evidence.case)
+            self.breadcrumbs.append({'title': upload.file_title,
+                                     'path': self.urls.build('evidence.view_photo',
+                                                             dict(evidence_id=evidence_id, upload_id=upload_id))})
+            self.breadcrumbs.append({'title': "Delete",
+                                     'path': self.urls.build('evidence.delete_photo',
+                                                             dict(evidence_id=evidence_id, upload_id=upload_id))})
             closed = False
             confirm_close = multidict_to_dict(self.request.args)
             if 'confirm' in confirm_close and confirm_close['confirm'] == "true":
@@ -231,6 +275,9 @@ class EvidenceController(BaseController):
         evidence = self._validate_evidence(evidence_id)
         if evidence is not None:
             self.check_permissions(self.current_user, evidence, 'add_file')
+            self._create_task_specific_breadcrumbs(evidence, evidence.case)
+            self.breadcrumbs.append({'title': "Add photo",
+                                     'path': self.urls.build('evidence.add_photo', dict(evidence_id=evidence_id))})
         else:
             return self.return_404()
 

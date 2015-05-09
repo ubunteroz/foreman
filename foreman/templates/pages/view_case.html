@@ -16,9 +16,6 @@
         % if check_perms(case, 'edit'):
         <a href='${urls.build("case.edit", dict(case_id=case.case_name))|h}'>Edit</a>
         % endif
-        % if check_perms(case, 'close'):
-        | <a href='${urls.build("case.close", dict(case_id=case.case_name))|h}'>Close</a>
-        % endif
         % if check_perms(case, 'edit'):
             % if case.status == case_statuses['created']:
                 | <a href='${urls.build("case.change_status", dict(case_id=case.case_name, status=case_statuses["open"]))|h}'>Open this Case for Investigation</a>
@@ -168,11 +165,11 @@
 
     <p>
     % if check_perms(case, 'add-task'):
-    <a href='${urls.build("task.add", dict(case_id=case.case_name))|h}'>Add Task</a>
+    <a href='${urls.build("case.add_task", dict(case_id=case.case_name))|h}'>Add Task</a>
     % endif
     % if check_perms(case, 'edit') and all_tasks_created:
-    | <a href='${urls.build("task.change_statuses", dict(case_id=case.case_name, status=task_statuses["queued"]))|h}'>Set all tasks to Queued</a> |
-    <a href='${urls.build("task.change_statuses", dict(case_id=case.case_name, status=task_statuses["start"]))|h}'>Set all tasks to Allocated</a></p>
+    | <a href='${urls.build("case.change_task_statuses", dict(case_id=case.case_name, status=task_statuses["queued"]))|h}'>Set all tasks to Queued</a> |
+    <a href='${urls.build("case.change_task_statuses", dict(case_id=case.case_name, status=task_statuses["start"]))|h}'>Set all tasks to Allocated</a></p>
     % endif
     </p>
 

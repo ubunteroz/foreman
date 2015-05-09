@@ -6,12 +6,21 @@ from werkzeug.utils import redirect
 from baseController import BaseController, lookup, jsonify
 from ..model import Task, UserTaskRoles, UserRoles, TaskStatus, TaskHistory, ForemanOptions, TaskType
 from ..utils.utils import multidict_to_dict, session, ROOT_DIR
-from ..forms.forms import AssignInvestigatorForm, EditTaskUsersForm, EditTaskForm, AddTaskForm, RequesterAddTaskForm
+from ..forms.forms import AssignInvestigatorForm, EditTaskUsersForm, EditTaskForm
 
 
 class TaskController(BaseController):
+    def _create_task_specific_breadcrumbs(self, task, case):
+        self.breadcrumbs.append({'title': 'Cases', 'path': self.urls.build('case.view_all')})
+        self.breadcrumbs.append({'title': case.case_name,
+                                 'path': self.urls.build('case.view', dict(case_id=case.case_name))})
+        self.breadcrumbs.append({'title': task.task_name,
+                                 'path': self.urls.build('task.view', dict(case_id=case.case_name,
+                                                                           task_id=task.task_name))})
+
     def view_all(self):
         self.check_permissions(self.current_user, 'Task', 'view-all')
+        self.breadcrumbs.append({'title': 'Tasks', 'path': self.urls.build('task.view_all')})
         all_tasks = Task.get_active_tasks(user=self.current_user, case_perm_checker=self.check_permissions)
         user_primary_inv, user_secondary_inv = Task.get_tasks_assigned_to_user(user=self.current_user)
         return self.return_response('pages', 'view_tasks.html', all_tasks=all_tasks, user_primary_inv=user_primary_inv,
@@ -19,6 +28,7 @@ class TaskController(BaseController):
 
     def view_qas(self):
         self.check_permissions(self.current_user, 'Task', 'view-qas')
+        self.breadcrumbs.append({'title': 'QAs', 'path': self.urls.build('task.view_qas')})
         completed = multidict_to_dict(self.request.args)
         if 'completed' in completed and completed['completed'] == "True":
             user_primary_qa, user_secondary_qa = Task.get_tasks_requiring_QA_by_user(user=self.current_user,
@@ -35,6 +45,7 @@ class TaskController(BaseController):
         task = self._validate_task(case_id, task_id)
         if task is not None:
             self.check_permissions(self.current_user, task, 'view')
+            self._create_task_specific_breadcrumbs(task, task.case)
             return self.return_response('pages', 'view_task.html', task=task)
         else:
             return self.return_404()
@@ -43,6 +54,11 @@ class TaskController(BaseController):
         upload = self._validate_upload(case_id, task_id, upload_id)
         if upload is not None:
             self.check_permissions(self.current_user, upload.task, 'add_file')
+            self._create_task_specific_breadcrumbs(upload.task, upload.task.case)
+            self.breadcrumbs.append({'title': upload.file_title,
+                                     'path': self.urls.build('task.view_upload',
+                                                             dict(case_id=upload.task.case.case_name,
+                                                                  task_id=upload.task.task_name, upload_id=upload.id))})
             return self.return_response('pages', 'view_upload.html', upload=upload)
         else:
             return self.return_404()
@@ -51,7 +67,16 @@ class TaskController(BaseController):
         upload = self._validate_upload(case_id, task_id, upload_id)
         if upload is not None:
             self.check_permissions(self.current_user, upload.task, 'delete_file')
-
+            self._create_task_specific_breadcrumbs(upload.task, upload.task.case)
+            self.breadcrumbs.append({'title': upload.file_title,
+                                     'path': self.urls.build('task.view_upload',
+                                                             dict(case_id=upload.task.case.case_name,
+                                                                  task_id=upload.task.task_name,
+                                                                  upload_id=upload.id))})
+            self.breadcrumbs.append({'title': "Delete",
+                                     'path': self.urls.build('task.delete_upload',
+                                                             dict(case_id=upload.task.case.case_name,
+                                                                  task_id=upload.task.task_name, upload_id=upload.id))})
             closed = False
             confirm_close = multidict_to_dict(self.request.args)
             if 'confirm' in confirm_close and confirm_close['confirm'] == "true":
@@ -62,33 +87,14 @@ class TaskController(BaseController):
         else:
             return self.return_404()
 
-    def change_statuses(self, case_id):
-        case = self._validate_case(case_id)
-        if case is not None:
-            self.check_permissions(self.current_user, case, 'edit')
-            args = multidict_to_dict(self.request.args)
-            change = False
-            if "status" in args and args["status"] in TaskStatus.preInvestigation:
-                status = args["status"]
-                all_tasks_created = len(set([task.status for task in case.tasks])) == 1 \
-                                    and case.tasks[0].status == TaskStatus.CREATED
-                if not all_tasks_created:
-                    return self.return_404()
-                if 'confirm' in args and args['confirm'] == "true":
-                    for task in case.tasks:
-                        task.set_status(status, self.current_user)
-                        change = True
-                return self.return_response('pages', 'confirm_task_statuses_change.html', case=case, change=change,
-                                            status=status)
-            else:
-                return self.return_404(reason="The case or status change you are trying to make does not exist.")
-        else:
-            return self.return_404(reason="The case or status change you are trying to make")
-
     def change_status(self, case_id, task_id):
         task = self._validate_task(case_id, task_id)
         if task is not None:
             self.check_permissions(self.current_user, task, 'edit')
+            self._create_task_specific_breadcrumbs(task, task.case)
+            self.breadcrumbs.append({'title': "Change Status",
+                                     'path': self.urls.build('task.change_status', dict(case_id=task.case.case_name,
+                                                                               task_id=task.task_name))})
             args = multidict_to_dict(self.request.args)
             change = False
             if "status" in args and args["status"] in TaskStatus.all_statuses:
@@ -103,62 +109,14 @@ class TaskController(BaseController):
         else:
             return self.return_404(reason="The case or status change you are trying to make does not exist.")
 
-    def add(self, case_id):
-        case = self._validate_case(case_id)
-        if case is not None:
-            self.check_permissions(self.current_user, case, 'add-task')
-            is_requester = self.current_user.is_requester()
-            task_type_options = [(tt.replace(" ", "").lower(), tt) for tt in TaskType.get_task_types()]
-
-            args = multidict_to_dict(self.request.args)
-            if 'type' in args and args['type'] == "requester" and is_requester:
-                if self.validate_form(RequesterAddTaskForm()):
-                    task_name = ForemanOptions.get_next_task_name(case, self.form_result['task_type'])
-                    new_task = Task(case, self.form_result['task_type'], task_name,
-                                    self.current_user, self.form_result['background'])
-                    session.add(new_task)
-                    session.flush()
-                    new_task.add_change(self.current_user)
-                    session.flush()
-                    return self.return_response('pages', 'task_added.html', task=new_task)
-                else:
-                    return self.return_response('pages', 'add_task.html', task_type_options=task_type_options,
-                                                case=case, errors=self.form_error, is_requester=is_requester)
-            elif self.validate_form(AddTaskForm()):
-                new_task = Task(case, self.form_result['task_type'], self.form_result['task_name'], self.current_user,
-                                self.form_result['background'], self.form_result['location'])
-                session.add(new_task)
-                session.flush()
-                new_task.add_change(self.current_user)
-                session.flush()
-
-                if self.form_result['primary_investigator']:
-                    self._create_new_user_role(UserTaskRoles.PRINCIPLE_INVESTIGATOR, new_task,
-                                               self.form_result['primary_investigator'])
-                if self.form_result['secondary_investigator']:
-                    self._create_new_user_role(UserTaskRoles.SECONDARY_INVESTIGATOR, new_task,
-                                               self.form_result['secondary_investigator'])
-                if self.form_result['primary_qa']:
-                    self._create_new_user_role(UserTaskRoles.PRINCIPLE_QA, new_task, self.form_result['primary_qa'])
-                if self.form_result['secondary_qa']:
-                    self._create_new_user_role(UserTaskRoles.SECONDARY_QA, new_task, self.form_result['secondary_qa'])
-
-                session.commit()
-                return redirect(
-                    self.urls.build('case.view', {"case_id": case.case_name}))  # CaseController.view(case.case_name)
-            else:
-                investigators = [(user.id, user.fullname) for user in UserRoles.get_investigators()]
-                qas = [(user.id, user.fullname) for user in UserRoles.get_qas()]
-                return self.return_response('pages', 'add_task.html', investigators=investigators, qas=qas,
-                                            task_type_options=task_type_options, case=case, errors=self.form_error,
-                                            is_requester=is_requester)
-        else:
-            return self.return_404()
-
     def edit(self, task_id, case_id):
         task = self._validate_task(case_id, task_id)
         if task is not None:
             self.check_permissions(self.current_user, task, 'edit')
+            self._create_task_specific_breadcrumbs(task, task.case)
+            self.breadcrumbs.append({'title': "Edit",
+                                     'path': self.urls.build('task.edit', dict(case_id=task.case.case_name,
+                                                                               task_id=task.task_name))})
 
             task_type_options = [(tt.replace(" ", "").lower(), tt) for tt in TaskType.get_task_types()]
             investigators = [(user.id, user.fullname) for user in UserRoles.get_investigators()]
@@ -211,6 +169,10 @@ class TaskController(BaseController):
         task = self._validate_task(case_id, task_id)
         if task is not None:
             self.check_permissions(self.current_user, task, 'close')
+            self._create_task_specific_breadcrumbs(task, task.case)
+            self.breadcrumbs.append({'title': "Close",
+                                     'path': self.urls.build('task.close', dict(case_id=task.case.case_name,
+                                                                                task_id=task.task_name))})
 
             closed = False
             confirm_close = multidict_to_dict(self.request.args)
@@ -226,6 +188,10 @@ class TaskController(BaseController):
         task = self._validate_task(case_id, task_id)
         if task is not None:
             self.check_permissions(self.current_user, task, 'assign-self')
+            self._create_task_specific_breadcrumbs(task, task.case)
+            self.breadcrumbs.append({'title': "Assign work to myself",
+                                     'path': self.urls.build('task.assign_work', dict(case_id=task.case.case_name,
+                                                                                      task_id=task.task_name))})
 
             if task.principle_investigator is not None and task.secondary_investigator is not None:
                 return self.return_404()
@@ -238,14 +204,14 @@ class TaskController(BaseController):
                     else:
                         task.assign_task(self.current_user, True)
                         return self.return_response('pages', 'assign_task.html', task=task, success=True,
-                                                investigator=first_assignment['assign'])
+                                                    investigator=first_assignment['assign'])
                 elif "assign" in first_assignment and first_assignment['assign'] == "secondary":
                     if first_assignment['assign'] == "secondary" and task.secondary_investigator is not None:
                         return self.return_404()
                     else:
                         task.assign_task(self.current_user, False)
                         return self.return_response('pages', 'assign_task.html', task=task, success=True,
-                                                investigator=first_assignment['assign'])
+                                                    investigator=first_assignment['assign'])
                 else:
                     return self.return_404()
             else:
@@ -267,6 +233,11 @@ class TaskController(BaseController):
         task = self._validate_task(case_id, task_id)
         if task is not None:
             self.check_permissions(self.current_user, task, 'assign-other')
+            self._create_task_specific_breadcrumbs(task, task.case)
+            self.breadcrumbs.append({'title': "Assign investigator to task",
+                                     'path': self.urls.build('task.assign_work_manager',
+                                                             dict(case_id=task.case.case_name,
+                                                                  task_id=task.task_name))})
 
             if task.principle_investigator is not None and task.secondary_investigator is not None:
                 return self.return_404()

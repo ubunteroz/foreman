@@ -28,11 +28,13 @@ class GeneralController(BaseController):
                                     company=opts.company, department=opts.department)
 
     def login(self):
+
         opts = ForemanOptions.get_options()
         if self.validate_form(LoginForm()):
             user = User.get_user_with_username(self.form_result['username'].lower())
             if user is not None:
                 if user.validated is False:
+                    self.breadcrumbs.append({'title': 'Login', 'path': self.urls.build('general.login')})
                     return self.return_response('pages', 'login.html', validated=False, company=opts.company,
                                                 department=opts.department)
                 else:
@@ -47,18 +49,22 @@ class GeneralController(BaseController):
                 # should not happen that you get a valid form but invalid user
                 return self.return_500()
         else:
+            self.breadcrumbs.append({'title': 'Login', 'path': self.urls.build('general.login')})
             return self.return_response('pages', 'login.html', errors=self.form_error, company=opts.company,
                                         department=opts.department)
 
     def logout(self):
+
         if 'userid' in self.request.session:
             del self.request.session['userid']
 
         opts = ForemanOptions.get_options()
+        self.breadcrumbs.append({'title': 'Login', 'path': self.urls.build('general.login')})
         return self.return_response('pages', 'login.html', errors=self.form_error, company=opts.company,
                                         department=opts.department)
 
     def register(self):
+        self.breadcrumbs.append({'title': 'Register for Foreman', 'path': self.urls.build('general.register')})
         success = False
         opts = ForemanOptions.get_options()
         if self.validate_form(RegisterForm()):
@@ -108,6 +114,7 @@ Foreman
 
     def admin(self):
         self.check_permissions(self.current_user, "Case", 'admin')
+        self.breadcrumbs.append({'title': 'Administration', 'path': self.urls.build('general.admin')})
         icon_path = join(ROOT_DIR, 'static', 'images', 'siteimages', 'evidence_icons_unique')
         over_load = ForemanOptions.run_out_of_names()
         form_type = multidict_to_dict(self.request.args)

@@ -24,7 +24,7 @@
 <div id="mainbar">
     <h1>Edit Case ${case.case_name|h}</h1>
     <p><a href="${urls.build('case.view', dict(case_id=case.case_name))|h}">Back to Case</a> |
-        <a href="${urls.build('task.add', dict(case_id=case.case_name))|h}">Add Tasks</a></p>
+        <a href="${urls.build('case.add_task', dict(case_id=case.case_name))|h}">Add Tasks</a></p>
     <div id="tabs">
         <ul>
         <li><a href="#tabs-1">Edit Case Details</a></li>

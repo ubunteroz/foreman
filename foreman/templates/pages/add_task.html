@@ -15,9 +15,9 @@
     <h1>Add Task to Case ${case.case_name|h}</h1>
 
     % if not is_requester:
-     <form method="post" action="${urls.build('task.add', dict(case_id=case.case_name))|h}">
+     <form method="post" action="${urls.build('case.add_task', dict(case_id=case.case_name))|h}">
      % else:
-     <form method="post" action="${urls.build('task.add', dict(case_id=case.case_name, type='requester'))|h}">
+     <form method="post" action="${urls.build('case.add_task', dict(case_id=case.case_name, type='requester'))|h}">
      % endif
 
 
