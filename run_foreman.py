@@ -17,27 +17,34 @@ def make_app(config_file):
 
 def runserver(args):
     """Start Foreman running under a simple development server."""
-    app = make_app(args.config_file)
-    run_simple(args.host, args.port, app, args.reloader, False)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=sa_exc.SAWarning)
+        app = make_app(args.config_file)
+        run_simple(args.host, args.port, app, args.reloader, False)
 
 
 def setup(args):
     """ Initialise database """
-    from foreman.utils.utils import init_database, drop_database, load_initial_values, setup, create_admin_user
-    setup(args.config_file)
-    drop_database()
-    init_database()
-    load_initial_values()
-    create_admin_user()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=sa_exc.SAWarning)
+
+        from foreman.utils.utils import init_database, drop_database, load_initial_values, setup, create_admin_user
+        setup(args.config_file)
+        drop_database()
+        init_database()
+        load_initial_values()
+        create_admin_user()
 
 
 def example(args):
     """ Initialise database and set up an example system """
-    from foreman.utils.utils import init_database, drop_database, populate_database, setup
-    setup(args.config_file)
-    drop_database()
-    init_database()
-    populate_database()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=sa_exc.SAWarning)
+        from foreman.utils.utils import init_database, drop_database, populate_database, setup
+        setup(args.config_file)
+        drop_database()
+        init_database()
+        populate_database()
 
 
 def run_tests(args):

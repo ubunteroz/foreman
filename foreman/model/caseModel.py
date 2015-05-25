@@ -12,7 +12,7 @@ from qrcode import *
 from werkzeug.exceptions import Forbidden
 # local imports
 from models import Base, Model, HistoryModel
-from generalModel import ForemanOptions, TaskCategory, TaskType
+from generalModel import ForemanOptions, TaskCategory, TaskType, CasePriority
 from userModel import UserTaskRoles, User, UserCaseRoles
 from ..utils.utils import session, ROOT_DIR, config, upload_file
 
@@ -153,13 +153,15 @@ class CaseHistory(HistoryModel, Base):
     classification = Column(Unicode)
     case_type = Column(Unicode)
     justification = Column(Unicode)
+    case_priority = Column(Unicode)
+    case_priority_colour = Column(Unicode)
 
     case = relation('Case', backref=backref('history', order_by=asc(date_time)))
     user = relation('User', backref=backref('case_history_changes'))
 
     comparable_fields = {'Case Name': 'case_name', 'Reference': 'reference', 'Background': 'background',
                          "Case Files Location": 'location', 'Classification': 'classification',
-                         'Case Type:': 'case_type', 'Justification': 'justification'}
+                         'Case Type:': 'case_type', 'Justification': 'justification', "Case Priority": 'case_priority'}
     history_name = ("Case", "case_name")
 
     def __init__(self, case, user):
@@ -174,6 +176,8 @@ class CaseHistory(HistoryModel, Base):
         self.classification = case.classification
         self.case_type = case.case_type
         self.justification = case.justification
+        self.case_priority = case.case_priority
+        self.case_priority_colour = case.case_priority_colour
 
     @property
     def previous(self):
@@ -206,9 +210,11 @@ class Case(Base, Model):
     classification = Column(Unicode)
     justification = Column(Unicode)
     case_type = Column(Unicode)
+    case_priority = Column(Unicode)
+    case_priority_colour = Column(Unicode)
 
     def __init__(self, case_name, user, background=None, reference=None, private=False, location=None,
-                 classification=None, case_type=None, justification=None):
+                 classification=None, case_type=None, justification=None, priority=None):
         self.case_name = case_name
         self.reference = reference
         self.set_status(CaseStatus.CREATED, user)
@@ -217,6 +223,11 @@ class Case(Base, Model):
         self.classification = classification
         self.case_type = case_type
         self.justification = justification
+        if priority is None:
+            priority = CasePriority.default_value()
+        self.case_priority = priority.case_priority
+        self.case_priority_colour = priority.colour
+
         if location is None:
             self.location = ForemanOptions.get_default_location()
         else:

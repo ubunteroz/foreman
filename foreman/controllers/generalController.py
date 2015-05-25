@@ -9,17 +9,17 @@ from werkzeug import Response, redirect
 # local imports
 from baseController import BaseController, jsonify
 from ..model.caseModel import Task, User, ForemanOptions, Case, Evidence, CaseStatus
-from ..model.generalModel import TaskType, TaskCategory, EvidenceType, CaseClassification, CaseType
+from ..model.generalModel import TaskType, TaskCategory, EvidenceType, CaseClassification, CaseType, CasePriority
 from ..model.userModel import UserRoles
 from ..forms.forms import LoginForm, OptionsForm, AddEvidenceTypeForm, RegisterForm, AddClassificationForm
 from ..forms.forms import AddCaseTypeForm, RemoveCaseTypeForm, RemoveClassificationForm, RemoveEvidenceTypeForm
 from ..forms.forms import MoveTaskTypeForm, AddTaskTypeForm, RemoveTaskTypeForm, AddTaskCategoryForm, RemoveCategoryForm
+from ..forms.forms import AddPriorityForm, RemovePriorityForm
 from ..utils.utils import multidict_to_dict, session, ROOT_DIR, config
 from ..utils.mail import email
 
 
 class GeneralController(BaseController):
-    
     def index(self, **vars):
         tasks = len(Task.get_active_tasks(user=self.current_user))
         qas = len(Task.get_active_QAs(user=self.current_user))
@@ -61,7 +61,7 @@ class GeneralController(BaseController):
         opts = ForemanOptions.get_options()
         self.breadcrumbs.append({'title': 'Login', 'path': self.urls.build('general.login')})
         return self.return_response('pages', 'login.html', errors=self.form_error, company=opts.company,
-                                        department=opts.department)
+                                    department=opts.department)
 
     def register(self):
         self.breadcrumbs.append({'title': 'Register for Foreman', 'path': self.urls.build('general.register')})
@@ -70,7 +70,8 @@ class GeneralController(BaseController):
         if self.validate_form(RegisterForm()):
             if self.form_result['middlename'] == "":
                 self.form_result['middlename'] = None
-            new_user = User(self.form_result['username'].lower(), self.form_result['password'], self.form_result['forename'],
+            new_user = User(self.form_result['username'].lower(), self.form_result['password'],
+                            self.form_result['forename'],
                             self.form_result['surname'], self.form_result['email'],
                             middle=self.form_result['middlename'])
             session.add(new_user)
@@ -119,6 +120,7 @@ Foreman
         over_load = ForemanOptions.run_out_of_names()
         form_type = multidict_to_dict(self.request.args)
         number_cases = number_tasks = validated = val_user = None
+
         if 'form' in form_type and form_type['form'] == "options" and self.validate_form(OptionsForm()):
             error_flag = False
             check_cases = check_tasks = False
@@ -151,11 +153,13 @@ Foreman
             if check_tasks:
                 ForemanOptions.get_next_task_name(None, test=True)
 
-        elif 'form' in form_type and form_type['form'] == "add_evidence_types" and self.validate_form(AddEvidenceTypeForm()):
+        elif 'form' in form_type and form_type['form'] == "add_evidence_types" and self.validate_form(
+                AddEvidenceTypeForm()):
             new_evidence_type = EvidenceType(self.form_result['evi_type'], self.form_result['icon_input'])
             session.add(new_evidence_type)
             session.flush()
-        elif 'form' in form_type and form_type['form'] == "remove_evidence_types" and self.validate_form(RemoveEvidenceTypeForm()):
+        elif 'form' in form_type and form_type['form'] == "remove_evidence_types" and self.validate_form(
+                RemoveEvidenceTypeForm()):
             evidence_type = EvidenceType.get_filter_by(evidence_type=self.form_result['evi_type']).first()
             if evidence_type:
                 session.delete(evidence_type)
@@ -164,6 +168,24 @@ Foreman
                 evidences = Evidence.get_filter_by(type=evidence_type.evidence_type).all()
                 for evidence in evidences:
                     evidence.type = EvidenceType.undefined()
+        elif 'form' in form_type and form_type['form'] == "remove_priority" and self.validate_form(RemovePriorityForm()):
+            number_left = CasePriority.get_amount()
+            if number_left > 1:
+                priority = self.form_result['priority_remove']
+                default = priority.default
+                session.delete(priority)
+                session.commit()
+                if default:
+                    new_default = CasePriority.get_all().first()
+                    new_default.default = True
+        elif 'form' in form_type and form_type['form'] == "add_priority" and self.validate_form(AddPriorityForm()):
+            if self.form_result['default'] is True:
+                for p in CasePriority.get_all():
+                    p.default = False
+            new_priority = CasePriority(self.form_result['priority'], self.form_result['colour'],
+                                        self.form_result['default'])
+            session.add(new_priority)
+            session.commit()
         elif 'validate_user' in form_type:
             user = self._validate_user(form_type['validate_user'])
             if user:
@@ -183,7 +205,8 @@ Foreman
 {}""".format(user.forename, config.get('admin', 'website_domain')), config.get('email', 'from_address'))
 
 
-        elif 'form' in form_type and form_type['form'] == 'remove_classification' and self.validate_form(RemoveClassificationForm):
+        elif 'form' in form_type and form_type['form'] == 'remove_classification' and self.validate_form(
+                RemoveClassificationForm):
             classification = CaseClassification.get_filter_by(classification=self.form_result['classification']).first()
             if classification:
                 session.delete(classification)
@@ -192,7 +215,8 @@ Foreman
                 cases = Case.get_filter_by(classification=classification.classification).all()
                 for case in cases:
                     case.classification = CaseClassification.undefined()
-        elif 'form' in form_type and form_type['form'] == 'add_classification' and self.validate_form(AddClassificationForm):
+        elif 'form' in form_type and form_type['form'] == 'add_classification' and self.validate_form(
+                AddClassificationForm):
             new_cls = CaseClassification(self.form_result['classification'])
             session.add(new_cls)
             session.commit()
@@ -227,15 +251,19 @@ Foreman
                 pass
             session.delete(task_type)
             session.commit()
-        elif 'form' in form_type and form_type['form'] == 'add_task_category' and self.validate_form(AddTaskCategoryForm):
+        elif 'form' in form_type and form_type['form'] == 'add_task_category' and self.validate_form(
+                AddTaskCategoryForm):
             new_tc = TaskCategory(self.form_result['add_task_category'])
             session.add(new_tc)
             session.commit()
-        elif 'form' in form_type and form_type['form'] == 'remove_task_category' and self.validate_form(RemoveCategoryForm):
+        elif 'form' in form_type and form_type['form'] == 'remove_task_category' and self.validate_form(
+                RemoveCategoryForm):
             category = self.form_result['remove_task_category']
             session.delete(category)
             session.commit()
 
+        all_priorities = CasePriority.get_all()
+        priorities = [(priority.case_priority, priority.case_priority) for priority in CasePriority.get_all()]
         users = User.get_filter_by(validated=False).all()
         options = ForemanOptions.get_options()
 
@@ -252,7 +280,7 @@ Foreman
         classifications = [(cl.replace(" ", "").lower(), cl) for cl in CaseClassification.get_classifications()]
         case_types = [(ct.replace(" ", "").lower(), ct) for ct in CaseType.get_case_types()]
         evi_types = [(et.replace(" ", "").lower(), et) for et in evidence_types]
-        icons = [f for f in listdir(icon_path) if isfile(join(icon_path,f)) and f != "Thumbs.db"]
+        icons = [f for f in listdir(icon_path) if isfile(join(icon_path, f)) and f != "Thumbs.db"]
         empty_categories = [(ct.replace(" ", "").lower(), ct) for ct in TaskCategory.get_empty_categories()]
         case_name_options = [(cn, cn) for cn in ForemanOptions.CASE_NAME_OPTIONS]
         task_name_options = [(tn, tn) for tn in ForemanOptions.TASK_NAME_OPTIONS]
@@ -262,7 +290,8 @@ Foreman
                                     empty_categories=empty_categories, task_categories=task_categories,
                                     errors=self.form_error, over_load=over_load, case_name_options=case_name_options,
                                     task_name_options=task_name_options, number_cases=number_cases,
-                                    number_tasks=number_tasks, validated=validated, val_user=val_user)
+                                    number_tasks=number_tasks, validated=validated, val_user=val_user,
+                                    all_priorities=all_priorities, priorities=priorities)
 
     def report(self):
         start_date = ForemanOptions.get_date_created()
@@ -281,13 +310,14 @@ Foreman
         for category in categories:
             cases_opened.append([start_date.strftime("%B %Y"), category,
                                  Case.get_num_cases_opened_on_date(start_date, CaseStatus.OPEN, case_type=category,
-                                                               by_month=True)])
+                                                                   by_month=True)])
             cases_closed.append([start_date.strftime("%B %Y"), category,
                                  Case.get_num_cases_opened_on_date(start_date, CaseStatus.CLOSED, case_type=category,
-                                                               by_month=True)])
+                                                                   by_month=True)])
             cases_archived.append([start_date.strftime("%B %Y"), category,
-                                   Case.get_num_cases_opened_on_date(start_date, CaseStatus.ARCHIVED, case_type=category,
-                                                                 by_month=True)])
+                                   Case.get_num_cases_opened_on_date(start_date, CaseStatus.ARCHIVED,
+                                                                     case_type=category,
+                                                                     by_month=True)])
         for category in TaskCategory.get_categories():
             for investigator in UserRoles.get_investigators():
                 cases_assigned_inv.append([investigator.fullname, category, Task.get_num_tasks_by_user(investigator,
@@ -300,17 +330,19 @@ Foreman
             months.append(start_date.strftime("%B %Y"))
             for status in CaseStatus.all_statuses:
                 total_cases.append([start_date.strftime("%B %Y"), status,
-                                    Case.get_num_cases_opened_on_date(start_date, status, case_type=None, by_month=True)])
+                                    Case.get_num_cases_opened_on_date(start_date, status, case_type=None,
+                                                                      by_month=True)])
             for category in categories:
                 cases_opened.append([start_date.strftime("%B %Y"), category,
                                      Case.get_num_cases_opened_on_date(start_date, CaseStatus.OPEN, case_type=category,
-                                                                   by_month=True)])
+                                                                       by_month=True)])
                 cases_closed.append([start_date.strftime("%B %Y"), category,
-                                     Case.get_num_cases_opened_on_date(start_date, CaseStatus.CLOSED, case_type=category,
-                                                                   by_month=True)])
+                                     Case.get_num_cases_opened_on_date(start_date, CaseStatus.CLOSED,
+                                                                       case_type=category,
+                                                                       by_month=True)])
                 cases_archived.append([start_date.strftime("%B %Y"), category,
                                        Case.get_num_cases_opened_on_date(start_date, CaseStatus.ARCHIVED,
-                                                                     case_type=category, by_month=True)])
+                                                                         case_type=category, by_month=True)])
             max_months -= 1
 
         return self.return_response('pages', 'report.html', cases_opened=cases_opened, cases_closed=cases_closed,

@@ -21,7 +21,8 @@
         </tr>
     % for task in tasks:
         <tr>
-            <td><a href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a></td>
+            <td style="padding-left: 10px; background-image:linear-gradient(to right,${task.case.case_priority_colour|h},${task.case.case_priority_colour|h} 5%,white 5%,white 95%,white 95%)">
+                <a href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a></td>
             <td><a href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a></td>
             <td>
                 % if task.principle_investigator != None:
@@ -89,7 +90,8 @@
         % for case in cases:
             % if len(case.tasks) == 0:
         <tr>
-            <td>
+            <td style="padding-left: 10px; background-image:linear-gradient(to right,${case.case_priority_colour|h},${case.case_priority_colour|h} 5%,white 5%,white 95%,white 95%)">
+
                 % if case.private is True:
                     <a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'><span class="highlight">${case.case_name|h}</span></a>
                     <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
@@ -143,7 +145,7 @@
                     % if (case_status == task_statuses['queued'] and task.status == task_statuses['queued']) or case_status != task_statuses['queued']:
                     <tr>
                         % if start_again:
-                            <td rowspan="${case_length|h}">
+                            <td rowspan="${case_length|h}" style="padding-left: 10px; background-image:linear-gradient(to right,${case.case_priority_colour|h},${case.case_priority_colour|h} 5%,white 5%,white 95%,white 95%)">
                                 % if case.private is True:
                                     <a class="highlight" href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a>
                                     <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
@@ -217,33 +219,33 @@
     % for task in tasks:
         <tr>
             % if case_tasks:
+                <td style="padding-left: 10px; background-image:linear-gradient(to right,${task.case.case_priority_colour|h},${task.case.case_priority_colour|h} 5%,white 5%,white 95%,white 95%)">
                 % if task.case.private is True:
-                    <td>
-                        <a class="highlight" href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a>
-                        <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
-                    </td>
+                    <a class="highlight" href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a>
+                    <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
                 % else:
-                    <td><a href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a></td>
+                    <a href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a>
                 % endif
+                </tr>
             % endif
             % if edit is True:
+                <td style="padding-left: 10px; background-image:linear-gradient(to right,${task.case.case_priority_colour|h},${task.case.case_priority_colour|h} 5%,white 5%,white 95%,white 95%)">
                 % if task.case.private is True:
-                    <td>
-                        <a class="highlight" href='${urls.build("task.edit", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a>
-                        <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
-                    </td>
+                    <a class="highlight" href='${urls.build("task.edit", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a>
+                    <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
                 % else:
-                    <td><a href='${urls.build("task.edit", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a></td>
+                    <a href='${urls.build("task.edit", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a>
                 % endif
+                </td>
             % else:
+                <td style="padding-left: 10px; background-image:linear-gradient(to right,${task.case.case_priority_colour|h},${task.case.case_priority_colour|h} 5%,white 5%,white 95%,white 95%)">
                 % if task.case.private is True:
-                    <td>
-                        <a class="highlight" href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a>
-                        <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
-                    </td>
+                    <a class="highlight" href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a>
+                    <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
                 % else:
-                    <td><a href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a></td>
+                    <a href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a>
                 % endif
+                </td>
             % endif
             <td>${task.date_created|h}</td>
             <td>${task.task_type.task_type|h}</td>

@@ -6,7 +6,7 @@ from formencode import validators as v, Invalid
 from formencode.compound import CompoundValidator
 # local imports
 from ..model import User, UserTaskRoles, UserRoles, TaskStatus, Task, CaseStatus, Case, ForemanOptions, TaskType
-from ..model import CaseType, CaseClassification, TaskCategory
+from ..model import CaseType, CaseClassification, TaskCategory, CasePriority
 from ..utils.utils import session, ROOT_DIR
 
 
@@ -332,6 +332,23 @@ class GetCaseClassification(GetObject):
             return None
 
 
+class GetPriority(GetObject):
+    messages = {
+        'invalid': 'Priority is invalid.',
+        'null': 'Please select an option.'
+    }
+
+    allow_new = False
+    allow_null = False
+
+    def getObject(self, priority):
+        for cp in CasePriority.get_all():
+            if priority == cp.case_priority:
+                return cp
+        else:
+            return None
+
+
 class GetCaseType(GetObject):
     messages = {
         'invalid': 'Case Type is invalid.',
@@ -439,6 +456,7 @@ class GetEvidenceType(GetObject):
         else:
             return None
 
+
 class GetBooleanYesNo(v.UnicodeString):
     messages = {
         'null': 'Please select an option.',
@@ -452,6 +470,25 @@ class GetBooleanYesNo(v.UnicodeString):
         elif value == "no":
             return False
         else:
+            raise Invalid(self.message('invalid', state), value, state)
+
+
+class CheckHex(v.UnicodeString):
+    messages = {
+        'null': 'Please select a colour.',
+        'invalid': 'Please select a valid colour',
+        }
+    allow_null = False
+
+    def _to_python(self, value, state):
+        try:
+            hex = value[1:]
+            if value[0] != "#" or len(hex) != 6:
+                raise Invalid(self.message('null', state), value, state)
+
+            int(hex, 16)
+            return value
+        except ValueError:
             raise Invalid(self.message('invalid', state), value, state)
 
 

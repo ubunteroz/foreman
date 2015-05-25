@@ -603,6 +603,13 @@ span.require_label{
     font-weight: bold;
 }
 
+span.priority{
+    border: solid 1px black;
+    width: 25px;
+    display: inline-block;
+    margin-right: 10px;
+}
+
 div.error{
     font-size: 9pt;
     background-color: red;

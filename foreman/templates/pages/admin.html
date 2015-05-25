@@ -7,8 +7,41 @@
     <link rel="StyleSheet" href="${urls.build('css', dict(file='jquery-ui-1.10.4.custom.css'))|h}" type="text/css" />
     <script src="${urls.build('javascript', dict(file='jquery-1.10.2.js'))|h}"></script>
     <script src="${urls.build('javascript', dict(file='jquery-ui-1.10.4.custom.min.js'))|h}"></script>
+
+    <script src="${urls.build('javascript', dict(file='spectrum.js'))|h}"></script>
+    <link rel='stylesheet' href="${urls.build('css', dict(file='spectrum.css'))|h}" />
     <script>
         $(function() {
+
+            $("#colour").spectrum({
+                preferredFormat: "hex",
+                showPaletteOnly: true,
+                showPalette:true,
+                color: 'green',
+                palette: [
+                    ['AliceBlue', 'AntiqueWhite', 'Aqua', 'Aquamarine', 'Azure', 'Beige', 'Bisque', 'Black',
+                        'BlanchedAlmond', 'Blue', 'BlueViolet', 'Brown', 'BurlyWood', 'CadetBlue', 'Chartreuse',
+                        'Chocolate', 'Coral', 'CornflowerBlue', 'Cornsilk', 'Crimson', 'Cyan', 'DarkBlue', 'DarkCyan',
+                        'DarkGoldenRod', 'DarkGray', 'DarkGreen', 'DarkKhaki', 'DarkMagenta', 'DarkOliveGreen',
+                        'DarkOrange', 'DarkOrchid', 'DarkRed', 'DarkSalmon', 'DarkSeaGreen', 'DarkSlateBlue',
+                        'DarkSlateGray', 'DarkTurquoise', 'DarkViolet', 'DeepPink', 'DeepSkyBlue', 'DimGray',
+                        'DodgerBlue', 'FireBrick', 'FloralWhite', 'ForestGreen', 'Fuchsia', 'Gainsboro', 'GhostWhite',
+                        'Gold', 'GoldenRod', 'Gray', 'Green', 'GreenYellow', 'HoneyDew', 'HotPink', 'IndianRed ',
+                        'Indigo ', 'Ivory', 'Khaki', 'Lavender', 'LavenderBlush', 'LawnGreen', 'LemonChiffon',
+                        'LightBlue', 'LightCoral', 'LightCyan', 'LightGoldenRodYellow', 'LightGray', 'LightGreen',
+                        'LightPink', 'LightSalmon', 'LightSeaGreen', 'LightSkyBlue', 'LightSlateGray', 'LightSteelBlue',
+                        'LightYellow', 'Lime', 'LimeGreen', 'Linen', 'Magenta', 'Maroon', 'MediumAquaMarine', 'MediumBlue',
+                        'MediumOrchid', 'MediumPurple', 'MediumSeaGreen', 'MediumSlateBlue', 'MediumSpringGreen',
+                        'MediumTurquoise', 'MediumVioletRed', 'MidnightBlue', 'MintCream', 'MistyRose', 'Moccasin',
+                        'NavajoWhite', 'Navy', 'OldLace', 'Olive', 'OliveDrab', 'Orange', 'OrangeRed', 'Orchid',
+                        'PaleGoldenRod', 'PaleGreen', 'PaleTurquoise', 'PaleVioletRed', 'PapayaWhip', 'PeachPuff',
+                        'Peru', 'Pink', 'Plum', 'PowderBlue', 'Purple', 'RebeccaPurple', 'Red', 'RosyBrown', 'RoyalBlue',
+                        'SaddleBrown', 'Salmon', 'SandyBrown', 'SeaGreen', 'SeaShell', 'Sienna', 'Silver', 'SkyBlue',
+                        'SlateBlue', 'SlateGray', 'Snow', 'SpringGreen', 'SteelBlue', 'Tan', 'Teal', 'Thistle', 'Tomato',
+                        'Turquoise', 'Violet', 'Wheat', 'White', 'WhiteSmoke', 'Yellow', 'YellowGreen']
+                ]
+            });
+
             $("#tabs").tabs();
             $("#tabs").tabs({ active: ${active_tab}});
 
@@ -60,6 +93,7 @@
                     <span class="validate">(${len(users)|h})</span>
                 % endif
             </a></li>
+            <li><a href="#tabs-7">Case Priorities</a></li>
         </ul>
 
         <div id="tabs-1" class="forensics_work_contents">
@@ -260,6 +294,53 @@
                 <p>There are no users that need validating.</p>
             % endif
 
+        </div>
+
+        <div id="tabs-7" class="forensics_work_contents">
+
+            <h2>Current Case Priorities</h2>
+
+
+            <table>
+                <tr>
+                    <th>Priority Name</th>
+                    <th>Colour</th>
+                    <th>Default?</th>
+                </tr>
+                 % for priority in all_priorities:
+                 <tr>
+                     <td>${priority.case_priority|h}</td>
+                     <td style="background-color:${priority.colour|h}">&nbsp;</td>
+                     <td>${priority.default|h}</td>
+                 </tr>
+                 % endfor
+            </table>
+
+
+            <div style="clear:both"></div>
+
+
+            % if len(priorities) > 1:
+            <div class="form_background">
+            <h2>Remove Priority</h2>
+
+            <form method="post" action="${urls.build('general.admin', dict(form='remove_priority', active_tab=6))|h}">
+                ${forms.formSelectBox("Priority", "priority_remove", "priority_remove", "form_label", "input_long", priorities, please_select=True)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Remove" /></p>
+            </form>
+            </div>
+            % endif
+
+            <div class="form_background">
+            <h2>Add New Priority</h2>
+
+            <form method="post" action="${urls.build('general.admin', dict(form='add_priority', active_tab=6))|h}">
+                ${forms.formTextField("Priority", "priority", "priority", "form_label", "input_long", first=True)}
+                ${forms.formSelectBox("Set as default", "default", "default", "form_label", "input_long", [("yes", "Yes"),("no", "No")], please_select=True)}
+                ${forms.formTextField("Colour", "colour", "colour", "form_label", "input_long")}
+                <p style="clear:both; text-align:center"><input type="submit" value="Add" /></p>
+            </form>
+            </div>
         </div>
 
     </div>

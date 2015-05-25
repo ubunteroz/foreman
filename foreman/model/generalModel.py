@@ -58,6 +58,7 @@ class ForemanOptions(Base, Model):
         EvidenceType.populate_default()
         CaseClassification.populate_default()
         CaseType.populate_default()
+        CasePriority.populate_default()
         session.commit()
 
     @staticmethod
@@ -385,7 +386,7 @@ class CaseType(Base, Model):
         return "Undefined"
 
     def __str__(self):
-        return self.classification
+        return self.case_type
 
 
 class EvidenceType(Base, Model):
@@ -433,3 +434,36 @@ class EvidenceType(Base, Model):
     @staticmethod
     def undefined():
         return "Undefined"
+
+
+class CasePriority(Base, Model):
+    __tablename__ = 'case_priority'
+
+    id = Column(Integer, primary_key=True)
+    case_priority = Column(Unicode)
+    colour = Column(Unicode)
+    default = Column(Boolean)
+
+    def __init__(self, case_priority, colour, default=False):
+        self.case_priority = case_priority
+        self.colour = colour
+        self.default = default
+
+    @staticmethod
+    def populate_default():
+        case_priorities = [("Low", "#00CCFF", False),
+                           ("Normal", "#009900", True),
+                           ("High", "#FF9933", False),
+                           ("Critical", "#CC0000", False)]
+
+        for case_priority, colour, default in case_priorities:
+            c = CasePriority(case_priority, colour, default)
+            session.add(c)
+            session.flush()
+
+    @staticmethod
+    def default_value():
+        return session.query(CasePriority).filter_by(default=True).first()
+
+    def __str__(self):
+        return self.case_priority

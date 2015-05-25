@@ -91,7 +91,10 @@
                 % endif
             </td>
         </tr>
-
+         <tr>
+            <th>Case Priority</th>
+            <td><span class="priority" style="background-color:${task.case.case_priority_colour|h}">&nbsp;</span>${task.case.case_priority|h}</td>
+        </tr>
         <tr>
             <th>Principle Case Manager</th>
              % if task.case.principle_case_manager != None:

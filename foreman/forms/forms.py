@@ -17,6 +17,7 @@ class AddCaseForm(Schema):
     classification = GetCaseClassification(not_emtpy=True)
     case_type = GetCaseType(not_empty=True)
     justification = v.UnicodeString(not_empty=True)
+    priority = GetPriority(not_empty=True)
 
 
 class RequesterAddCaseForm(Schema):
@@ -28,8 +29,17 @@ class RequesterAddCaseForm(Schema):
     justification = v.UnicodeString(not_empty=True)
 
 
+class AddPriorityForm(Schema):
+    priority = v.UnicodeString(not_empty=True)
+    default = GetBooleanYesNo(not_empty=True)
+    colour = CheckHex(not_empty=True)
+
+
+class RemovePriorityForm(Schema):
+    priority_remove = GetPriority(not_empty=True)
+
 class RemoveClassificationForm(Schema):
-    classification = GetCaseClassification(not_emtpy=True)
+    classification = GetCaseClassification(not_empty=True)
 
 
 class RemoveCaseTypeForm(Schema):
@@ -231,6 +241,7 @@ class EditCaseForm(Schema):
     justification = v.UnicodeString(not_empty=True)
     classification = GetCaseClassification(not_emtpy=True)
     case_type = GetCaseType(not_empty=True)
+    priority = GetPriority(not_empty=True)
 
 
 class AddCaseLinkForm(Schema):
