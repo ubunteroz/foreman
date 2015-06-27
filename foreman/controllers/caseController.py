@@ -113,6 +113,7 @@ class CaseController(BaseController):
         if 'type' in args and args['type'] == "requester" and is_requester:
             if self.validate_form(RequesterAddCaseForm()):
                 case_name = ForemanOptions.get_next_case_name()
+
                 new_case = Case(case_name, self.current_user, self.form_result['background'],
                                 self.form_result['reference'], self.form_result['private'], None,
                                 self.form_result['classification'], self.form_result['case_type'],
@@ -148,7 +149,10 @@ class CaseController(BaseController):
             return self.return_response('pages', 'view_case.html', case=new_case, classifications=classifications,
                                         case_types=case_types, priorities=priorities)
         else:
-            next_case_name = ForemanOptions.get_next_case_name()
+            if not is_requester:
+                next_case_name = ForemanOptions.get_next_case_name()
+            else:
+                next_case_name = None
             return self.return_response('pages', 'add_case.html', case_loc=case_loc, is_requester=is_requester,
                                         managers=managers, errors=self.form_error, classifications=classifications,
                                         case_types=case_types, next_case_name=next_case_name, priorities=priorities)

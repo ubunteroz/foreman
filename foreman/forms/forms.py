@@ -27,6 +27,7 @@ class RequesterAddCaseForm(Schema):
     classification = GetCaseClassification(not_emtpy=True)
     case_type = GetCaseType(not_empty=True)
     justification = v.UnicodeString(not_empty=True)
+    priority = GetPriority(not_empty=True)
 
 
 class AddPriorityForm(Schema):

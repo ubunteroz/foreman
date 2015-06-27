@@ -133,6 +133,7 @@ class ForemanOptions(Base, Model):
                 return '{now}{num:0{width}}'.format(now=now, num=options.c_increment, width=options.c_leading_zeros)
             else:
                 options.c_increment = 1
+                options.c_leading_date = now
                 return '{now}{num:0{width}}'.format(now=now, num=options.c_increment, width=options.c_leading_zeros)
         elif options.case_names == "FromList":
             options.c_increment += 1

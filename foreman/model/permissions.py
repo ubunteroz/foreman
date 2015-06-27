@@ -165,6 +165,8 @@ class RequesterForCaseChecker(BaseChecker):
     def check(self, user, case):
         requester_role = UserRoles.check_user_has_active_role(user, UserRoles.REQUESTER)
         requester_user = case.requester
+        if requester_user is None:
+            return False
         return requester_user.id == user.id and requester_role
 
 
