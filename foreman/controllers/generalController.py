@@ -1,7 +1,7 @@
 from os import listdir
 from os.path import isfile, join
 from datetime import datetime
-from monthdelta import monthdelta
+from monthdelta import MonthDelta
 
 # library imports
 from werkzeug import Response, redirect
@@ -326,7 +326,7 @@ Foreman
 
         max_months = 11
         while start_date.month != today_date.month and max_months != 0:
-            start_date = start_date + monthdelta(1)
+            start_date = start_date + MonthDelta(1)
             months.append(start_date.strftime("%B %Y"))
             for status in CaseStatus.all_statuses:
                 total_cases.append([start_date.strftime("%B %Y"), status,

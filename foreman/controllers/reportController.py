@@ -1,7 +1,7 @@
 from os import listdir
 from os.path import isfile, join
 from datetime import datetime
-from monthdelta import monthdelta
+from monthdelta import MonthDelta
 
 # library imports
 from werkzeug import Response, redirect
@@ -14,6 +14,10 @@ from ..model.userModel import UserRoles
 
 
 class ReportController(BaseController):
+
+    def _create_breadcrumbs(self):
+        BaseController._create_breadcrumbs(self)
+        self.breadcrumbs.append({'title': 'Reports', 'path': self.urls.build('report.report')})
 
     def report(self):
         self.check_permissions(self.current_user, 'Report', 'view')
@@ -42,7 +46,7 @@ class ReportController(BaseController):
                                                                  by_month=True)])
         max_months = 11
         while start_date.month != today_date.month and max_months != 0:
-            start_date = start_date + monthdelta(1)
+            start_date = start_date + MonthDelta(1)
             months.append(start_date.strftime("%B %Y"))
             for status in CaseStatus.all_statuses:
                 total_cases.append([start_date.strftime("%B %Y"), status,
