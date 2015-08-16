@@ -1,0 +1,21 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+
+<%def name="javascripts()" filter="trim">
+</%def>
+
+<div id="sidebar">
+    ${sidebars.user_menu()}
+</div>
+
+<div id="mainbar">
+
+    <h1>${department.department|h}</h1>
+
+
+    % for team in department.teams:
+            <h2>${team.team|h}</h2>
+            <p><a href="${urls.build('user.view_team', dict(team_id=team.id,department_id=department.id))|h}">View Team</a></p>
+    % endfor
+
+</div>

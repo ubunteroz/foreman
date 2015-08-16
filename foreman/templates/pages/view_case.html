@@ -13,17 +13,24 @@
     <h1>Case ${case.case_name|h}</h1>
 
     <p>
+        % if check_perms(case, 'authorise') and (case.authorised is None or case.authorised.case_authorised == "PENDING"):
+            <a href='${urls.build("case.authorise", dict(case_id=case.id))|h}'>Authorise this case</a>
+        % endif
         % if check_perms(case, 'edit'):
-        <a href='${urls.build("case.edit", dict(case_id=case.case_name))|h}'>Edit</a>
+            % if current_user.id == case.requester.id and case.authorised.case_authorised == "NOAUTH":
+            <a href='${urls.build("case.edit", dict(case_id=case.id))|h}'>Edit the case to retry for authorisation</a>
+            % else:
+            <a href='${urls.build("case.edit", dict(case_id=case.id))|h}'>Edit</a>
+            % endif
         % endif
         % if check_perms(case, 'edit'):
             % if case.status == case_statuses['created']:
-                | <a href='${urls.build("case.change_status", dict(case_id=case.case_name, status=case_statuses["open"]))|h}'>Open this Case for Investigation</a>
+                | <a href='${urls.build("case.change_status", dict(case_id=case.id, status=case_statuses["open"]))|h}'>Open this Case for Investigation</a>
             % elif case.status == case_statuses['open']:
-                | <a href='${urls.build("case.change_status", dict(case_id=case.case_name, status=case_statuses["closed"]))|h}'>Close this Case</a>
+                | <a href='${urls.build("case.change_status", dict(case_id=case.id, status=case_statuses["closed"]))|h}'>Close this Case</a>
             % elif case.status == case_statuses['closed']:
-                | <a href='${urls.build("case.change_status", dict(case_id=case.case_name, status=case_statuses["open"]))|h}'>Reopen this Case</a>
-                | <a href='${urls.build("case.change_status", dict(case_id=case.case_name, status=case_statuses["archived"]))|h}'>Archive this Case</a>
+                | <a href='${urls.build("case.change_status", dict(case_id=case.id, status=case_statuses["open"]))|h}'>Reopen this Case</a>
+                | <a href='${urls.build("case.change_status", dict(case_id=case.id, status=case_statuses["archived"]))|h}'>Archive this Case</a>
             % endif
         % endif
 
@@ -34,164 +41,47 @@
     <h3>Background information</h3>
     <div class="case_background">${case.background}</div>
 
-
     <h3>Case Justification</h3>
     <div class="case_background">${case.justification}</div>
 
+    ${formatting.case_details()}
 
-    <h2>Details</h2>
 
-    <table>
-        <tr>
-            <th width="200px">Reference</th>
-            <td width="300px">
-                % if case.reference:
-                    ${case.reference|h}
-                % else:
-                    None
-                % endif
-            </td>
-        </tr>
-        <tr>
-            <th>Case Files Location</th>
-            <td>
-                % if case.location:
-                    <a href="file:///${case.location.replace('\\','/')|h}" target="_blank">${case.location|h}</a>
-                % else:
-                    Not Specified
-                % endif
-            </td>
-        </tr>
-        <tr>
-            <th>Private</th>
-            <td>
-                % if case.private:
-                    <span class="highlight">Yes</span>
-                    <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
-                % else:
-                    No
-                % endif
-            </td>
-        </tr>
-        <tr>
-            <th>Case Created</th>
-            <td>${case.date_created|h}</td>
-        </tr>
-         <tr>
-            <th>Case Priority</th>
-            <td><span class="priority" style="background-color:${case.case_priority_colour|h}">&nbsp;</span>${case.case_priority|h}</td>
-        </tr>
-        <tr>
-            <th>Case Classification</th>
-            <td>${case.classification|h}</td>
-        </tr>
-         <tr>
-            <th>Case Type</th>
-            <td>${case.case_type|h}</td>
-        </tr>
-        <tr>
-            <th>Status</th>
-            <td>
-                % if case.status == case_statuses['archived']:
-                    <span class="archived">${case.status|h}</span>
-                % else:
-                    ${case.status|h}
-                % endif
-            </td>
-        </tr>
-        <tr>
-            <% links = ", ".join(["<a href='" + urls.build("case.view", dict(case_id=c.case_name)) + "'>" + c.case_name + "</a>" for c in case.get_links()]) %>
-            <th>
-                % if len(case.get_links()) == 1:
-                Case linked to
-                % else:
-                Cases linked to
-                % endif
-            </th>
-            <td>
-                % if len(case.get_links()) > 0:
-                ${links}
-                % else:
-                No Links
-                % endif
-            </td>
-        </tr>
-        <tr>
-            <% links = ", ".join(["<a href='" + urls.build("case.view", dict(case_id=c.case_name)) + "'>" + c.case_name + "</a>" for c in case.get_from_links()]) %>
-            <th>
-                % if len(case.get_from_links()) == 1:
-                Case linked from
-                % else:
-                Cases linked from
-                % endif
-            </th>
-            <td>
-                % if len(case.get_from_links()) > 0:
-                ${links}
-                % else:
-                No Links
-                % endif
-            </td>
-        </tr>
-        <tr>
-            <th>Principle Case manager</th>
-            <td>
-                % if case.principle_case_manager is not None:
-                <a href='${urls.build("user.view", dict(user_id=case.principle_case_manager.id))|h}'>${case.principle_case_manager.fullname|h}</a>
-                % else:
-                None assigned
-                % endif
-            </td>
-        </tr>
-        <tr>
-            <th>Secondary Case manager</th>
-            <td>
-                % if case.secondary_case_manager is not None:
-                <a href='${urls.build("user.view", dict(user_id=case.secondary_case_manager.id))|h}'>${case.secondary_case_manager.fullname|h}</a>
-                % else:
-                None assigned
-                % endif
-            </td>
-        </tr>
-        <tr>
-            <th>Requester</th>
-            <td>
-                % if case.requester is not None:
-                <a href='${urls.build("user.view", dict(user_id=case.requester.id))|h}'>${case.requester.fullname|h}</a>
-                % else:
-                None assigned
-                % endif
-            </td>
-        </tr>
-    </table>
+    % if case.status != case_statuses['rejected'] and case.status != case_statuses['pending']:
+        <h2>Tasks</h2>
 
-    <h2>Tasks</h2>
+        <p>
+        % if check_perms(case, 'add-task'):
+        <a href='${urls.build("case.add_task", dict(case_id=case.id))|h}'>Add Task</a>
+        % endif
+        % if check_perms(case, 'edit') and all_tasks_created:
+        | <a href='${urls.build("case.change_task_statuses", dict(case_id=case.id, status=task_statuses["queued"]))|h}'>Set all tasks to Queued</a> |
+        <a href='${urls.build("case.change_task_statuses", dict(case_id=case.id, status=task_statuses["start"]))|h}'>Set all tasks to Allocated</a></p>
+        % endif
+        </p>
 
-    <p>
-    % if check_perms(case, 'add-task'):
-    <a href='${urls.build("case.add_task", dict(case_id=case.case_name))|h}'>Add Task</a>
+        ${formatting.task_table(case.tasks, show_qa=True)}
+
+        <h2>Evidence</h2>
+        % if check_perms(case, 'add-evidence'):
+        <p><a href='${urls.build("evidence.add", dict(case_id=case.id))|h}'>Add Evidence</a></p>
+        % endif
+
+        % if len(case.evidence) > 0:
+            <ol>
+            % for evidence in case.evidence:
+
+                <li>
+                    % if check_perms(evidence, "view"):
+                    <a href='${urls.build("evidence.view", dict(evidence_id=evidence.id, case_id=case.id))|h}'>${evidence.reference|h}</a>
+                    % else:
+                    ${evidence.reference|h}
+                    % endif
+                </li>
+            % endfor
+            </ol>
+        % else:
+            <p>No Evidence has been added.</p>
+        % endif
     % endif
-    % if check_perms(case, 'edit') and all_tasks_created:
-    | <a href='${urls.build("case.change_task_statuses", dict(case_id=case.case_name, status=task_statuses["queued"]))|h}'>Set all tasks to Queued</a> |
-    <a href='${urls.build("case.change_task_statuses", dict(case_id=case.case_name, status=task_statuses["start"]))|h}'>Set all tasks to Allocated</a></p>
-    % endif
-    </p>
-
-    ${formatting.task_table(case.tasks, show_qa=True)}
-
-    <h2>Evidence</h2>
-    % if check_perms(case, 'add-evidence'):
-    <p><a href='${urls.build("evidence.add", dict(case_id=case.case_name))|h}'>Add Evidence</a></p>
-    % endif
-
-    % if len(case.evidence) > 0:
-        <ol>
-        % for evidence in case.evidence:
-            <li><a href='${urls.build("evidence.view", dict(evidence_id=evidence.id, case_id=case.case_name))|h}'>${evidence.reference|h}</a></li>
-        % endfor
-        </ol>
-    % else:
-        <p>No evidence has been added to this case.</p>
-    % endif
-
 </div>

@@ -35,13 +35,12 @@
             <div id="top_menu_left">
                 <a href='${urls.build("general.index")|h}'>Home</a>
                 % if current_user:
+                    | <a href='${urls.build("case.view_all")|h}'>Cases</a>
+
                     % if current_user.is_worker():
-                    | <a href='${urls.build("case.view_all")|h}'>Cases</a> |
-                    <a href='${urls.build("task.view_all")|h}'>Tasks</a> |
+                    | <a href='${urls.build("task.view_all")|h}'>Tasks</a> |
                     <a href='${urls.build("task.view_qas")|h}'>QAs</a> |
                     <a href='${urls.build("evidence.view_all")|h}'>Evidence</a>
-                    % elif current_user.is_requester():
-                   |  <a href='${urls.build("user.case_history", dict(user_id=current_user.id))|h}'>My Cases</a>
                     % endif
 
                     % if check_perms("Report", 'view'):

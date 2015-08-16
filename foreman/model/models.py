@@ -30,7 +30,7 @@ class HistoryModel(Model):
     comparable_fields = {}
     history_backref = 'history'
     object_name = None  # override this to add an entry for "<object_name> created"
-    history_name = (None, None)  # override this for user history of this object
+    history_name = (None, None, None)  # override this for user history of this object
 
     @classmethod
     def get_changes(cls, current_obj):
@@ -50,7 +50,7 @@ class HistoryModel(Model):
                                'user': oldest_entry.user,
                                'current': current_obj,
                                'date_time': oldest_entry.date_time,
-                               'change_log': cls.object_name + " created"})
+                               'change_log': "Created " + cls.object_name})
             except IndexError:
                 # no entries
                 pass
@@ -81,12 +81,20 @@ class HistoryModel(Model):
             if previous_entry_list is None:
                 change_log.append({'date': entry.date,
                                    'date_time': entry.date_time,
-                                   'object': (entry.history_name[0], getattr(entry, entry.history_name[1])),
+                                   'object': (entry.history_name[0], getattr(entry, entry.history_name[1]),
+                                              getattr(entry, entry.history_name[2]),
+                                              getattr(entry, entry.history_name[3]) if len(entry.history_name) > 3 else None),
                                    'change_log': entry.history_name[0] + " created"})
+            elif previous_entry_list is False:
+                pass # used for case on 1st case creation: status is set to created and case is set to created,
+                # therefore duplicating the entry from two different sources, e.g. CaseStatus.previous = False
+                # if the 1st one
             else:
                 change_log.append({'date': entry.date,
                                    'date_time': entry.date_time,
-                                   'object': (entry.history_name[0], getattr(entry, entry.history_name[1])),
+                                   'object': (entry.history_name[0], getattr(entry, entry.history_name[1]),
+                                              getattr(entry, entry.history_name[2]),
+                                              getattr(entry, entry.history_name[3]) if len(entry.history_name) > 3 else None),
                                    'change_log': previous_entry_list.difference(entry)})
         return change_log
 
@@ -95,7 +103,7 @@ class HistoryModel(Model):
 
 
 class UserHistoryModel(Model):
-    history_name = (None, None)  # override this for user history of this object
+    history_name = (None, None, None)  # override this for user history of this object
 
     @classmethod
     def get_changes(cls, current_obj, role):
@@ -132,12 +140,25 @@ class UserHistoryModel(Model):
             if previous_entry_list is None:
                 change_log.append({'date': entry.date,
                                    'date_time': entry.date_time,
-                                   'object': (entry.history_name[0], getattr(entry, entry.history_name[1])),
+                                   'object': (entry.history_name[0], getattr(entry, entry.history_name[1]),
+                                              getattr(entry, entry.history_name[2]),
+                                              getattr(entry, entry.history_name[3]) if len(entry.history_name) > 3 else None),
                                    'change_log': {entry.role: ("ADD", entry.user.fullname)}})
+            elif previous_entry_list is False and not entry.removed:
+                change_log.append({'date': entry.date,
+                                   'date_time': entry.date_time,
+                                   'object': (entry.history_name[0], getattr(entry, entry.history_name[1]),
+                                              getattr(entry, entry.history_name[2]),
+                                              getattr(entry, entry.history_name[3]) if len(entry.history_name) > 3 else None),
+                                   'change_log': {entry.role: ("ADD", entry.user.fullname)}})
+            elif previous_entry_list is False and entry.removed:
+                pass
             else:
                 change_log.append({'date': entry.date,
                                    'date_time': entry.date_time,
-                                   'object': (entry.history_name[0], getattr(entry, entry.history_name[1])),
+                                   'object': (entry.history_name[0], getattr(entry, entry.history_name[1]),
+                                              getattr(entry, entry.history_name[2]),
+                                              getattr(entry, entry.history_name[3]) if len(entry.history_name) > 3 else None),
                                    'change_log': previous_entry_list.difference(entry, entry.role)})
         return change_log
 

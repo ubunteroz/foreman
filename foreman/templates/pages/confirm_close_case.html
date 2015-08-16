@@ -23,6 +23,6 @@
     </div>
     % else:
     <h1>Case ${case.case_name|h} has been closed</h1>
-    <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>View Case</a></p>
+    <p><a href='${urls.build("case.view", dict(case_id=case.id))|h}'>View Case</a></p>
     % endif
 </div>

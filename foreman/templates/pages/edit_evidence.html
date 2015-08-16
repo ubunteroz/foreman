@@ -22,8 +22,8 @@
     <h1>Edit ${evidence.reference|h}</h1>
 
     % if evidence.case is not None:
-        <p><a href="${urls.build('evidence.view', dict(evidence_id=evidence.id, case_id=evidence.case.case_name))|h}">Back to Evidence</a> |
-       <a href="${urls.build('case.view', dict(case_id=evidence.case.case_name))|h}">Back to Case</a></p>
+        <p><a href="${urls.build('evidence.view', dict(evidence_id=evidence.id, case_id=evidence.case.id))|h}">Back to Evidence</a> |
+       <a href="${urls.build('case.view', dict(case_id=evidence.case.id))|h}">Back to Case</a></p>
     % else:
         <p><a href="${urls.build('evidence.view_caseless', dict(evidence_id=evidence.id))|h}">Back to Evidence</a></p>
     % endif
@@ -57,7 +57,10 @@
                             <td>
                                 % if not isinstance(history['change_log'], basestring):
                                     % for entry, change in history['change_log'].iteritems():
-                                        The ${entry|h} changed from ${change[0]|h} to ${change[1]|h} <br/>
+                                        The <i>${entry|h}</i> changed from
+                                        <span class="change">${change[0]|h}</span>
+                                        to
+                                        <span class="change">${change[1]|h}</span><br/>
                                     % endfor
                                 % else:
                                     ${history['change_log']|h}

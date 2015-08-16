@@ -94,6 +94,7 @@
                 % endif
             </a></li>
             <li><a href="#tabs-7">Case Priorities</a></li>
+            <li><a href="#tabs-8">Authorisation Options</a></li>
         </ul>
 
         <div id="tabs-1" class="forensics_work_contents">
@@ -109,6 +110,8 @@
                 % endif
                 </div>
             % endif
+
+            <h1>Options</h1>
 
             <div class="form_background">
                 <h2>Information About Your Team & Foreman Options</h2>
@@ -128,6 +131,68 @@
                     <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
                 </form>
             </div>
+            <h1>Teams</h1>
+            <p>Teams that users belong to, e.g. administrators, requesters, authorisers, case managers and investigators.
+                Note you can only remove departments which have no teams (remove the teams first); and can only remove teams with no users.
+                Please remove all members of the team first by editing their profile and changing their team to something else. </p>
+            <div class="form_background">
+                <h2>Add Department</h2>
+                <form method="post" enctype='multipart/form-data' action="${urls.build('general.admin', dict(form='add_department', active_tab=0))|h}">
+                    ${forms.formTextField("Department Name", "department_name", "department_name", "form_label", "input_long", first=True)}
+                    <p style="clear:both; text-align:center"><input type="submit" value="Add" /></p>
+                </form>
+            </div>
+
+            % if len(department_options) > 0:
+            <div class="form_background">
+                <h2>Rename Department</h2>
+                <form method="post" enctype='multipart/form-data' action="${urls.build('general.admin', dict(form='rename_department', active_tab=0))|h}">
+                    ${forms.formSelectBox("Department", "old_department_name", "old_department_name", "form_label", "input_long", department_options, first=True, please_select=True)}
+                    ${forms.formTextField("New Name", "new_dep_name", "new_dep_name", "form_label", "input_long")}
+                    <p style="clear:both; text-align:center"><input type="submit" value="Rename" /></p>
+                </form>
+            </div>
+            % endif
+
+            % if len(del_department_options) > 0:
+            <div class="form_background">
+                <h2>Remove Department</h2>
+                <form method="post" enctype='multipart/form-data' action="${urls.build('general.admin', dict(form='remove_department', active_tab=0))|h}">
+                    ${forms.formSelectBox("Department", "remove_department_name", "remove_department_name", "form_label", "input_long", del_department_options, first=True, please_select=True)}
+                    <p style="clear:both; text-align:center"><input type="submit" value="Remove" /></p>
+                </form>
+            </div>
+            % endif
+
+            <div class="form_background">
+                <h2>Add Team</h2>
+                <form method="post" enctype='multipart/form-data' action="${urls.build('general.admin', dict(form='add_team', active_tab=0))|h}">
+                    ${forms.formSelectBox("Department", "t_department_name", "t_department_name", "form_label", "input_long", department_options, first=True, please_select=True)}
+                    ${forms.formTextField("Team Name", "new_team_name", "new_team_name", "form_label", "input_long")}
+                    <p style="clear:both; text-align:center"><input type="submit" value="Add" /></p>
+                </form>
+            </div>
+
+            % if len(team_options) > 0:
+            <div class="form_background">
+                <h2>Rename Team</h2>
+                <form method="post" enctype='multipart/form-data' action="${urls.build('general.admin', dict(form='rename_team', active_tab=0))|h}">
+                    ${forms.formSelectBox("Team", "old_team_name", "old_team_name", "form_label", "input_long", team_options, first=True, please_select=True)}
+                    ${forms.formTextField("New Name", "rename_team", "rename_name", "form_label", "input_long")}
+                    <p style="clear:both; text-align:center"><input type="submit" value="Rename" /></p>
+                </form>
+            </div>
+            % endif
+
+            % if len(del_team_options) > 0:
+            <div class="form_background">
+                <h2>Remove Team</h2>
+                <form method="post" enctype='multipart/form-data' action="${urls.build('general.admin', dict(form='remove_team', active_tab=0))|h}">
+                   ${forms.formSelectBox("Team", "team_name", "team_name", "form_label", "input_long", del_team_options, first=True, please_select=True)}
+                    <p style="clear:both; text-align:center"><input type="submit" value="Remove" /></p>
+                </form>
+            </div>
+            % endif
         </div>
 
         <div id="tabs-2" class="forensics_work_contents">
@@ -341,6 +406,18 @@
                 <p style="clear:both; text-align:center"><input type="submit" value="Add" /></p>
             </form>
             </div>
+        </div>
+
+        <div id="tabs-8" class="forensics_work_contents">
+
+            <h2>Authorisation Options</h2>
+
+            <form method="post" action="${urls.build('general.admin', dict(form='authoriser_options', active_tab=7))|h}">
+                ${forms.formSelectBox("Authorisers can view case tasks", "see_tasks", "see_tasks", "form_label", "input_long", authoriser_options, value=str(options.auth_view_tasks), first=True)}
+                ${forms.formSelectBox("Authorisers can view case evidence", "see_evidence", "see_evidence", "form_label", "input_long", authoriser_options, value=str(options.auth_view_evidence))}
+                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+            </form>
+
         </div>
 
     </div>

@@ -56,7 +56,19 @@
                     <td>
                         % if not isinstance(history['change_log'], basestring):
                         % for entry, change in history['change_log'].iteritems():
-                            The ${entry|h} changed from ${change[0]|h} to ${change[1]|h} <br/>
+                            % if entry == "Profile photo":
+                                % if change[0] is None:
+                                    The <i>${entry|h}</i> changed from <span class="change">None</span> to
+                                    <a href="${urls.build("files", dict(file='user_profile_photos/' + change[1]))|h}">${change[1]|h}</a> <br/>
+                                % else:
+                                    The <i>${entry|h}</i> changed from <a href="${urls.build("files", dict(file='user_profile_photos/' + change[0]))|h}">${change[0]|h}</a> to
+                                    <a href="${urls.build("files", dict(file='user_profile_photos/' + change[1]))|h}">${change[1]|h}</a> <br/>
+                                % endif
+                            % else:
+                                 The <i>${entry|h}</i> changed from <span class="change">${change[0]|h}</span> to <span class="change">${change[1]|h}</span> <br/>
+
+                            % endif
+
                         % endfor
                         % else:
                             ${history['change_log']|h}
@@ -69,15 +81,15 @@
 
             <h2>Edit User Details</h2>
 
-            <form method="post" action="${urls.build('user.edit', dict(user_id=user.id, form='edit_user'))|h}">
+            <form method="post" enctype="multipart/form-data" action="${urls.build('user.edit', dict(user_id=user.id, form='edit_user'))|h}">
                 ${forms.formTextField("Username", "username", "username", "form_label", "input_long", first=True, value=user.username)}
                 ${forms.formTextField("Email address", "email", "email", "form_label", "input_long", value=user.email)}
                 ${forms.formTextField("Forename", "forename", "forename", "form_label", "input_long", value=user.forename)}
                 ${forms.formTextField("Middle Name", "middlename", "middlename", "form_label", "input_long", value=user.middle, required=False)}
                 ${forms.formTextField("Surname", "surname", "surname", "form_label", "input_long", value=user.surname)}
+                ${forms.formTextField("Profile Photo", "photo", "photo", "form_label", "input_long", input_type="file", required=False)}
                 ${forms.formTextField("Job Title", "job_title", "job_title", "form_label", "input_long",  value=user.job_title)}
-                ${forms.formTextField("Team", "team", "team", "form_label", "input_long",  value=user.team)}
-                ${forms.formTextField("Department", "department", "department", "form_label", "input_long",  value=user.department)}
+                ${forms.formSelectBox("Team & Department", "team", "team", "form_label", "input_long", teams, please_select=True, value=user.team.id)}
                 ${forms.formTextField("Telephone Number", "telephone", "telephone", "form_label", "input_long",  value=user.telephone, required=False)}
                 ${forms.formTextField("Alternative Telephone Number", "alt_telephone", "alt_telephone", "form_label", "input_long",  value=user.alt_telephone, required=False)}
                 ${forms.formTextField("Fax", "fax", "fax", "form_label", "input_long",  value=user.fax, required=False)}
@@ -105,9 +117,9 @@
                     <td>
                         % for entry, change in history['change_log'].iteritems():
                             % if change[0] == "ADD":
-                            The ${entry|h} Role was assigned to ${change[1]|h} <br/>
+                            The <i>${entry|h}</i> role was assigned to ${change[1]|h} <br/>
                             % elif change[0] == "DEL":
-                            ${change[1]|h} was removed from the ${entry|h} Role<br/>
+                            ${change[1]|h} was removed from the <i>${entry|h}</i> role<br/>
                             % endif
                         % endfor
                     </td>

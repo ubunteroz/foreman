@@ -4,6 +4,428 @@
     % endif
 </%def>
 
+<%def name="report_file_details(upload_list)" filter="trim">
+    <table class="history">
+        <tr>
+            <th>File Title</th>
+            <th>Date Uploaded</th>
+            <th>File Hash</th>
+            <th>Uploader</th>
+            <th>Notes</th>
+            <th>File Location</th>
+        </tr>
+        <% count = 0 %>
+        % for upload in upload_list:
+            % if upload.deleted is False:
+            <tr>
+                <td>${upload.file_title|h}</td>
+                <td>${upload.date|h}</td>
+                <td>
+                    % if upload.check_hash():
+                    <img src='${urls.build("images", dict(file="siteimages/icons/tick-icon.jpg"))|h}' />
+                    % else:
+                    <img src='${urls.build("images", dict(file="siteimages/icons/cross-icon.jpg"))|h}' />
+                    % endif
+                    ${upload.file_hash|h}
+                </td>
+                <td><a href='${urls.build("user.view", dict(user_id=upload.uploader.id))|h}'>${upload.uploader.fullname|h}</a></td>
+                <td>${upload.file_note|h}</td>
+                <td><a href='${urls.build("files", dict(file=upload.file_path))|h}'>Path to file</a></td>
+            </tr>
+                <% count += 1 %>
+            % endif
+        % endfor
+        % if count == 0:
+            <tr><td colspan="6">No files uploaded.</td></tr>
+        % endif
+    </table>
+</%def>
+
+<%def name="report_histories(histories, name, obj, obj_id)" filter="trim">
+    % for history_entry in histories:
+        <h3 class="spacer">
+            <% params = {obj_id: history_entry[0]['current'].id, 'case_id': history_entry[0]['current'].case.id} %>
+            <a href="${urls.build(obj + ".view", params)|h}">${getattr(history_entry[0]['current'], name)|h}</a></h3>
+        <table class="history">
+            <tr>
+                <th class="history_date">Date</th>
+                <th class="history_user">User</th>
+                <th class="history_entry">Events</th>
+            </tr>
+            % for history in history_entry:
+            <tr>
+                <td>${history['date']|h}</td>
+                <td><a href='${urls.build("user.view", dict(user_id=history['user'].id))|h}'>${history['user'].fullname|h}</a></td>
+                <td>
+                    % if not isinstance(history['change_log'], basestring):
+                        % for entry, change in history['change_log'].iteritems():
+                            % if change[0] == "ADD":
+                               ${change[1]|h} was assigned as <i>${entry|h}</i> <br/>
+                            % elif change[0] == "DEL":
+                                ${change[1]|h} was removed as <i>${entry|h}</i><br/>
+                            % else:
+                                The <i>${entry|h}</i> changed from
+                                <span class="change">${change[0]|h}</span>
+                                to
+                                <span class="change">${change[1]|h}</span>
+                            % endif
+                        % endfor
+                    % else:
+                        ${history['change_log']|h}
+                    % endif
+                </td>
+            </tr>
+            % endfor
+        </table>
+    % endfor
+</%def>
+
+<%def name="evidence_details(evidence)" filter="trim">
+    <table class="case_details">
+        % if evidence.case_id is not None:
+         <tr>
+            <th>Case</th>
+            <td><a href='${urls.build("case.view", dict(case_id=evidence.case.id))|h}'>${evidence.case.case_name|h}</a>
+            % if evidence.case.status == "Archived":
+                    <span class="archived">[${evidence.case.status|h}]</span>
+            % endif
+
+            % if evidence.case.private:
+                    <span class="archived">[Private Case]</span>
+                    <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
+            % endif
+            </td>
+        </tr>
+        % endif
+        <tr>
+            <th>Date Evidence Added</th>
+            <td>${evidence.date|h}</td>
+        </tr>
+         <tr>
+            <th>Evidence Type</th>
+            <td>${evidence.type|h}</td>
+        </tr>
+         <tr>
+            <th>User who added evidence</th>
+            <td><a href='${urls.build("user.view", dict(user_id=evidence.user.id))|h}'>${evidence.user.fullname|h}</a></td>
+        </tr>
+         <tr>
+            <th>Originator</th>
+            <td>${evidence.originator|h}</td>
+        </tr>
+         <tr>
+            <th>Bag Number</th>
+            <td>${evidence.evidence_bag_number|h}</td>
+        </tr>
+         <tr>
+            <th>Location Seized From</th>
+            <td>${evidence.location|h}</td>
+        </tr>
+         <tr>
+            <th>Current status</th>
+            <td>
+                % if evidence.current_status.check_in == True:
+                In storage
+                % else:
+                Checked out by ${evidence.current_status.user.fullname|h}
+                % endif
+            </td>
+        </tr>
+        <tr>
+            <th>Comments</th>
+            <td>${evidence.comment|h}</td>
+        </tr>
+    </table>
+
+    <h2>Chain of Custody</h2>
+
+    <table class="history">
+        <tr>
+            <th>Record Date</th>
+            <th>User</th>
+            <th>Date of Movement</th>
+            <th>Custodian / Location</th>
+            <th>Action</th>
+            <th>Comment</th>
+            <th>Attachments</th>
+        </tr>
+        % for chain in evidence.user_handled:
+        <tr>
+            <td>${chain.date|h}</td>
+            <td><a href='${urls.build("user.view", dict(user_id=chain.user.id))|h}'>${chain.user.fullname|h}</a></td>
+            <td>${chain.custody_date|h}</td>
+            <td>${chain.custodian|h}</td>
+            <td>
+                % if chain.check_in == True:
+                Evidence checked in
+                % else:
+                Evidence checked out
+                % endif
+            </td>
+            <td>${chain.comment|h}</td>
+            <td>
+                % if chain.custody_receipt is not None:
+                    <a href="${urls.build('evidence_custody_receipts', dict(file=chain.custody_receipt))|h}">${chain.custody_receipt_label|h}</a>
+                % else:
+                    None.
+                % endif
+            </td>
+        </tr>
+        % endfor
+    </table>
+</%def>
+
+<%def name="task_details(task)" filter="trim">
+
+    <table class="case_details">
+        <tr>
+            <th>Task Created</th>
+            <td>${task.date_created|h}</td>
+        </tr>
+        <tr>
+            <th>Task Status</th>
+            <td>${task.status|h}</td>
+        </tr>
+        <tr>
+            <th>Task Type</th>
+            <td>${task.task_type|h}</td>
+        </tr>
+        <tr>
+             <th>Task Files Location</th>
+            <td>
+                % if task.location:
+                    <a href="file:///${task.location.replace('\\','/')|h}" target="_blank">${task.location|h}</a>
+                % else:
+                    Not Specified
+                % endif
+            </td>
+        </tr>
+        <tr>
+            <th>Principle Forensic Investigator</th>
+            % if task.principle_investigator != None:
+            <td><a href='${urls.build("user.view", dict(user_id=task.principle_investigator.id))|h}'>${task.principle_investigator.fullname|h}</a></td>
+            % else:
+            <td>None assigned</td>
+            % endif
+        </tr>
+        <tr>
+            <th>Secondary Forensic Investigator</th>
+            % if task.secondary_investigator != None:
+            <td><a href='${urls.build("user.view", dict(user_id=task.secondary_investigator.id))|h}'>${task.secondary_investigator.fullname|h}</a></td>
+            % else:
+            <td>None assigned</td>
+            % endif
+        </tr>
+        <tr>
+            <th>Principle QA Investigator</th>
+             % if task.principle_QA != None:
+            <td><a href='${urls.build("user.view", dict(user_id=task.principle_QA.id))|h}'>${task.principle_QA.fullname|h}</a></td>
+            % else:
+            <td>None assigned</td>
+            % endif
+        </tr>
+        <tr>
+            <th>Secondary QA Investigator</th>
+            % if task.secondary_QA != None:
+            <td><a href='${urls.build("user.view", dict(user_id=task.secondary_QA.id))|h}'>${task.secondary_QA.fullname|h}</a></td>
+            % else:
+            <td>None assigned</td>
+            % endif
+        </tr>
+    </table>
+
+    <h2>Notes</h2>
+
+    % if len(task.notes) > 0:
+        <table>
+        % for note in task.notes:
+        <tr class="note">
+            <th>Date & Time</th>
+            <th>Author</th>
+            <th>Hash of note</th>
+        </tr>
+        <tr>
+            <td>${note.date|h}</td>
+            <td><a href="${urls.build("user.view", dict(user_id=note.author.id))|h}">${note.author.fullname|h}</a></td>
+            <td>
+                % if note.check_hash():
+                <img src='${urls.build("images", dict(file="siteimages/icons/tick-icon.jpg"))|h}' /> ${note.hash|h}
+                % else:
+                <img src='${urls.build("images", dict(file="siteimages/icons/cross-icon.jpg"))|h}' /> ${note.hash|h}
+                % endif
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3"><pre class="notes">${note.note}</pre></td></td>
+        </tr>
+        % endfor
+        </table>
+    % else:
+        <p>No notes have been added yet. </p>
+    % endif
+
+
+</%def>
+
+<%def name="case_details()" filter="trim">
+    <h2>Case Details</h2>
+    <table class="case_details">
+        <tr>
+            <th>Case Created</th>
+            <td>${case.date_created|h}</td>
+        </tr>
+
+        % if case.status == case_statuses['rejected']:
+            <tr>
+                <th>Date Rejected</th>
+                <td>${case.authorised.date|h}</td>
+            </tr>
+            <tr>
+                <th>Rejection Justification</th>
+                <td>${case.authorised.reason|h}</td>
+            </tr>
+        % elif case.status != case_statuses['rejected'] and case.status != case_statuses['pending']:
+            <tr>
+                <th>Date Approved</th>
+                <td>${case.authorised.date|h}</td>
+            </tr>
+            <tr>
+                <th>Authorisation Justification</th>
+                <td>${case.authorised.reason|h}</td>
+            </tr>
+        % endif
+        <tr>
+            <th>Authoriser</th>
+            <td><a href='${urls.build("user.view", dict(user_id=case.authoriser.id))|h}'>${case.authoriser.fullname|h}</a></td>
+        </tr>
+        <tr>
+            <th>Requester</th>
+            <td>
+                % if case.requester is not None:
+                <a href='${urls.build("user.view", dict(user_id=case.requester.id))|h}'>${case.requester.fullname|h}</a>
+                % else:
+                None assigned
+                % endif
+            </td>
+        </tr>
+        <tr>
+            <th>Current Status</th>
+                % if case.status == case_statuses['archived']:
+                    <td><span class="archived">${case.status|h}</span></td>
+                % elif case.status == case_statuses['rejected']:
+                    <td class="rejected">${case.status|h}</td>
+                % else:
+                    <td>${case.status|h}</td>
+                % endif
+        </tr>
+        % if case.status != case_statuses['pending']:
+            <tr>
+                <th>Status Date</th>
+                <td>${case.get_status().date|h}</td>
+            </tr>
+        % endif
+        <tr>
+            <th width="200px">Reference</th>
+            <td width="300px">
+                % if case.reference:
+                    ${case.reference|h}
+                % else:
+                    None
+                % endif
+            </td>
+        </tr>
+        <tr>
+            <th>Case Files Location</th>
+            <td>
+                % if case.location:
+                    <a href="file:///${case.location.replace('\\','/')|h}" target="_blank">${case.location|h}</a>
+                % else:
+                    Not Specified
+                % endif
+            </td>
+        </tr>
+        <tr>
+            <th>Private</th>
+            <td>
+                % if case.private:
+                    <span class="highlight">Yes</span>
+                    <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
+                % else:
+                    No
+                % endif
+            </td>
+        </tr>
+         <tr>
+            <th>Case Priority</th>
+            <td><span class="priority" style="background-color:${case.case_priority_colour|h}">&nbsp;</span>${case.case_priority|h}</td>
+        </tr>
+        <tr>
+            <th>Case Classification</th>
+            <td>${case.classification|h}</td>
+        </tr>
+         <tr>
+            <th>Case Type</th>
+            <td>${case.case_type|h}</td>
+        </tr>
+        <tr>
+            <% case_links = case.get_links(check_perms_user, current_user) %>
+            <% links = ", ".join(["<a href='" + urls.build("case.view", dict(case_id=c.id)) + "'>" + c.case_name + "</a>" for c in case_links]) %>
+            <th>
+                % if len(case_links) == 1:
+                Case linked to
+                % else:
+                Cases linked to
+                % endif
+            </th>
+            <td>
+                % if len(case_links) > 0:
+                ${links}
+                % else:
+                No Links
+                % endif
+            </td>
+        </tr>
+        <tr>
+            <% case_linkees = case.get_from_links(check_perms_user, current_user) %>
+            <% links = ", ".join(["<a href='" + urls.build("case.view", dict(case_id=c.id)) + "'>" + c.case_name + "</a>" for c in case_linkees]) %>
+            <th>
+                % if len(case_linkees) == 1:
+                Case linked from
+                % else:
+                Cases linked from
+                % endif
+            </th>
+            <td>
+                % if len(case_linkees) > 0:
+                ${links}
+                % else:
+                No Links
+                % endif
+            </td>
+        </tr>
+        <tr>
+            <th>Principle Case manager</th>
+            <td>
+                % if case.principle_case_manager is not None:
+                <a href='${urls.build("user.view", dict(user_id=case.principle_case_manager.id))|h}'>${case.principle_case_manager.fullname|h}</a>
+                % else:
+                None assigned
+                % endif
+            </td>
+        </tr>
+        <tr>
+            <th>Secondary Case manager</th>
+            <td>
+                % if case.secondary_case_manager is not None:
+                <a href='${urls.build("user.view", dict(user_id=case.secondary_case_manager.id))|h}'>${case.secondary_case_manager.fullname|h}</a>
+                % else:
+                None assigned
+                % endif
+            </td>
+        </tr>
+    </table>
+</%def>
+
 <%def name="qa_task_table(tasks)" filter="trim">
 % if len(tasks) > 0:
     <table class="case_table">
@@ -22,8 +444,14 @@
     % for task in tasks:
         <tr>
             <td style="padding-left: 10px; background-image:linear-gradient(to right,${task.case.case_priority_colour|h},${task.case.case_priority_colour|h} 5%,white 5%,white 95%,white 95%)">
-                <a href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a></td>
-            <td><a href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a></td>
+                <a href='${urls.build("case.view", dict(case_id=task.case.id))|h}'>${task.case.case_name|h}</a></td>
+            <td>
+                % if check_perms(task, "view"):
+                <a href='${urls.build("task.view", dict(task_id=task.id, case_id=task.case.id))|h}'>${task.task_name|h}</a>
+                else:
+                ${task.task_name|h}
+                % endif
+            </td>
             <td>
                 % if task.principle_investigator != None:
                     <a href="${urls.build('user.view', dict(user_id=task.principle_investigator.id))|h}">${task.principle_investigator.fullname|h}</a>
@@ -56,7 +484,7 @@
             % if current_user.is_investigator():
             <td>
                 % if current_user in task.QAs and task.status == task_statuses['qa']:
-                <a href='${urls.build("forensics.qa", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>QA task</a>
+                <a href='${urls.build("forensics.qa", dict(task_id=task.id, case_id=task.case.id))|h}'>QA task</a>
                 % else:
                     X
                 % endif
@@ -93,10 +521,10 @@
             <td style="padding-left: 10px; background-image:linear-gradient(to right,${case.case_priority_colour|h},${case.case_priority_colour|h} 5%,white 5%,white 95%,white 95%)">
 
                 % if case.private is True:
-                    <a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'><span class="highlight">${case.case_name|h}</span></a>
+                    <a href='${urls.build("case.view", dict(case_id=case.id))|h}'><span class="highlight">${case.case_name|h}</span></a>
                     <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
                 % else:
-                    <a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a>
+                    <a href='${urls.build("case.view", dict(case_id=case.id))|h}'>${case.case_name|h}</a>
                 % endif
             </td>
             <td>${case.status|h}</td>
@@ -104,7 +532,7 @@
             % if case.principle_case_manager is None and case.secondary_case_manager is None:
             <td colspan="2">
                 % if check_perms(case, 'edit'):
-                 <a href='${urls.build("case.edit", dict(case_id=case.case_name, active_tab=2))|h}'>Assign yourself to case</a>
+                 <a href='${urls.build("case.edit", dict(case_id=case.id, active_tab=2))|h}'>Assign yourself to case</a>
                 % else:
                 None assigned
                 % endif
@@ -125,9 +553,9 @@
                 % endif
             </td>
             % endif
-            <td colspan="4">
+            <td colspan="5">
                 % if check_perms(case, 'edit'):
-                <a href='${urls.build("case.add_task", dict(case_id=case.case_name))|h}'>Add Tasks</a>
+                <a href='${urls.build("case.add_task", dict(case_id=case.id))|h}'>Add Tasks</a>
                 % else:
                 No Tasks added.
                 % endif
@@ -147,10 +575,10 @@
                         % if start_again:
                             <td rowspan="${case_length|h}" style="padding-left: 10px; background-image:linear-gradient(to right,${case.case_priority_colour|h},${case.case_priority_colour|h} 5%,white 5%,white 95%,white 95%)">
                                 % if case.private is True:
-                                    <a class="highlight" href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a>
+                                    <a class="highlight" href='${urls.build("case.view", dict(case_id=case.id))|h}'>${case.case_name|h}</a>
                                     <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
                                 % else:
-                                    <a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a>
+                                    <a href='${urls.build("case.view", dict(case_id=case.id))|h}'>${case.case_name|h}</a>
                                 % endif
                             </td>
                             <td rowspan="${case_length|h}">${case.status|h}</td>
@@ -171,7 +599,7 @@
                             </td>
                         % endif
                         <% start_again = False %>
-                        <td><a href='${urls.build("task.view", dict(task_id=task.task_name,case_id=case.case_name))|h}'>${task.task_name|h}</a></td>
+                        <td><a href='${urls.build("task.view", dict(task_id=task.id,case_id=case.id))|h}'>${task.task_name|h}</a></td>
                         <td>${task.task_type.task_type|h}</td>
                         <td>${task.status|h}</td>
                         <td ${highlight(task, 'principle_investigator', highlighted)}>
@@ -221,29 +649,45 @@
             % if case_tasks:
                 <td style="padding-left: 10px; background-image:linear-gradient(to right,${task.case.case_priority_colour|h},${task.case.case_priority_colour|h} 5%,white 5%,white 95%,white 95%)">
                 % if task.case.private is True:
-                    <a class="highlight" href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a>
+                    <a class="highlight" href='${urls.build("case.view", dict(case_id=task.case.id))|h}'>${task.case.case_name|h}</a>
                     <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
                 % else:
-                    <a href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>${task.case.case_name|h}</a>
+                    <a href='${urls.build("case.view", dict(case_id=task.case.id))|h}'>${task.case.case_name|h}</a>
                 % endif
-                </tr>
+                </td>
             % endif
             % if edit is True:
-                <td style="padding-left: 10px; background-image:linear-gradient(to right,${task.case.case_priority_colour|h},${task.case.case_priority_colour|h} 5%,white 5%,white 95%,white 95%)">
-                % if task.case.private is True:
-                    <a class="highlight" href='${urls.build("task.edit", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a>
-                    <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
+                % if case_tasks:
+                    <td>
                 % else:
-                    <a href='${urls.build("task.edit", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a>
+                    <td style="padding-left: 10px; background-image:linear-gradient(to right,${task.case.case_priority_colour|h},${task.case.case_priority_colour|h} 5%,white 5%,white 95%,white 95%)">
+                % endif
+
+                % if task.case.private is True and check_perms(task, "edit"):
+                    <a class="highlight" href='${urls.build("task.edit", dict(task_id=task.id, case_id=task.case.id))|h}'>${task.task_name|h}</a>
+                    <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
+                % elif check_perms(task, "edit"):
+                    <a href='${urls.build("task.edit", dict(task_id=task.id, case_id=task.case.id))|h}'>${task.task_name|h}</a>
+                % elif check_perms(task, "view"):
+                    <a href='${urls.build("task.view", dict(task_id=task.id, case_id=task.case.id))|h}'>${task.task_name|h}</a>
+                % else:
+                    ${task.task_name|h}
                 % endif
                 </td>
             % else:
-                <td style="padding-left: 10px; background-image:linear-gradient(to right,${task.case.case_priority_colour|h},${task.case.case_priority_colour|h} 5%,white 5%,white 95%,white 95%)">
-                % if task.case.private is True:
-                    <a class="highlight" href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a>
-                    <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
+                % if case_tasks:
+                    <td>
                 % else:
-                    <a href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>${task.task_name|h}</a>
+                    <td style="padding-left: 10px; background-image:linear-gradient(to right,${task.case.case_priority_colour|h},${task.case.case_priority_colour|h} 5%,white 5%,white 95%,white 95%)">
+                % endif
+
+                % if task.case.private is True and check_perms(task, "view"):
+                    <a class="highlight" href='${urls.build("task.view", dict(task_id=task.id, case_id=task.case.id))|h}'>${task.task_name|h}</a>
+                    <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
+                % elif check_perms(task, "view"):
+                    <a href='${urls.build("task.view", dict(task_id=task.id, case_id=task.case.id))|h}'>${task.task_name|h}</a>
+                % else:
+                    ${task.task_name|h}
                 % endif
                 </td>
             % endif
@@ -302,6 +746,6 @@
     % endfor
     </table>
     % else:
-        <p>None.</p>
+        <p>No Tasks have been added.</p>
     % endif
 </%def>

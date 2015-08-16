@@ -22,6 +22,6 @@
     </div>
     % else:
     <h1>You have been added as ${investigator.title()|h} Investigator for ${task.task_name|h}</h1>
-    <p><a href='${urls.build("task.view", dict(case_id=task.case.case_name, task_id=task.task_name))|h}'>View Task</a> | <a href='${urls.build("forensics.work", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>Work on Task</a></p>
+    <p><a href='${urls.build("task.view", dict(case_id=task.case.id, task_id=task.id))|h}'>View Task</a> | <a href='${urls.build("forensics.work", dict(task_id=task.id, case_id=task.case.id))|h}'>Work on Task</a></p>
     % endif
 </div>

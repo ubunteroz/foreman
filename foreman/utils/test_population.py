@@ -11,7 +11,7 @@ import population
 now = datetime.now()
 
 
-def create_test_cases(case_managers, requestors, investigators):
+def create_test_cases(case_managers, requestors, investigators, authorisers):
     backgrounds = [
         """Employee {} has been accused of harassment and bullying. Please conduct an investigation into the
          matter. """,
@@ -54,6 +54,7 @@ def create_test_cases(case_managers, requestors, investigators):
     print "Adding 10 cases:"
     for i in xrange(0, 10):
         case_manager = case_managers[i]
+        requestor = requestors[i]
         justification = justifications[i%3]
         background = backgrounds[i]
         rand_user = random_users[i]
@@ -65,25 +66,30 @@ def create_test_cases(case_managers, requestors, investigators):
             is_private = True
         else:
             is_private = False
-        new_case = Case(ForemanOptions.get_next_case_name(), case_manager, background=background, reference=None,
+        new_case = Case(ForemanOptions.get_next_case_name(), requestor, background=background, reference=None,
                         private=is_private, location=None, classification=classification, case_type=case_type,
                         justification=justification)
         session.add(new_case)
         session.flush()
-        new_case.add_change(case_manager)
+        new_case.add_change(requestor)
         session.commit()
+        auth = authorisers[randint(0, len(authorisers) - 1)]
 
-        requestor = requestors[i]
+        UserCaseRoles(auth, new_case, UserCaseRoles.AUTHORISER)
+        new_case.authorise(auth, "Case Creation", "PENDING")
+
         n = UserCaseRoles(requestor, new_case, UserCaseRoles.REQUESTER)
-        n.add_change(case_manager)
+        n.add_change(requestor)
         n1 = UserCaseRoles(case_manager, new_case, UserCaseRoles.PRINCIPLE_CASE_MANAGER)
-        n1.add_change(case_manager)
+        n1.add_change(requestor)
 
         if i%2 == 0:
             case_manager_2 = case_managers[(i+1)%10]
             n1 = UserCaseRoles(case_manager_2, new_case, UserCaseRoles.SECONDARY_CASE_MANAGER)
             n1.add_change(case_manager)
         session.flush()
+
+        new_case.authorise(auth, "Looks acceptable. Please go ahead.", "AUTH")
 
         if i%4 == 1 and i != 9:
             new_case.set_status(CaseStatus.OPEN, new_case.principle_case_manager)
@@ -222,5 +228,6 @@ def create_test_data():
     investigators = population.create_test_investigators(admin)
     case_managers = population.create_test_case_managers(admin)
     requestors = population.create_test_requestors(admin)
-    create_test_cases(case_managers, requestors, investigators)
+    authorisers = population.create_test_authorisers(admin)
+    create_test_cases(case_managers, requestors, investigators, authorisers)
     disassociate_evidence(investigators[1])

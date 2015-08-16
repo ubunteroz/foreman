@@ -21,7 +21,7 @@
         <h1>Uploaded file ${upload.file_title|h} has been deleted</h1>
         <p>
             % if upload.evidence.case_id is not None:
-            <a href='${urls.build("evidence.view", dict(evidence_id=upload.evidence.id, case_id=upload.evidence.case.case_name))|h}'>View evidence ${upload.evidence.reference|h}</a>
+            <a href='${urls.build("evidence.view", dict(evidence_id=upload.evidence.id, case_id=upload.evidence.case.id))|h}'>View evidence ${upload.evidence.reference|h}</a>
             % else:
             <a href='${urls.build("evidence.view_caseless", dict(evidence_id=upload.evidence.id))|h}'>View evidence ${upload.evidence.reference|h}</a>
             % endif

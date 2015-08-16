@@ -13,6 +13,6 @@
     <div class="confirmclosurebox">
         <p>Your task has been assigned the name <b>${task.task_name|h}</b>. A case manager will be in contact
         to discuss your case & new task shortly. </p>
-        <p><a href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>View your task here.</a></p>
+        <p><a href='${urls.build("task.view", dict(task_id=task.id, case_id=task.case.id))|h}'>View your task here.</a></p>
     </div>
 </div>

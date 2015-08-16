@@ -18,6 +18,7 @@ class AddCaseForm(Schema):
     case_type = GetCaseType(not_empty=True)
     justification = v.UnicodeString(not_empty=True)
     priority = GetPriority(not_empty=True)
+    authoriser = GetAuthoriser(not_empty=True)
 
 
 class RequesterAddCaseForm(Schema):
@@ -28,6 +29,12 @@ class RequesterAddCaseForm(Schema):
     case_type = GetCaseType(not_empty=True)
     justification = v.UnicodeString(not_empty=True)
     priority = GetPriority(not_empty=True)
+    authoriser = GetAuthoriser(not_empty=True)
+
+
+class AuthoriseCaseForm(Schema):
+    reason = v.UnicodeString(not_empty=True)
+    auth = GetBooleanAuthReject(not_empty=True)
 
 
 class AddPriorityForm(Schema):
@@ -108,6 +115,7 @@ class RegisterForm(Schema):
     password = v.UnicodeString(not_empty=True)
     password_2 = v.UnicodeString(not_empty=True)
     email = v.UnicodeString(not_empty=True)
+    team = GetTeam(not_empty=True)
 
     chained_validators = [
         Match('password', 'password_2'),
@@ -243,6 +251,7 @@ class EditCaseForm(Schema):
     classification = GetCaseClassification(not_emtpy=True)
     case_type = GetCaseType(not_empty=True)
     priority = GetPriority(not_empty=True)
+    authoriser = GetAuthoriser(not_empty=True)
 
 
 class AddCaseLinkForm(Schema):
@@ -275,8 +284,8 @@ class EditUserForm(Schema):
     alt_telephone = v.UnicodeString()
     fax = v.UnicodeString()
     job_title = v.UnicodeString(not_empty=True)
-    team = v.UnicodeString(not_empty=True)
-    department = v.UnicodeString(not_empty=True)
+    team = GetTeam(not_empty=True)
+    photo = UploadProfilePhoto()
 
 
 class AddUserForm(Schema):
@@ -289,8 +298,7 @@ class AddUserForm(Schema):
     alt_telephone = v.UnicodeString()
     fax = v.UnicodeString()
     job_title = v.UnicodeString(not_empty=True)
-    team = v.UnicodeString(not_empty=True)
-    department = v.UnicodeString(not_empty=True)
+    team = GetTeam(not_empty=True)
     administrator = GetBooleanYesNo(not_empty=True)
     casemanager = GetBooleanYesNo(not_empty=True)
     requester = GetBooleanYesNo(not_empty=True)
@@ -323,3 +331,35 @@ class UploadTaskFile(Schema):
     file_title = v.UnicodeString(not_empty=True)
     comments = v.UnicodeString(not_empty=True)
     file = UploadTaskFiles(not_empty=True)
+
+
+class AuthOptionsForm(Schema):
+    see_tasks = GetBooleanYesNo(not_empty=True)
+    see_evidence = GetBooleanYesNo(not_empty=True)
+
+
+class AddTeamForm(Schema):
+    t_department_name = GetDepartment(not_empty=True)
+    new_team_name = v.UnicodeString(not_empty=True)
+
+
+class RenameTeamForm(Schema):
+    old_team_name = GetTeam(not_empty=True)
+    rename_team = v.UnicodeString(not_empty=True)
+
+
+class RemoveTeamForm(Schema):
+    team_name = GetTeam(not_empty=True)
+
+
+class AddDepartmentForm(Schema):
+    department_name = v.UnicodeString(not_empty=True)
+
+
+class RenameDepartmentForm(Schema):
+    old_department_name = GetDepartment(not_empty=True)
+    new_dep_name = v.UnicodeString(not_empty=True)
+
+
+class RemoveDepartmentForm(Schema):
+    remove_department_name = GetDepartment(not_empty=True)

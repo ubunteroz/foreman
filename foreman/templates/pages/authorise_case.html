@@ -1,0 +1,67 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+<%namespace file="/utils/forms.html" name="forms" />
+
+<%def name="javascripts()" filter="trim">
+    <script>
+        function goBack(){
+            window.history.back()
+        }
+    </script>
+</%def>
+
+
+<div id="sidebar">
+   ${sidebars.tasks_menu()}
+</div>
+
+<div id="mainbar">
+
+    <h1>Authorise Case ${case.case_name|h}</h1>
+
+    <h2>Case History</h2>
+
+    <table>
+        <tr>
+            <th>Date</th>
+            <th>User</th>
+            <th>Changes</th>
+        </tr>
+        % for history in case_history:
+        <tr>
+            <td>${history['date']|h}</td>
+            <td><a href='${urls.build("user.view", dict(user_id=history['user'].id))|h}'>${history['user'].fullname|h}</a></td>
+            <td>
+                % if not isinstance(history['change_log'], basestring):
+                % for entry, change in history['change_log'].iteritems():
+                    The ${entry|h} changed from ${change[0]|h} to ${change[1]|h} <br/>
+                % endfor
+                % else:
+                    ${history['change_log']|h}
+                % endif
+            </td>
+        </tr>
+        % endfor
+    </table>
+
+    <h2>Authorise Case</h2>
+
+    % if complete is False:
+     <form method="post" action="${urls.build('case.authorise', dict(case_id=case.id))|h}">
+         ${forms.formSelectBox("Authorised", "auth", "auth", "form_label", "input_long", auth_choices, please_select=True, first=True)}
+         ${forms.formTextArea("Justification", "reason", "reason", "form_label", "addeditcase_short")}
+
+        <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+    </form>
+    % else:
+        <div class="confirmclosurebox">
+            % if case.authorised.case_authorised == "AUTH":
+                <p>Case ${case.case_name|h} has been authorised and has now been placed in the case manager's queue. </p>
+            % else:
+                <p>Case ${case.case_name|h} has been rejected. </p>
+            % endif
+
+            <p><a href='${urls.build("case.view", dict(case_id=case.id))|h}'>View the case</a>.</p>
+        </div>
+    % endif
+</div>

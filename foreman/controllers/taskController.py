@@ -4,7 +4,7 @@ from werkzeug import Response
 from werkzeug.utils import redirect
 # local imports
 from baseController import BaseController, lookup, jsonify
-from ..model import Task, UserTaskRoles, UserRoles, TaskStatus, TaskHistory, ForemanOptions, TaskType
+from ..model import Task, UserTaskRoles, UserRoles, TaskStatus, TaskHistory, ForemanOptions, TaskType, TaskUpload
 from ..utils.utils import multidict_to_dict, session, ROOT_DIR
 from ..forms.forms import AssignInvestigatorForm, EditTaskUsersForm, EditTaskForm
 
@@ -13,10 +13,10 @@ class TaskController(BaseController):
     def _create_task_specific_breadcrumbs(self, task, case):
         self.breadcrumbs.append({'title': 'Cases', 'path': self.urls.build('case.view_all')})
         self.breadcrumbs.append({'title': case.case_name,
-                                 'path': self.urls.build('case.view', dict(case_id=case.case_name))})
+                                 'path': self.urls.build('case.view', dict(case_id=case.id))})
         self.breadcrumbs.append({'title': task.task_name,
-                                 'path': self.urls.build('task.view', dict(case_id=case.case_name,
-                                                                           task_id=task.task_name))})
+                                 'path': self.urls.build('task.view', dict(case_id=case.id,
+                                                                           task_id=task.id))})
 
     def view_all(self):
         self.check_permissions(self.current_user, 'Task', 'view-all')
@@ -57,8 +57,8 @@ class TaskController(BaseController):
             self._create_task_specific_breadcrumbs(upload.task, upload.task.case)
             self.breadcrumbs.append({'title': upload.file_title,
                                      'path': self.urls.build('task.view_upload',
-                                                             dict(case_id=upload.task.case.case_name,
-                                                                  task_id=upload.task.task_name, upload_id=upload.id))})
+                                                             dict(case_id=upload.task.case.id,
+                                                                  task_id=upload.task.id, upload_id=upload.id))})
             return self.return_response('pages', 'view_upload.html', upload=upload)
         else:
             return self.return_404()
@@ -70,13 +70,13 @@ class TaskController(BaseController):
             self._create_task_specific_breadcrumbs(upload.task, upload.task.case)
             self.breadcrumbs.append({'title': upload.file_title,
                                      'path': self.urls.build('task.view_upload',
-                                                             dict(case_id=upload.task.case.case_name,
-                                                                  task_id=upload.task.task_name,
+                                                             dict(case_id=upload.task.case.id,
+                                                                  task_id=upload.task.id,
                                                                   upload_id=upload.id))})
             self.breadcrumbs.append({'title': "Delete",
                                      'path': self.urls.build('task.delete_upload',
-                                                             dict(case_id=upload.task.case.case_name,
-                                                                  task_id=upload.task.task_name, upload_id=upload.id))})
+                                                             dict(case_id=upload.task.case.id,
+                                                                  task_id=upload.task.id, upload_id=upload.id))})
             closed = False
             confirm_close = multidict_to_dict(self.request.args)
             if 'confirm' in confirm_close and confirm_close['confirm'] == "true":
@@ -93,8 +93,8 @@ class TaskController(BaseController):
             self.check_permissions(self.current_user, task, 'edit')
             self._create_task_specific_breadcrumbs(task, task.case)
             self.breadcrumbs.append({'title': "Change Status",
-                                     'path': self.urls.build('task.change_status', dict(case_id=task.case.case_name,
-                                                                               task_id=task.task_name))})
+                                     'path': self.urls.build('task.change_status', dict(case_id=task.case.id,
+                                                                               task_id=task.id))})
             args = multidict_to_dict(self.request.args)
             change = False
             if "status" in args and args["status"] in TaskStatus.all_statuses:
@@ -115,8 +115,8 @@ class TaskController(BaseController):
             self.check_permissions(self.current_user, task, 'edit')
             self._create_task_specific_breadcrumbs(task, task.case)
             self.breadcrumbs.append({'title': "Edit",
-                                     'path': self.urls.build('task.edit', dict(case_id=task.case.case_name,
-                                                                               task_id=task.task_name))})
+                                     'path': self.urls.build('task.edit', dict(case_id=task.case.id,
+                                                                               task_id=task.id))})
 
             task_type_options = [(tt.replace(" ", "").lower(), tt) for tt in TaskType.get_task_types()]
             investigators = [(user.id, user.fullname) for user in UserRoles.get_investigators()]
@@ -171,8 +171,8 @@ class TaskController(BaseController):
             self.check_permissions(self.current_user, task, 'close')
             self._create_task_specific_breadcrumbs(task, task.case)
             self.breadcrumbs.append({'title': "Close",
-                                     'path': self.urls.build('task.close', dict(case_id=task.case.case_name,
-                                                                                task_id=task.task_name))})
+                                     'path': self.urls.build('task.close', dict(case_id=task.case.id,
+                                                                                task_id=task.id))})
 
             closed = False
             confirm_close = multidict_to_dict(self.request.args)
@@ -190,8 +190,8 @@ class TaskController(BaseController):
             self.check_permissions(self.current_user, task, 'assign-self')
             self._create_task_specific_breadcrumbs(task, task.case)
             self.breadcrumbs.append({'title': "Assign work to myself",
-                                     'path': self.urls.build('task.assign_work', dict(case_id=task.case.case_name,
-                                                                                      task_id=task.task_name))})
+                                     'path': self.urls.build('task.assign_work', dict(case_id=task.case.id,
+                                                                                      task_id=task.id))})
 
             if task.principle_investigator is not None and task.secondary_investigator is not None:
                 return self.return_404()
@@ -236,8 +236,8 @@ class TaskController(BaseController):
             self._create_task_specific_breadcrumbs(task, task.case)
             self.breadcrumbs.append({'title': "Assign investigator to task",
                                      'path': self.urls.build('task.assign_work_manager',
-                                                             dict(case_id=task.case.case_name,
-                                                                  task_id=task.task_name))})
+                                                             dict(case_id=task.case.id,
+                                                                  task_id=task.id))})
 
             if task.principle_investigator is not None and task.secondary_investigator is not None:
                 return self.return_404()
@@ -286,7 +286,8 @@ class TaskController(BaseController):
     def _get_tasks_history_changes(task):
         history = TaskHistory.get_changes(task)
         status = TaskStatus.get_changes(task)
-        results = history + status
+        uploads = TaskUpload.get_changes(task)
+        results = history + status + uploads
         results.sort(key=lambda d: d['date_time'])
         return results
 

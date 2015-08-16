@@ -16,9 +16,9 @@ class EvidenceController(BaseController):
         if case is not None:
             self.breadcrumbs.append({'title': 'Cases', 'path': self.urls.build('case.view_all')})
             self.breadcrumbs.append({'title': case.case_name,
-                                     'path': self.urls.build('case.view', dict(case_id=case.case_name))})
+                                     'path': self.urls.build('case.view', dict(case_id=case.id))})
             self.breadcrumbs.append({'title': evidence.reference,
-                                 'path': self.urls.build('evidence.view', dict(case_id=case.case_name,
+                                 'path': self.urls.build('evidence.view', dict(case_id=case.id,
                                                                            evidence_id=evidence.id))})
         else:
             self.breadcrumbs.append({'title': "Evidence",
@@ -218,7 +218,7 @@ class EvidenceController(BaseController):
                                        self.form_result['comments'], self.form_result['attach'],
                                        self.form_result['label'])
                 if evidence.case is not None:
-                    return self.view(evidence.case.case_name, evidence_id)
+                    return self.view(evidence.case.id, evidence_id)
                 else:
                     return self.view_caseless(evidence_id)
             else:

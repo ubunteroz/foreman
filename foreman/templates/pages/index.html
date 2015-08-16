@@ -90,6 +90,18 @@
     <div style="clear:both" />
     % endif
 
+    % if current_user.is_authoriser():
+    <h1>Case Authoriser</h1>
+
+    <div class="boxes">
+        <a class="boxes" href='${urls.build("case.view_all", dict(view="Pending"))|h}'><span class="pick_a_box">
+            View cases <br />
+             <img src="${urls.build("images", dict(file='siteimages/icons/Binoculars.png'))|h}" />
+        </span></a>
+    </div>
+
+    <div style="clear:both" />
+    % endif
 
     <h1>Admin</h1>
 

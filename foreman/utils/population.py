@@ -1,6 +1,7 @@
 # foreman imports
 from foreman.model import User, ForemanOptions, UserRoles, Case, UserCaseRoles, CaseType, CaseClassification, CaseStatus
-from foreman.model import TaskType, Task, TaskStatus, UserTaskRoles, EvidenceType, Evidence, TaskUpload, EvidencePhotoUpload
+from foreman.model import TaskType, Task, TaskStatus, UserTaskRoles, EvidenceType, Evidence, TaskUpload
+from foreman.model import EvidencePhotoUpload, Department, Team
 from utils import session, config, ROOT_DIR
 from random import randint
 from os import path, mkdir, stat
@@ -13,6 +14,8 @@ def create_admin_user():
                  validated=True)
     session.add(admin)
     session.flush()
+    admin.team = Team.get(1)
+    admin.job_title = "Administrator"
 
     admin_role = UserRoles(admin, "Administrator", False)
     session.add(admin_role)
@@ -38,6 +41,13 @@ def load_initial_values():
     session.flush()
     session.commit()
 
+    dep = Department("Forensics Department")
+    session.add(dep)
+    session.commit()
+    t = Team("Forensics Team", dep)
+    session.add(t)
+    session.commit()
+
 
 def load_initial_values_test():
     opts = ForemanOptions("%d %b %Y %H:%M:%S", r"C:\Foreman", "FromList", "NumericIncrement", "Wordwide Forensics Inc",
@@ -47,6 +57,18 @@ def load_initial_values_test():
     session.add(opts)
     session.flush()
     session.commit()
+
+    deps = [('IT Security', ['Investigations & Digital Forensics', 'CERT Team', 'Security Operations Centre']),
+            ('Human Resources', ['HR Complaints']), ('Internal Audit', ['Fraud Prevention', 'Investigations']),
+            ('Legal', ['Litigation'])]
+    for department, teams in deps:
+        dep = Department(department)
+        session.add(dep)
+        session.commit()
+        for team in teams:
+            t = Team(team, dep)
+            session.add(t)
+            session.commit()
 
 
 def create_test_investigators(admin):
@@ -108,9 +130,8 @@ def create_test_investigators(admin):
             u.job_title = "Senior Forensic Investigator"
         else:
             u.job_title = "Forensic Investigator"
-        u.team = "Investigations & Digital Forensics"
-        u.department = "IT Security"
-        u.add_change(u)
+        u.team = Team.get_filter_by(team='Investigations & Digital Forensics').first()
+        u.add_change(admin)
 
         ur1 = UserRoles(u, "Investigator", False)
         ur2 = UserRoles(u, "QA", False)
@@ -181,9 +202,8 @@ def create_test_case_managers(admin):
             u.job_title = "Senior Forensic Case Manager"
         else:
             u.job_title = "Forensic Case Manager"
-        u.team = "Investigations & Digital Forensics"
-        u.department = "IT Security"
-        u.add_change(u)
+        u.team = Team.get_filter_by(team='Investigations & Digital Forensics').first()
+        u.add_change(admin)
 
         ur1 = UserRoles(u, "Investigator", True)
         ur2 = UserRoles(u, "QA", True)
@@ -208,6 +228,58 @@ def create_test_case_managers(admin):
     session.commit()
     print "10 Case Managers added to Foreman."
     return case_managers
+
+
+def create_test_authorisers(admin):
+    u1 = User("presleye", "password", "Elvis", "Presley", "elvis.presley@example.org", validated=True)
+    u2 = User("johne", "password", "Elton", "John", "elton.john@example.org", validated=True)
+    u3 = User("sinatraf", "password", "Frank", "Sinatra", "frank.sinatra@example.org", validated=True)
+    u4 = User("lennoxa", "password", "Annie", "Lennox", "annie.lennox@example.org", validated=True)
+    session.add(u1)
+    session.add(u2)
+    session.add(u3)
+    session.add(u4)
+    session.flush()
+    u1.add_change(admin)
+    u2.add_change(admin)
+    u3.add_change(admin)
+    u4.add_change(admin)
+    session.flush()
+    session.commit()
+    authorisers = [u1, u2, u3, u4]
+
+    job_types = ["Head of Department", "Team Lead"]
+
+    for u in authorisers:
+        job = randint(0,1)
+        team = randint(0,5)
+        u.job_title = job_types[job]
+        u.team = Team.get_all().all()[team]
+
+        u.add_change(admin)
+        ur1 = UserRoles(u, "Investigator", True)
+        ur2 = UserRoles(u, "QA", True)
+        ur3 = UserRoles(u, "Case Manager", True)
+        ur4 = UserRoles(u, "Requester", True)
+        ur5 = UserRoles(u, "Authoriser", False)
+        ur6 = UserRoles(u, "Administrator", True)
+        session.add(ur1)
+        session.add(ur2)
+        session.add(ur3)
+        session.add(ur4)
+        session.add(ur5)
+        session.add(ur6)
+        session.flush()
+        ur1.add_change(admin)
+        ur2.add_change(admin)
+        ur3.add_change(admin)
+        ur4.add_change(admin)
+        ur5.add_change(admin)
+        ur6.add_change(admin)
+        session.flush()
+    session.commit()
+    print "4 Authorisers added to Foreman."
+    return authorisers
 
 
 def create_test_requestors(admin):
@@ -247,20 +319,15 @@ def create_test_requestors(admin):
     session.commit()
     requestors = [u1, u2, u3, u4, u5, u6, u7, u8, u9, u10]
 
-    job_types = [("Fraud Investigator", "Fraud Prevention", "Financial Audit"),
-                 ("HR Investigator", "HR Complaints", "Human Resources"),
-                 ("First Responder", "Incident Response", "IT Security"),
-                 ("Litigation Analyst", "Litigation", "Legal"),
-                 ("IT Security Consultant", "CERT Team", "IT Security"),
-                 ("Investigation Analyst", "Internal Investigations", "Internal Audit")]
+    job_types = ["Investigator", "Analyst", "Consultant"]
 
     for u in requestors:
-        job = randint(0,5)
-        u.job_title = job_types[job][0]
-        u.team = job_types[job][1]
-        u.department = job_types[job][2]
+        job = randint(0,2)
+        team = randint(0,5)
+        u.job_title = job_types[job]
+        u.team = Team.get_all().all()[team]
 
-        u.add_change(u)
+        u.add_change(admin)
         ur1 = UserRoles(u, "Investigator", True)
         ur2 = UserRoles(u, "QA", True)
         ur3 = UserRoles(u, "Case Manager", True)
@@ -286,7 +353,7 @@ def create_test_requestors(admin):
     return requestors
 
 
-def create_test_cases(case_managers, requestors, investigators):
+def create_test_cases(case_managers, requestors, investigators, authorisers):
     backgrounds = [
         """Employee {} has been accused of harassment and bullying. Please conduct an investigation into the
          matter. """,
@@ -332,6 +399,7 @@ def create_test_cases(case_managers, requestors, investigators):
     print "Adding 50 cases:"
     for i in xrange(0, 50):
         case_manager = case_managers[randint(0, len(case_managers) - 1)]
+        requestor = requestors[randint(0, len(requestors) - 1)]
         justification = justifications[randint(0, len(justifications) - 1)]
         background = backgrounds[randint(0, len(backgrounds) - 1)]
         rand_user = random_users[randint(0, len(random_users) - 1)]
@@ -349,18 +417,25 @@ def create_test_cases(case_managers, requestors, investigators):
             is_private = True
         else:
             is_private = False
-        new_case = Case(ForemanOptions.get_next_case_name(), case_manager, background=background, reference=None,
+        new_case = Case(ForemanOptions.get_next_case_name(), requestor, background=background, reference=None,
                         private=is_private, location=None, classification=classification, case_type=case_type,
                         justification=justification)
         session.add(new_case)
         session.flush()
-        new_case.add_change(case_manager)
+        new_case.add_change(requestor)
         session.commit()
 
-        requestor = requestors[randint(0, len(requestors) - 1)]
         n = UserCaseRoles(requestor, new_case, UserCaseRoles.REQUESTER)
-        n.add_change(case_manager)
+        session.add(n)
+        auth = authorisers[randint(0, len(authorisers) - 1)]
+        a = UserCaseRoles(auth, new_case, UserCaseRoles.AUTHORISER)
+        session.add(a)
+        new_case.authorise(auth, "Case Creation", "PENDING")
+
+        n.add_change(requestor)
+        a.add_change(requestor)
         n1 = UserCaseRoles(case_manager, new_case, UserCaseRoles.PRINCIPLE_CASE_MANAGER)
+        session.add(n1)
         n1.add_change(case_manager)
         have_secondary_case_manager = randint(0, 1)
         if have_secondary_case_manager == 1:
@@ -368,21 +443,28 @@ def create_test_cases(case_managers, requestors, investigators):
             while case_manager_2.id == case_manager.id:
                 case_manager_2 = case_managers[randint(0, len(case_managers) - 1)]
             n1 = UserCaseRoles(case_manager_2, new_case, UserCaseRoles.SECONDARY_CASE_MANAGER)
+            session.add(n1)
             n1.add_change(case_manager)
         session.flush()
 
         rand = randint(0, 6)
-        if rand >=2:
-            new_case.set_status(CaseStatus.OPEN, new_case.principle_case_manager)
-        if rand >= 5:
-            new_case.set_status(CaseStatus.CLOSED, new_case.principle_case_manager)
-        if rand >= 6:
-            new_case.set_status(CaseStatus.ARCHIVED, new_case.principle_case_manager)
-        print "Case added to Foreman."
-
         if rand >= 1:
+            new_case.authorise(auth, "Looks acceptable. Please go ahead.", "AUTH")
             inv = create_test_tasks(new_case, investigators, rand_user)
             create_evidence(new_case, inv, rand_user)
+        else:
+            if randint(0,1) == 0:
+                new_case.authorise(auth, "I don't think this meets our requirements.", "NOAUTH")
+
+        if new_case.authorised.case_authorised != "NOAUTH":
+            if rand >=2:
+                new_case.set_status(CaseStatus.OPEN, new_case.principle_case_manager)
+            if rand >= 5:
+                new_case.set_status(CaseStatus.CLOSED, new_case.principle_case_manager)
+            if rand >= 6:
+                new_case.set_status(CaseStatus.ARCHIVED, new_case.principle_case_manager)
+        print "Case added to Foreman."
+
     session.commit()
 
 
@@ -540,4 +622,5 @@ def create_test_data():
     investigators = create_test_investigators(admin)
     case_managers = create_test_case_managers(admin)
     requestors = create_test_requestors(admin)
-    create_test_cases(case_managers, requestors, investigators)
+    authorisers = create_test_authorisers(admin)
+    create_test_cases(case_managers, requestors, investigators, authorisers)

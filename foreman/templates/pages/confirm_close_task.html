@@ -24,6 +24,6 @@
     </div>
     % else:
     <h1>Task ${task.task_name|h} has been closed</h1>
-    <p><a href='${urls.build("case.view", dict(case_id=task.case.case_name))|h}'>View Case</a> | <a href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>View Task</a></p>
+    <p><a href='${urls.build("case.view", dict(case_id=task.case.id))|h}'>View Case</a> | <a href='${urls.build("task.view", dict(task_id=task.id, case_id=task.case.id))|h}'>View Task</a></p>
     % endif
 </div>

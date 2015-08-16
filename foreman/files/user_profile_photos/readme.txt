@@ -1,0 +1,1 @@
+Empty folder for user profile picture

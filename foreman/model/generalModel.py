@@ -30,12 +30,15 @@ class ForemanOptions(Base, Model):
     date_created = Column(DateTime)
     over_limit_case = Column(Boolean)
     over_limit_task = Column(Boolean)
+    auth_view_tasks = Column(Boolean)
+    auth_view_evidence = Column(Boolean)
 
     CASE_NAME_OPTIONS = ['NumericIncrement', 'DateNumericIncrement', 'FromList']
     TASK_NAME_OPTIONS = ['NumericIncrement', 'FromList', 'TaskTypeNumericIncrement']
 
     def __init__(self, date_format, default_location, case_names, task_names, company, department, c_list_location=None,
-                 c_leading_zeros=3, t_list_location=None, t_leading_zeros=3):
+                 c_leading_zeros=3, t_list_location=None, t_leading_zeros=3, auth_view_tasks=True,
+                 auth_view_evidence=True):
         self.date_format = date_format
         self.default_location = default_location
         self.case_names = case_names
@@ -52,6 +55,8 @@ class ForemanOptions(Base, Model):
         self.date_created = datetime.now()
         self.over_limit_case = False
         self.over_limit_task = False
+        self.auth_view_evidence = auth_view_evidence
+        self.auth_view_tasks = auth_view_tasks
 
         TaskCategory.populate_default()
         TaskType.populate_default()

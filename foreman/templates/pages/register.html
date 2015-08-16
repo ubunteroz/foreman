@@ -20,13 +20,14 @@
 
         <h1>Register</h1>
         <form method="post" action="${urls.build('general.register')|h}">
-            ${forms.formTextField("Username", "username", "username", "form_label", "addeditcase", first=True)}
-            ${forms.formTextField("Forename", "forename", "forename", "form_label", "addeditcase")}
-            ${forms.formTextField("Middle Name (optional)", "middlename", "middlename", "form_label", "addeditcase")}
-            ${forms.formTextField("Surname", "surname", "surname", "form_label", "addeditcase")}
-            ${forms.formTextField("Password", "password", "password", "form_label", "addeditcase", input_type="password")}
-            ${forms.formTextField("Password (Confirm)", "password_2", "password", "form_label", "addeditcase", input_type="password")}
-            ${forms.formTextField("Email Address", "email", "email", "form_label", "addeditcase")}
+            ${forms.formTextField("Username", "username", "username", "form_label", "input_long", first=True)}
+            ${forms.formTextField("Forename", "forename", "forename", "form_label", "input_long")}
+            ${forms.formTextField("Middle Name (optional)", "middlename", "middlename", "form_label", "input_long", required=False)}
+            ${forms.formTextField("Surname", "surname", "surname", "form_label", "input_long")}
+            ${forms.formSelectBox("Team & Department", "team", "team", "form_label", "input_long", teams, please_select=True)}
+            ${forms.formTextField("Password", "password", "password", "form_label", "input_long", input_type="password")}
+            ${forms.formTextField("Password (Confirm)", "password_2", "password", "form_label", "input_long", input_type="password")}
+            ${forms.formTextField("Email Address", "email", "email", "form_label", "input_long")}
             <p style="clear:both; text-align:center"><input type="submit" value="Register" /></p>
         </form>
 </div>

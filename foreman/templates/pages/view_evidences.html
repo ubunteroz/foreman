@@ -80,8 +80,8 @@
                     % if evi.case.status == "Archived":
                         <span class="archived">
                     % endif
-                <p><a href='${urls.build("case.view", dict(case_id=evi.case.case_name))|h}'>${evi.case.case_name|h}</a>
-                <br /><a href='${urls.build("evidence.view", dict(evidence_id=evi.id, case_id=evi.case.case_name))|h}'>${evi.reference|h}</a></p>
+                <p><a href='${urls.build("case.view", dict(case_id=evi.case.id))|h}'>${evi.case.case_name|h}</a>
+                <br /><a href='${urls.build("evidence.view", dict(evidence_id=evi.id, case_id=evi.case.id))|h}'>${evi.reference|h}</a></p>
                         % if evi.case.status == "Archived":
                             </span>
                         % endif
