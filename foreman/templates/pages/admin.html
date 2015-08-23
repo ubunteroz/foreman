@@ -231,10 +231,15 @@
             <h2>Remove Task Category</h2>
 
             <p>Please note you can only remove Task Categories that are empty, please move all task types from the category into different categories first.</p>
+
+            % if len(empty_categories) > 0:
             <form method="post" action="${urls.build('general.admin', dict(form='remove_task_category', active_tab=1))|h}">
                  ${forms.formSelectBox("Task Category", "remove_task_category", "remove_task_Category", "form_label", "input_long", empty_categories, please_select=True, first=True)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Remove" /></p>
             </form>
+            % else:
+                <p>There are no empty categories.</p>
+            % endif
             </div>
 
             <div class="form_background">
@@ -274,7 +279,7 @@
             <h2>Add New Evidence Type</h2>
 
             <form method="post" action="${urls.build('general.admin', dict(form='add_evidence_types', active_tab=2))|h}">
-                ${forms.formTextField("New Evidence Type", "evi_type", "evi_type", "form_label", "input_long", first=True)}
+                ${forms.formTextField("New Evidence Type", "evi_type_new", "evi_type_new", "form_label", "input_long", first=True)}
                 ${forms.pickImageField("Pick an Icon", "icon_input", "icon_input", "form_label", "icon_input", icons, "populate_icon", "img_hover")}
                 <p style="clear:both; text-align:center"><input type="submit" value="Add" /></p>
             </form>
@@ -296,7 +301,7 @@
             <div class="form_background">
             <h2>Add New Case Type</h2>
             <form method="post" action="${urls.build('general.admin', dict(form='add_case_type', active_tab=3))|h}">
-                ${forms.formTextField("New Case Type", "case_type", "case_type", "form_label", "input_long", first=True)}
+                ${forms.formTextField("New Case Type", "new_case_type", "new_case_type", "form_label", "input_long", first=True)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Add" /></p>
             </form>
             </div>
@@ -314,7 +319,7 @@
             <div class="form_background">
             <h2>Add New Case Classification</h2>
             <form method="post" action="${urls.build('general.admin', dict(form='add_classification', active_tab=3))|h}">
-                ${forms.formTextField("New Classification", "classification", "classification", "form_label", "input_long", first=True)}
+                ${forms.formTextField("New Classification", "new_classification", "classification", "form_label", "input_long", first=True)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Add" /></p>
             </form>
             </div>

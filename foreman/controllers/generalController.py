@@ -165,12 +165,12 @@ Foreman
 
         elif 'form' in form_type and form_type['form'] == "add_evidence_types" and self.validate_form(
                 AddEvidenceTypeForm()):
-            new_evidence_type = EvidenceType(self.form_result['evi_type'], self.form_result['icon_input'])
+            new_evidence_type = EvidenceType(self.form_result['evi_type_new'], self.form_result['icon_input'])
             session.add(new_evidence_type)
             session.flush()
         elif 'form' in form_type and form_type['form'] == "remove_evidence_types" and self.validate_form(
                 RemoveEvidenceTypeForm()):
-            evidence_type = EvidenceType.get_filter_by(evidence_type=self.form_result['evi_type']).first()
+            evidence_type = self.form_result['evi_type']
             if evidence_type:
                 session.delete(evidence_type)
                 session.commit()
@@ -226,7 +226,7 @@ Foreman
 
         elif 'form' in form_type and form_type['form'] == 'remove_classification' and self.validate_form(
                 RemoveClassificationForm):
-            classification = CaseClassification.get_filter_by(classification=self.form_result['classification']).first()
+            classification = self.form_result['classification']
             if classification:
                 session.delete(classification)
                 session.commit()
@@ -236,11 +236,11 @@ Foreman
                     case.classification = CaseClassification.undefined()
         elif 'form' in form_type and form_type['form'] == 'add_classification' and self.validate_form(
                 AddClassificationForm):
-            new_cls = CaseClassification(self.form_result['classification'])
+            new_cls = CaseClassification(self.form_result['new_classification'])
             session.add(new_cls)
             session.commit()
         elif 'form' in form_type and form_type['form'] == 'remove_case_type' and self.validate_form(RemoveCaseTypeForm):
-            case_type = CaseType.get_filter_by(case_type=self.form_result['case_type']).first()
+            case_type = self.form_result['case_type']
             if case_type:
                 session.delete(case_type)
                 session.commit()
@@ -249,7 +249,7 @@ Foreman
                 for case in cases:
                     case.case_type = CaseType.undefined()
         elif 'form' in form_type and form_type['form'] == 'add_case_type' and self.validate_form(AddCaseTypeForm):
-            new_type = CaseType(self.form_result['case_type'])
+            new_type = CaseType(self.form_result['new_case_type'])
             session.add(new_type)
             session.commit()
         elif 'form' in form_type and form_type['form'] == 'move_task_type' and self.validate_form(MoveTaskTypeForm):
@@ -272,7 +272,7 @@ Foreman
             session.commit()
         elif 'form' in form_type and form_type['form'] == 'add_task_category' and self.validate_form(
                 AddTaskCategoryForm):
-            new_tc = TaskCategory(self.form_result['add_task_category'])
+            new_tc = TaskCategory(self.form_result['new_task_category'])
             session.add(new_tc)
             session.commit()
         elif 'form' in form_type and form_type['form'] == 'remove_task_category' and self.validate_form(
@@ -324,14 +324,14 @@ Foreman
                 active_tab = 0
         else:
             active_tab = 0
-        task_types = [(tt.replace(" ", "").lower(), tt) for tt in TaskType.get_task_types()]
-        task_categories = [(tc.replace(" ", "").lower(), tc) for tc in TaskCategory.get_categories()]
-        evidence_types = EvidenceType.get_evidence_types()
-        classifications = [(cl.replace(" ", "").lower(), cl) for cl in CaseClassification.get_classifications()]
-        case_types = [(ct.replace(" ", "").lower(), ct) for ct in CaseType.get_case_types()]
-        evi_types = [(et.replace(" ", "").lower(), et) for et in evidence_types]
+        task_types = [(tt.id, tt.task_type) for tt in TaskType.get_all() if tt.task_type != "Undefined"]
+        task_categories = [(tc.id, tc.category) for tc in TaskCategory.get_all()]
+        evidence_types = [et.evidence_type for et in EvidenceType.get_all() if et.evidence_type != "Undefined"]
+        classifications = [(cl.id, cl.classification) for cl in CaseClassification.get_all() if cl != "Undefined"]
+        case_types = [(ct.id, ct.case_type) for ct in CaseType.get_all() if ct.case_type != "Undefined"]
+        evi_types = [(et.id, et.evidence_type) for et in EvidenceType.get_all() if et.evidence_type != "Undefined"]
         icons = [f for f in listdir(icon_path) if isfile(join(icon_path, f)) and f != "Thumbs.db"]
-        empty_categories = [(ct.replace(" ", "").lower(), ct) for ct in TaskCategory.get_empty_categories()]
+        empty_categories = [(ct.id, ct.category) for ct in TaskCategory.get_empty_categories()]
         case_name_options = [(cn, cn) for cn in ForemanOptions.CASE_NAME_OPTIONS]
         task_name_options = [(tn, tn) for tn in ForemanOptions.TASK_NAME_OPTIONS]
         authoriser_options = [("yes", "Yes"), ("no", "No")]

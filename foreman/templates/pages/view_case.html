@@ -17,7 +17,7 @@
             <a href='${urls.build("case.authorise", dict(case_id=case.id))|h}'>Authorise this case</a>
         % endif
         % if check_perms(case, 'edit'):
-            % if current_user.id == case.requester.id and case.authorised.case_authorised == "NOAUTH":
+            % if current_user.id == case.requester.id and (case.authorised is not None and case.authorised.case_authorised == "NOAUTH"):
             <a href='${urls.build("case.edit", dict(case_id=case.id))|h}'>Edit the case to retry for authorisation</a>
             % else:
             <a href='${urls.build("case.edit", dict(case_id=case.id))|h}'>Edit</a>

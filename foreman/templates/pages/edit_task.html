@@ -69,7 +69,7 @@
                 ${forms.formTextField("Task Files Location", "location", "location", "form_label", "input_long", value=task.location)}
                 ${forms.formTextArea("Task Description", "background", "background", "form_label", "addeditcase", value=task.background)}
                 % if task.task_type.task_type != "Undefined":
-                ${forms.formSelectBox("Task Type", "task_type", "task_type", "form_label", "input_long", task_type_options, value=task.task_type, please_select=False)}
+                ${forms.formSelectBox("Task Type", "task_type", "task_type", "form_label", "input_long", task_type_options, value=task.task_type.id, please_select=False)}
                 % else:
                 ${forms.formSelectBox("Task Type", "task_type", "task_type", "form_label", "input_long", task_type_options, please_select=True)}
                 % endif

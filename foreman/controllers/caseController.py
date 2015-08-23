@@ -110,8 +110,8 @@ class CaseController(BaseController):
         managers = [(user.id, user.fullname) for user in UserRoles.get_managers()]
         authorisers = [(user.id, user.fullname) for user in UserRoles.get_authorisers() if
                        user.department == self.current_user.department] #only user authorisers in same department
-        classifications = [(cl.replace(" ", "").lower(), cl) for cl in CaseClassification.get_classifications()]
-        case_types = [(ct.replace(" ", "").lower(), ct) for ct in CaseType.get_case_types()]
+        classifications = [(cl.id, cl.classification) for cl in CaseClassification.get_all() if cl != "Undefined"]
+        case_types = [(ct.id, ct.case_type) for ct in CaseType.get_all() if ct.case_type != "Undefined"]
         priorities = [(priority.case_priority, priority.case_priority) for priority in CasePriority.get_all()]
 
         args = multidict_to_dict(self.request.args)
@@ -121,7 +121,8 @@ class CaseController(BaseController):
 
                 new_case = Case(case_name, self.current_user, self.form_result['background'],
                                 self.form_result['reference'], self.form_result['private'], None,
-                                self.form_result['classification'], self.form_result['case_type'],
+                                self.form_result['classification'].classification,
+                                self.form_result['case_type'].case_type,
                                 self.form_result['justification'], self.form_result['priority'])
                 session.add(new_case)
                 session.flush()
@@ -139,7 +140,7 @@ class CaseController(BaseController):
         elif self.validate_form(AddCaseForm()):
             new_case = Case(self.form_result['case_name'], self.current_user, self.form_result['background'],
                             self.form_result['reference'], self.form_result['private'], self.form_result['location'],
-                            self.form_result['classification'], self.form_result['case_type'],
+                            self.form_result['classification'].classification, self.form_result['case_type'].case_type,
                             self.form_result['justification'], self.form_result['priority'])
             session.add(new_case)
             session.flush()
@@ -177,12 +178,12 @@ class CaseController(BaseController):
                                                                                       dict(case_id=case.id))})
 
             is_requester = self.current_user.is_requester()
-            task_type_options = [(tt.replace(" ", "").lower(), tt) for tt in TaskType.get_task_types()]
+            task_type_options = [(tt.id, tt.task_type) for tt in TaskType.get_all() if tt.task_type != "Undefined"]
 
             args = multidict_to_dict(self.request.args)
             if 'type' in args and args['type'] == "requester" and is_requester:
                 if self.validate_form(RequesterAddTaskForm()):
-                    task_name = ForemanOptions.get_next_task_name(case, self.form_result['task_type'])
+                    task_name = ForemanOptions.get_next_task_name(case, self.form_result['task_type'].task_type)
                     new_task = Task(case, self.form_result['task_type'], task_name,
                                     self.current_user, self.form_result['background'])
                     session.add(new_task)
@@ -194,8 +195,8 @@ class CaseController(BaseController):
                     return self.return_response('pages', 'add_task.html', task_type_options=task_type_options,
                                                 case=case, errors=self.form_error, is_requester=is_requester)
             elif self.validate_form(AddTaskForm()):
-                new_task = Task(case, self.form_result['task_type'], self.form_result['task_name'], self.current_user,
-                                self.form_result['background'], self.form_result['location'])
+                new_task = Task(case, self.form_result['task_type'], self.form_result['task_name'],
+                                self.current_user, self.form_result['background'], self.form_result['location'])
                 session.add(new_task)
                 session.flush()
                 new_task.add_change(self.current_user)
@@ -272,8 +273,8 @@ class CaseController(BaseController):
         case_link_remove_options = [(case_link.id, case_link.case_name) for case_link in linked_cases]
         principle_man = case.principle_case_manager.fullname if case.principle_case_manager else "Please Select"
         secondary_man = case.secondary_case_manager.fullname if case.secondary_case_manager else "Please Select"
-        classifications = [(cl.replace(" ", "").lower(), cl) for cl in CaseClassification.get_classifications()]
-        case_types = [(ct.replace(" ", "").lower(), ct) for ct in CaseType.get_case_types()]
+        classifications = [(cl.id, cl.classification) for cl in CaseClassification.get_all() if cl != "Undefined"]
+        case_types = [(ct.id, ct.case_type) for ct in CaseType.get_all() if ct.case_type != "Undefined"]
         priorities = [(priority.case_priority, priority.case_priority) for priority in CasePriority.get_all()]
         authorisers = [(user.id, user.fullname) for user in UserRoles.get_authorisers() if
                        user.department == self.current_user.department]
@@ -312,8 +313,8 @@ class CaseController(BaseController):
                     case.private = self.form_result['private']
                     case.background = self.form_result['background']
                     case.location = self.form_result['location']
-                    case.classification = self.form_result['classification']
-                    case.case_type = self.form_result['case_type']
+                    case.classification = self.form_result['classification'].classification
+                    case.case_type = self.form_result['case_type'].case_type
                     case.justification = self.form_result['justification']
                     case.case_priority = self.form_result['priority'].case_priority
                     case.case_priority_colour = self.form_result['priority'].colour

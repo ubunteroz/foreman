@@ -6,7 +6,7 @@ from formencode import validators as v, Invalid
 from formencode.compound import CompoundValidator
 # local imports
 from ..model import User, UserTaskRoles, UserRoles, TaskStatus, Task, CaseStatus, Case, ForemanOptions, TaskType
-from ..model import CaseType, CaseClassification, TaskCategory, CasePriority, Department, Team
+from ..model import CaseType, CaseClassification, TaskCategory, CasePriority, Department, Team, EvidenceType
 from ..utils.utils import session, ROOT_DIR
 
 
@@ -341,11 +341,7 @@ class GetCaseClassification(GetObject):
     allow_null = False
 
     def getObject(self, classification):
-        for ct in CaseClassification.get_classifications():
-            if classification == ct.replace(" ", "").lower():
-                return ct
-        else:
-            return None
+        return CaseClassification.get(classification)
 
 
 class GetPriority(GetObject):
@@ -375,11 +371,7 @@ class GetCaseType(GetObject):
     allow_null = False
 
     def getObject(self, case_type):
-        for ct in CaseType.get_case_types():
-            if case_type == ct.replace(" ", "").lower():
-                return ct
-        else:
-            return None
+        return CaseType.get(case_type)
 
 
 class GetCaseStatus(GetObject):
@@ -472,7 +464,10 @@ class GetTaskTypes(GetObject):
     allow_null = False
 
     def getObject(self, task_type):
-        return TaskType.get_type_from_list(task_type)
+        try:
+            return TaskType.get(int(task_type))
+        except ValueError:
+            return None
 
 
 class GetTaskCategory(GetObject):
@@ -485,7 +480,10 @@ class GetTaskCategory(GetObject):
     allow_null = False
 
     def getObject(self, category):
-        return TaskCategory.get_category_from_list(category)
+        try:
+            return TaskCategory.get(int(category))
+        except ValueError:
+            return None
 
 
 class GetEvidenceType(GetObject):
@@ -498,10 +496,9 @@ class GetEvidenceType(GetObject):
     allow_null = False
 
     def getObject(self, evidence_type):
-        for evi in ForemanOptions.get_evidence_types():
-                if evidence_type == evi.replace(" ","").lower():
-                    return evi
-        else:
+        try:
+            return EvidenceType.get(int(evidence_type))
+        except ValueError:
             return None
 
 

@@ -195,15 +195,6 @@ class ForemanOptions(Base, Model):
                     options.over_limit_case = True
         return results
 
-
-    @staticmethod
-    def get_task_types():
-        return TaskType.get_task_types()
-
-    @staticmethod
-    def get_evidence_types():
-        return EvidenceType.get_evidence_types()
-
     @staticmethod
     def get_options():
         return session.query(ForemanOptions).first()
@@ -279,11 +270,6 @@ class TaskType(Base, Model):
         return None
 
     @staticmethod
-    def get_task_types():
-        q = session.query(TaskType).all()
-        return [c.task_type for c in q if c.task_type != "Undefined"]
-
-    @staticmethod
     def undefined():
         return "Undefined"
 
@@ -320,16 +306,7 @@ class TaskCategory(Base, Model):
 
     @staticmethod
     def get_empty_categories():
-        q = session.query(TaskCategory).outerjoin('task_types').filter(TaskType.task_type==None)
-        return [c.category for c in q]
-
-    @staticmethod
-    def get_category_from_list(category):
-        cats = session.query(TaskCategory).all()
-        for cat in cats:
-            if category == cat.category.replace(" ", "").lower():
-                return cat
-        return None
+        return session.query(TaskCategory).outerjoin('task_types').filter(TaskType.task_type==None)
 
 
 class CaseClassification(Base, Model):

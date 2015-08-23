@@ -56,11 +56,11 @@ class RemoveCaseTypeForm(Schema):
 
 
 class AddClassificationForm(Schema):
-    classification = v.UnicodeString(not_emtpy=True)
+    new_classification = v.UnicodeString(not_emtpy=True)
 
 
 class AddCaseTypeForm(Schema):
-    case_type = v.UnicodeString(not_empty=True)
+    new_case_type = v.UnicodeString(not_empty=True)
 
 
 class AddTaskForm(Schema):
@@ -186,7 +186,7 @@ class EditEvidenceQRCodesForm(Schema):
 
 
 class AddEvidenceTypeForm(Schema):
-    evi_type = v.UnicodeString(not_empty=True)
+    evi_type_new = v.UnicodeString(not_empty=True)
     icon_input = AddIcon(not_empty=True)
 
 

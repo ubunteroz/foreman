@@ -118,7 +118,7 @@ class TaskController(BaseController):
                                      'path': self.urls.build('task.edit', dict(case_id=task.case.id,
                                                                                task_id=task.id))})
 
-            task_type_options = [(tt.replace(" ", "").lower(), tt) for tt in TaskType.get_task_types()]
+            task_type_options = [(tt.id, tt.task_type) for tt in TaskType.get_all() if tt.task_type != "Undefined"]
             investigators = [(user.id, user.fullname) for user in UserRoles.get_investigators()]
             qas = [(user.id, user.fullname) for user in UserRoles.get_qas()]
             status_options = [(status, status) for status in TaskStatus.all_statuses]
