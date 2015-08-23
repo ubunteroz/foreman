@@ -213,10 +213,12 @@ class RequesterForEvidenceChecker(BaseChecker):
 
 class AuthoriserForEvidenceChecker(BaseChecker):
     def check(self, user, evidence):
-        authoriser = evidence.case.authoriser
-        options = ForemanOptions.get_options()
-        if options.auth_view_evidence and authoriser and user.id == authoriser.id:
-            return True
+        if evidence.case_id is not None:
+            authoriser = evidence.case.authoriser
+            options = ForemanOptions.get_options()
+            if options.auth_view_evidence and authoriser and user.id == authoriser.id:
+                return True
+            return False
         return False
 
 

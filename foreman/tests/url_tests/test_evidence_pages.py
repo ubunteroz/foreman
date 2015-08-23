@@ -8,15 +8,15 @@ from base_tester import URLTestCase
 class EvidenceTestCase(URLTestCase):
 
     def test_disassociate_evidence(self):
-        self._check_url('/cases/rat/evidence/SCH-20140228-HDD_002/remove/', 1, 404)  # login as admin, but wrong case
-        self._check_url('/cases/rat/evidence/6/remove/', None, 401)  # not logged in
-        self._check_url('/cases/rat/evidence/6/remove/', 1)  # login as admin
-        self._check_url('/cases/rat/evidence/6/remove/', 19, 403)  # login as a case manager
-        self._check_url('/cases/rat/evidence/6/remove/', 22)  # login as a case manager for case
-        self._check_url('/cases/rat/evidence/6/remove/', 10, 403)  # login as an investigator
-        self._check_url('/cases/rat/evidence/6/remove/', 6)  # login as an investigator for case
-        self._check_url('/cases/rat/evidence/6/remove/', 33, 403)  # login as a requester
-        self._check_url('/cases/rat/evidence/6/remove/', 32, 403)  # login as a requester for case
+        self._check_url('/cases/6/evidence/SCH-20140228-HDD_002/remove/', 1, 404)  # login as admin, but wrong case
+        self._check_url('/cases/6/evidence/6/remove/', None, 401)  # not logged in
+        self._check_url('/cases/6/evidence/6/remove/', 1)  # login as admin
+        self._check_url('/cases/6/evidence/6/remove/', 19, 403)  # login as a case manager
+        self._check_url('/cases/6/evidence/6/remove/', 22)  # login as a case manager for case
+        self._check_url('/cases/6/evidence/6/remove/', 10, 403)  # login as an investigator
+        self._check_url('/cases/6/evidence/6/remove/', 6)  # login as an investigator for case
+        self._check_url('/cases/6/evidence/6/remove/', 33, 403)  # login as a requester
+        self._check_url('/cases/6/evidence/6/remove/', 32, 403)  # login as a requester for case
 
     def test_associate_evidence(self):
         self._check_url('/evidence/SCH-20140228-HDD_002/associate/', 1, 404)  # login as admin, but wrong case
@@ -98,15 +98,15 @@ class EvidenceTestCase(URLTestCase):
 
     def test_view_evidence(self):
         self._check_url('/cases/testing/evidence/SCH-20140228-HDD_002/', 1, 404)  # login as admin, but wrong case
-        self._check_url('/cases/chinchilla/evidence/testing/', 1, 404)  # login as admin, but wrong evidence
-        self._check_url('/cases/chinchilla/evidence/9/', None, 401)  # not logged in
-        self._check_url('/cases/chinchilla/evidence/9/', 1)  # login as admin
-        self._check_url('/cases/chinchilla/evidence/9/', 19, 403)  # login as a case manager
-        self._check_url('/cases/chinchilla/evidence/9/', 10, 403)  # login as an investigator
-        self._check_url('/cases/chinchilla/evidence/9/', 9)  # login as an investigator for this case
-        self._check_url('/cases/chinchilla/evidence/9/', 33, 403)  # login as a requester
-        self._check_url('/cases/chinchilla/evidence/9/', 25)  # login as a primary case manager for this case
-        self._check_url('/cases/chinchilla/evidence/9/', 35)  # login as a requester for this case
+        self._check_url('/cases/9/evidence/testing/', 1, 404)  # login as admin, but wrong evidence
+        self._check_url('/cases/9/evidence/9/', None, 401)  # not logged in
+        self._check_url('/cases/9/evidence/9/', 1)  # login as admin
+        self._check_url('/cases/9/evidence/9/', 19, 403)  # login as a case manager
+        self._check_url('/cases/9/evidence/9/', 10, 403)  # login as an investigator
+        self._check_url('/cases/9/evidence/9/', 9)  # login as an investigator for this case
+        self._check_url('/cases/9/evidence/9/', 33, 403)  # login as a requester
+        self._check_url('/cases/9/evidence/9/', 25)  # login as a primary case manager for this case
+        self._check_url('/cases/9/evidence/9/', 35)  # login as a requester for this case
 
     def test_view_evidence_caseless(self):
         self._check_url('/evidence/testing/', 1, 404)  # login as admin, but wrong evidence
@@ -135,15 +135,15 @@ class EvidenceTestCase(URLTestCase):
         self._check_url('/evidence/4/edit/', 33, 403)  # login as a requester
 
     def test_add_evidence(self):
-        self._check_url('/cases/chinchilla/evidence/add/', None, 401)  # not logged in
-        self._check_url('/cases/chinchilla/evidence/add/', 1)  # login as admin
-        self._check_url('/cases/chinchilla/evidence/add/', 19, 403)  # login as a case manager
-        self._check_url('/cases/chinchilla/evidence/add/', 11, 403)  # login as an investigator
-        self._check_url('/cases/chinchilla/evidence/add/', 33, 403)  # login as a requester
-        self._check_url('/cases/chinchilla/evidence/add/', 25)  # login as a primary case manager for this case
-        self._check_url('/cases/chinchilla/evidence/add/', 6)  # login as a primary investigator for this case
-        self._check_url('/cases/chinchilla/evidence/add/', 7)  # login as a secondary investigator for this case
-        self._check_url('/cases/chinchilla/evidence/add/', 35, 403)  # login as a requester for this case
+        self._check_url('/cases/9/evidence/add/', None, 401)  # not logged in
+        self._check_url('/cases/9/evidence/add/', 1)  # login as admin
+        self._check_url('/cases/9/evidence/add/', 19, 403)  # login as a case manager
+        self._check_url('/cases/9/evidence/add/', 11, 403)  # login as an investigator
+        self._check_url('/cases/9/evidence/add/', 33, 403)  # login as a requester
+        self._check_url('/cases/9/evidence/add/', 25)  # login as a primary case manager for this case
+        self._check_url('/cases/9/evidence/add/', 6)  # login as a primary investigator for this case
+        self._check_url('/cases/9/evidence/add/', 7)  # login as a secondary investigator for this case
+        self._check_url('/cases/9/evidence/add/', 35, 403)  # login as a requester for this case
 
     def test_add_evidence_caseless(self):
         self._check_url('/evidence/add/', None, 401)  # not logged in
