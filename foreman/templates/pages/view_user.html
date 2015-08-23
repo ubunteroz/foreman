@@ -52,8 +52,14 @@
         </tr>
         % if user.validated is False:
         <tr>
-            <th>Validated</th>
-            <td><a href='${urls.build("general.admin", dict(active_tab=5))|h}'>False</a></td>
+
+                % if current_user.is_admin():
+                    <th><span class="highlight">Validated</span></th>
+                    <td><a href='${urls.build("general.admin", dict(active_tab=5))|h}'>False</a></td>
+                % else:
+                    <th>Validated</th>
+                    <td>False</td>
+                % endif
         </tr>
         % endif
         <tr>
@@ -81,6 +87,16 @@
         <tr>
             <th>Department</th>
             <td><a href="${urls.build('user.view_department', dict(department_id=user.team.department.id))|h}">${user.department|h}</a></td>
+        </tr>
+        <tr>
+            <th>Active user</th>
+            <td>
+                % if user.active:
+                    Yes
+                % else:
+                    No
+                % endif
+            </td>
         </tr>
     </table>
 

@@ -20,6 +20,7 @@
             <th>Edit Profile</th>
             % if check_perms("User", 'add'):
             <th>Validated</th>
+            <th>Active</th>
             % endif
         </tr>
         % for user in users:
@@ -38,6 +39,13 @@
                 <a href='${urls.build("general.admin", dict(active_tab=5))|h}'>${user.validated|h}</a>
                 % else:
                 ${user.validated|h}
+                % endif
+            </td>
+            <td>
+                % if user.active:
+                    Yes
+                % else:
+                    No
                 % endif
             </td>
             % endif

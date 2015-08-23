@@ -150,6 +150,7 @@ class User(Base, Model):
     team_id = Column(Integer, ForeignKey('team.id'))
     job_title = Column(Unicode)
     photo = Column(Unicode)
+    active = Column(Boolean)
 
     team = relation('Team', backref=backref('team_members'))
     PROFILE_PHOTO_FOLDER = path.join(ROOT_DIR, 'files', 'user_profile_photos')
@@ -163,11 +164,18 @@ class User(Base, Model):
         self.email = email
         self.validated = validated
         self.photo = photo
+        self.activate()
 
     def add_change(self, user):
         change = UserHistory(self, user)
         session.add(change)
         session.flush()
+
+    def deactivate(self):
+        self.active = False
+
+    def activate(self):
+        self.active = True
 
     def is_investigator(self):
         return UserRoles.check_user_has_active_role(user=self, role=UserRoles.INV) or \

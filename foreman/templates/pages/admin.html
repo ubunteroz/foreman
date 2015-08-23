@@ -89,9 +89,10 @@
             <li><a href="#tabs-4">Case Types & Classifications</a></li>
             <li><a href="#tabs-5">Notes Export Formatting</a></li>
             <li><a href="#tabs-6">Validate Users
-                % if users:
-                    <span class="validate">(${len(users)|h})</span>
+                % if unvalidated_users:
+                    <span class="validate">(${len(unvalidated_users)|h})</span>
                 % endif
+                & Deactivate Users
             </a></li>
             <li><a href="#tabs-7">Case Priorities</a></li>
             <li><a href="#tabs-8">Authorisation Options</a></li>
@@ -332,6 +333,7 @@
 
         <div id="tabs-6" class="forensics_work_contents">
 
+            <div class="form_background">
             <h2>Validate Users</h2>
 
             % if validated is True:
@@ -341,12 +343,12 @@
                 </div>
             % endif
 
-            % if users:
+            % if unvalidated_users:
             <table>
                 <tr>
                     <th>Username</th> <th>Name</th> <th>Email address</th> <th>Validate</th>
                 </tr>
-                % for user in users:
+                % for user in unvalidated_users:
                 <tr>
                      <td><a href='${urls.build("user.view", dict(user_id=user.id))|h}'>${user.username|h}</a></td>
                      <td>${user.fullname|h}</td>
@@ -357,6 +359,27 @@
             </table>
             % else:
                 <p>There are no users that need validating.</p>
+            % endif
+            </div>
+
+            <div class="form_background">
+            <h2>Deactivate Users</h2>
+
+            <p>Pick a user to deactivate their account. Users cannot be deleted, as case information is tied to them; but their accounts can be deactivated so that they can no longer log in.</p>
+            <form method="post" action="${urls.build('general.admin', dict(form='deactiviate_user', active_tab=5))|h}">
+                ${forms.formSelectBox("User to deactivate", "deactivate_user", "deactivate_user", "form_label", "input_long", users, please_select=True, first=True)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Deactivate" /></p>
+            </form>
+            </div>
+
+            % if len(deactivated_users) > 0:
+                <div class="form_background">
+                <h2>Reactivate Users</h2>
+                <form method="post" action="${urls.build('general.admin', dict(form='reactivate_user', active_tab=5))|h}">
+                    ${forms.formSelectBox("User to reactivate", "reactivate_user", "reactivate_user", "form_label", "input_long", deactivated_users, please_select=True, first=True)}
+                    <p style="clear:both; text-align:center"><input type="submit" value="Reactivate" /></p>
+                </form>
+                </div>
             % endif
 
         </div>

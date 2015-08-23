@@ -10,12 +10,12 @@ from werkzeug import Response, redirect
 from baseController import BaseController, jsonify
 from ..model.caseModel import Task, User, ForemanOptions, Case, Evidence, CaseStatus
 from ..model.generalModel import TaskType, TaskCategory, EvidenceType, CaseClassification, CaseType, CasePriority
-from ..model.userModel import UserRoles, Department, Team
+from ..model.userModel import UserRoles, Department, Team, User
 from ..forms.forms import LoginForm, OptionsForm, AddEvidenceTypeForm, RegisterForm, AddClassificationForm
 from ..forms.forms import AddCaseTypeForm, RemoveCaseTypeForm, RemoveClassificationForm, RemoveEvidenceTypeForm
 from ..forms.forms import MoveTaskTypeForm, AddTaskTypeForm, RemoveTaskTypeForm, AddTaskCategoryForm, RemoveCategoryForm
 from ..forms.forms import AddTeamForm, RenameTeamForm, RemoveTeamForm, AddDepartmentForm, RenameDepartmentForm
-from ..forms.forms import RemoveDepartmentForm
+from ..forms.forms import RemoveDepartmentForm, DeactivateUser, ReactivateUser
 from ..forms.forms import AddPriorityForm, RemovePriorityForm, AuthOptionsForm
 from ..utils.utils import multidict_to_dict, session, ROOT_DIR, config
 from ..utils.mail import email
@@ -38,6 +38,10 @@ class GeneralController(BaseController):
                 if user.validated is False:
                     self.breadcrumbs.append({'title': 'Login', 'path': self.urls.build('general.login')})
                     return self.return_response('pages', 'login.html', validated=False, company=opts.company,
+                                                department=opts.department)
+                elif user.active is False:
+                    self.breadcrumbs.append({'title': 'Login', 'path': self.urls.build('general.login')})
+                    return self.return_response('pages', 'login.html', active=False, company=opts.company,
                                                 department=opts.department)
                 else:
                     # successful login
@@ -69,7 +73,7 @@ class GeneralController(BaseController):
         self.breadcrumbs.append({'title': 'Register for Foreman', 'path': self.urls.build('general.register')})
         success = False
         teams = sorted([(team.id, team.department.department + ": " + team.team) for team in Team.get_all()],
-                           key=lambda t: t[1])
+                       key=lambda t: t[1])
         opts = ForemanOptions.get_options()
         if self.validate_form(RegisterForm()):
             if self.form_result['middlename'] == "":
@@ -174,7 +178,8 @@ Foreman
                 evidences = Evidence.get_filter_by(type=evidence_type.evidence_type).all()
                 for evidence in evidences:
                     evidence.type = EvidenceType.undefined()
-        elif 'form' in form_type and form_type['form'] == "remove_priority" and self.validate_form(RemovePriorityForm()):
+        elif 'form' in form_type and form_type['form'] == "remove_priority" and self.validate_form(
+                RemovePriorityForm()):
             number_left = CasePriority.get_amount()
             if number_left > 1:
                 priority = self.form_result['priority_remove']
@@ -192,6 +197,14 @@ Foreman
                                         self.form_result['default'])
             session.add(new_priority)
             session.commit()
+        elif 'form' in form_type and form_type['form'] == "deactiviate_user" and self.validate_form(DeactivateUser()):
+            user = self.form_result['deactivate_user']
+            user.deactivate()
+            session.flush()
+        elif 'form' in form_type and form_type['form'] == "reactivate_user" and self.validate_form(ReactivateUser()):
+            user = self.form_result['reactivate_user']
+            user.activate()
+            session.flush()
         elif 'validate_user' in form_type:
             user = self._validate_user(form_type['validate_user'])
             if user:
@@ -300,7 +313,8 @@ Foreman
             session.flush()
         all_priorities = CasePriority.get_all()
         priorities = [(priority.case_priority, priority.case_priority) for priority in CasePriority.get_all()]
-        users = User.get_filter_by(validated=False).all()
+        unvalidated_users = User.get_filter_by(validated=False).all()
+        deactivated_users = [(user.id, user.username) for user in User.get_filter_by(active=False).all()]
         options = ForemanOptions.get_options()
 
         if 'active_tab' in form_type:
@@ -325,12 +339,14 @@ Foreman
         del_department_options = [(dep.id, dep.department) for dep in Department.get_all() if len(dep.teams) == 0]
         team_options = [(t.id, t.team) for t in Team.get_all()]
         del_team_options = [(t.id, t.team) for t in Team.get_all() if len(t.team_members) == 0]
+        users = [(user.id, user.username) for user in User.get_all() if user.id != 1 and user.active]
         return self.return_response('pages', 'admin.html', options=options, active_tab=active_tab, icons=icons,
-                                    task_types=task_types, evidence_types=evidence_types, users=users,
+                                    task_types=task_types, evidence_types=evidence_types,
+                                    unvalidated_users=unvalidated_users, deactivated_users=deactivated_users,
                                     classifications=classifications, case_types=case_types, evi_types=evi_types,
                                     empty_categories=empty_categories, task_categories=task_categories,
                                     errors=self.form_error, over_load=over_load, case_name_options=case_name_options,
-                                    task_name_options=task_name_options, number_cases=number_cases,
+                                    task_name_options=task_name_options, number_cases=number_cases, users=users,
                                     number_tasks=number_tasks, validated=validated, val_user=val_user,
                                     all_priorities=all_priorities, priorities=priorities, team_options=team_options,
                                     authoriser_options=authoriser_options, department_options=department_options,

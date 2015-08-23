@@ -46,6 +46,7 @@ class AddPriorityForm(Schema):
 class RemovePriorityForm(Schema):
     priority_remove = GetPriority(not_empty=True)
 
+
 class RemoveClassificationForm(Schema):
     classification = GetCaseClassification(not_empty=True)
 
@@ -129,6 +130,14 @@ class QACheckerForm(Schema):
 
 class AddTaskNotesForm(Schema):
     notes = v.UnicodeString(not_empty=True)
+
+
+class DeactivateUser(Schema):
+    deactivate_user = GetUser(not_empty=True)
+
+
+class ReactivateUser(Schema):
+    reactivate_user = GetUser(not_empty=True)
 
 
 class AssignInvestigatorForm(Schema):
