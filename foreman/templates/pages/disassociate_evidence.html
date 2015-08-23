@@ -27,6 +27,6 @@
     % else:
     <h1>Evidence ${evidence.reference|h} has been removed. </h1>
     <p><a href="${urls.build('evidence.view_all')|h}">Associate with another case or remove completely here</a>.</p>
-    <p><a href="${urls.build('evidence.view_caseless', dict(evidence_id=evidence.id))|h}">View Evidence</a> | <a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>View Case</a></p>
+    <p><a href="${urls.build('evidence.view_caseless', dict(evidence_id=evidence.id))|h}">View Evidence</a> | <a href='${urls.build("case.view", dict(case_id=case.id))|h}'>View Case</a></p>
     % endif
 </div>

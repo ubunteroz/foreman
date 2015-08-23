@@ -1,0 +1,117 @@
+﻿<%inherit file="/base/base_report.html"/>
+<%namespace file="/utils/format.html" name="formatting" />
+
+    <h1 class="report">Case ${case.case_name|h} Report</h1>
+
+    <div class="report_options">
+        <p>Save report as:</p>
+        <div class="report_option"><img src="${urls.build("images", dict(file='siteimages/icons/document.png'))|h}" class="evidenceicon"/>
+            <a href="${urls.build("export.case_report_html", dict(case_id=case.id))|h}">HTML file</a></div>
+        <div class="report_option"><img src="${urls.build("images", dict(file='siteimages/icons/document.png'))|h}" class="evidenceicon"/>
+            <a href="${urls.build("export.case_report_rtf", dict(case_id=case.id))|h}">RTF file</a></div>
+        <div class="report_option"><img src="${urls.build("images", dict(file='siteimages/icons/document.png'))|h}" class="evidenceicon"/>
+            <a href="${urls.build("export.case_report_pdf", dict(case_id=case.id))|h}">PDF file</a></div>
+    </div>
+
+    <div class="report">
+
+    <h1>Case Summary</h1>
+
+    ${formatting.case_details()}
+
+    <h1>Task Summary</h1>
+
+    ${formatting.task_table(case.tasks, show_qa=True)}
+
+    <h1>Evidence Summary</h1>
+        <table class="case_table">
+        <tr>
+            <th>Reference</th>
+            <th>Date Added</th>
+            <th>Type</th>
+            <th>User</th>
+            <th>Current Status</th>
+        </tr>
+        % for evidence in case.evidence:
+            <tr>
+                <td>${evidence.reference|h}</td>
+                <td>${evidence.date|h}</td>
+                <td>${evidence.type|h}</td>
+                <td><a href='${urls.build("user.view", dict(user_id=evidence.user.id))|h}'>${evidence.user.fullname|h}</a></td>
+                <td>
+                    % if evidence.current_status.check_in == True:
+                    In storage
+                    % else:
+                    Checked out by ${evidence.current_status.user.fullname|h}
+                    % endif
+                </td>
+            </tr>
+        % endfor
+        </table>
+
+    % for task in case.tasks:
+        <h1>Task Details: ${task.task_name|h}</h1>
+        ${formatting.task_details(task)}
+
+        <h2>File Uploads</h2>
+        ${formatting.report_file_details(task.task_uploads)}
+    % endfor
+
+    % for evidence in case.evidence:
+        <h1>Evidence Details: ${evidence.reference|h}</h1>
+        ${formatting.evidence_details(evidence)}
+
+        <h2>Photo Uploads</h2>
+        ${formatting.report_file_details(evidence.evidence_photos)}
+    % endfor
+
+    <h1>Audit Logs</h1>
+
+    <h2>Case Audit Log</h2>
+    <table class="history">
+        <tr>
+            <th class="history_date">Date</th>
+            <th class="history_user">User</th>
+            <th class="history_entry">Events</th>
+        </tr>
+        % for history in case_history:
+        <tr>
+            <td>${history['date']|h}</td>
+            <td><a href='${urls.build("user.view", dict(user_id=history['user'].id))|h}'>${history['user'].fullname|h}</a></td>
+            <td>
+                % if not isinstance(history['change_log'], basestring):
+                % for entry, change in history['change_log'].iteritems():
+                    % if change[0] == "ADD":
+                       ${change[1]|h} was assigned as <i>${entry|h}</i> <br/>
+                    % elif change[0] == "DEL":
+                        ${change[1]|h} was removed as <i>${entry|h}</i><br/>
+                    % elif change[0] == "LINK":
+                        A link to case <span class="change">${change[1]|h}</span> was added<br/>
+                    % elif change[0] == "UNLINK":
+                        The link to case <span class="change">${change[1]|h}</span> was removed<br/>
+                    % elif change[0] == "AUTH":
+                        The case was authorised with reason: <br/><span class="change">${change[1]|h}</span><br/>
+                    % elif change[0] == "NOAUTH":
+                        The case was rejected with reason: <br/><span class="change">${change[1]|h}</span><br/>
+                    % else:
+                        The <i>${entry|h}</i> changed from
+                        <span class="change">${change[0]|h}</span>
+                        to
+                        <span class="change">${change[1]|h}</span>
+                    % endif
+                % endfor
+                % else:
+                    ${history['change_log']|h}
+                % endif
+            </td>
+        </tr>
+        % endfor
+    </table>
+
+    <h2>Task Audit Log</h2>
+    ${formatting.report_histories(task_histories, "task_name", "task", "task_id")}
+
+    <h2>Evidence Audit Log</h2>
+    ${formatting.report_histories(evidence_histories, "reference", "evidence", "evidence_id")}
+
+    </div>

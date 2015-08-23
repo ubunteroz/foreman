@@ -27,7 +27,9 @@
         <div class="show-hide-sidepanel">
 
             <p><a href='${urls.build("user.view", dict(user_id=current_user.id))|h}'>View My Profile</a></p>
-            <p><a href='${urls.build("user.case_history", dict(user_id=current_user.id))|h}'>View My Case History</a></p>
+            % if not current_user.is_authoriser:
+                <p><a href='${urls.build("user.case_history", dict(user_id=current_user.id))|h}'>View My Case History</a></p>
+            % endif
             <p><a href='${urls.build("user.edit", dict(user_id=current_user.id))|h}'>Edit My Basic Details</a></p>
             <p><a href='${urls.build("user.edit_password", dict(user_id=current_user.id))|h}'>Change My Password</a></p>
 
@@ -67,6 +69,21 @@
 </%def>
 
 <%def name="tasks_menu()" filter="trim">
+
+    % if current_user.is_authoriser():
+        <div class="sidebar-panel">
+            <a href="#"><img class="show-hide-sidepanel-up-button" src="${urls.build("images", dict(file='siteimages/up-arrow.png'))|h}" /></a>
+            <a href="#"><img class="show-hide-sidepanel-down-button" src="${urls.build("images", dict(file='siteimages/down-arrow.png'))|h}" /></a>
+            <h1>Case Authorisations</h1>
+            <div class="show-hide-sidepanel">
+                <p><a href='${urls.build("case.view_all", dict(view="Pending"))|h}'>Cases that require authorisation</a> (${len(authoriser_to_authorise)|h})</p>
+                <p><a href='${urls.build("case.view_all", dict(view="Rejected"))|h}'>Cases rejected</a> (${len(authoriser_rejected)|h})</p>
+                <p><a href='${urls.build("case.view_all", dict(view="Authorised"))|h}'>Cases authorised</a> (${len(authoriser_authorised)|h})</p>
+            </div>
+
+        </div>
+    % endif
+
     % if current_user.is_case_manager():
         <div class="sidebar-panel">
             <a href="#"><img class="show-hide-sidepanel-up-button" src="${urls.build("images", dict(file='siteimages/up-arrow.png'))|h}" /></a>
@@ -87,6 +104,7 @@
         <div class="sidebar-panel">
         <a href="#"><img class="show-hide-sidepanel-up-button" src="${urls.build("images", dict(file='siteimages/up-arrow.png'))|h}" /></a>
         <a href="#"><img class="show-hide-sidepanel-down-button" src="${urls.build("images", dict(file='siteimages/down-arrow.png'))|h}" /></a>
+
         <h1>Case Requests </h1>
         <div class="show-hide-sidepanel">
             <p><a href='${urls.build("case.add")|h}'>Add new Case</a></p>
@@ -94,12 +112,39 @@
             <h1>Cases Requested</h1>
             <p><a href='${urls.build("user.case_history", dict(user_id=current_user.id))|h}'>View summary</a></p>
 
-            <h2>Cases Created</h2>
-            % for case in requester_created_cases:
-                <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a> (${len(case.tasks)})
+
+            <h2>Cases Awaiting Authorisation</h2>
+            % for case in requester_pending_cases:
+                <p><a href='${urls.build("case.view", dict(case_id=case.id))|h}'>${case.case_name|h}</a> (${len(case.tasks)})
                     % for task in case.tasks:
                         <br /><span class="side_indent">
-                        <a href='${urls.build("task.view", dict(task_id=task.task_name,case_id=task.case.case_name))|h}'>${task.task_name|h}</a> [${task.currentStatus|h}]</span>
+                        <a href='${urls.build("task.view", dict(task_id=task.id,case_id=task.case.id))|h}'>${task.task_name|h}</a> [${task.currentStatus|h}]</span>
+                    % endfor
+                </p>
+            % endfor
+            % if len(requester_pending_cases) == 0:
+                <p>None.</p>
+            % endif
+
+            <h2>Cases Rejected</h2>
+            % for case in requester_rejected_cases:
+                <p><a href='${urls.build("case.view", dict(case_id=case.id))|h}'>${case.case_name|h}</a> (${len(case.tasks)})
+                    % for task in case.tasks:
+                        <br /><span class="side_indent">
+                        <a href='${urls.build("task.view", dict(task_id=task.id,case_id=task.case.id))|h}'>${task.task_name|h}</a> [${task.currentStatus|h}]</span>
+                    % endfor
+                </p>
+            % endfor
+            % if len(requester_rejected_cases) == 0:
+                <p>None.</p>
+            % endif
+
+            <h2>Cases Created</h2>
+            % for case in requester_created_cases:
+                <p><a href='${urls.build("case.view", dict(case_id=case.id))|h}'>${case.case_name|h}</a> (${len(case.tasks)})
+                    % for task in case.tasks:
+                        <br /><span class="side_indent">
+                        <a href='${urls.build("task.view", dict(task_id=task.id,case_id=task.case.id))|h}'>${task.task_name|h}</a> [${task.currentStatus|h}]</span>
                     % endfor
                 </p>
             % endfor
@@ -107,12 +152,14 @@
                 <p>None.</p>
             % endif
 
+            <h1>Active Cases</h1>
+
             <h2>Cases Opened</h2>
             % for case in requester_opened_cases:
-                <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a> (${len(case.tasks)})
+                <p><a href='${urls.build("case.view", dict(case_id=case.id))|h}'>${case.case_name|h}</a> (${len(case.tasks)})
                     % for task in case.tasks:
                         <br /><span class="side_indent">
-                        <a href='${urls.build("task.view", dict(task_id=task.task_name,case_id=task.case.case_name))|h}'>${task.task_name|h}</a> [${task.currentStatus|h}]</span>
+                        <a href='${urls.build("task.view", dict(task_id=task.id,case_id=task.case.id))|h}'>${task.task_name|h}</a> [${task.currentStatus|h}]</span>
                     % endfor
                 </p>
             % endfor
@@ -122,10 +169,10 @@
 
             <h2>Cases Closed</h2>
             % for case in requester_closed_cases:
-                <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a> (${len(case.tasks)})
+                <p><a href='${urls.build("case.view", dict(case_id=case.id))|h}'>${case.case_name|h}</a> (${len(case.tasks)})
                     % for task in case.tasks:
                         <br /><span class="side_indent">
-                        <a href='${urls.build("task.view", dict(task_id=task.task_name,case_id=task.case.case_name))|h}'>${task.task_name|h}</a> [${task.currentStatus|h}]</span>
+                        <a href='${urls.build("task.view", dict(task_id=task.id,case_id=task.case.id))|h}'>${task.task_name|h}</a> [${task.currentStatus|h}]</span>
                     % endfor
                 </p>
             % endfor
@@ -135,10 +182,10 @@
 
             <h2>Cases Archived</h2>
             % for case in requester_archived_cases:
-                <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a> (${len(case.tasks)})
+                <p><a href='${urls.build("case.view", dict(case_id=case.id))|h}'>${case.case_name|h}</a> (${len(case.tasks)})
                     % for task in case.tasks:
                         <br /><span class="side_indent">
-                        <a href='${urls.build("task.view", dict(task_id=task.task_name,case_id=task.case.case_name))|h}'>${task.task_name|h}</a> [${task.currentStatus|h}]</span>
+                        <a href='${urls.build("task.view", dict(task_id=task.id,case_id=task.case.id))|h}'>${task.task_name|h}</a> [${task.currentStatus|h}]</span>
                     % endfor
                 </p>
             % endfor
@@ -167,9 +214,9 @@
                     <% tasks = [task for task in case.tasks if current_user in task.investigators and task.status == task_statuses['start']] %>
                     % if len(tasks) > 0:
                     <% inv_flag = inv_flag + 1 %>
-                    <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a> (${len(tasks)})
+                    <p><a href='${urls.build("case.view", dict(case_id=case.id))|h}'>${case.case_name|h}</a> (${len(tasks)})
                         % for task in tasks:
-                            <br /><span class="side_indent"><a href='${urls.build("task.view", dict(task_id=task.task_name,case_id=task.case.case_name))|h}'>${task.task_name|h}</a></span>
+                            <br /><span class="side_indent"><a href='${urls.build("task.view", dict(task_id=task.id,case_id=task.case.id))|h}'>${task.task_name|h}</a></span>
                         % endfor
                     </p>
                     % endif
@@ -184,9 +231,9 @@
                     <% tasks = [task for task in case.tasks if current_user in task.investigators and task.status == task_statuses['progress']] %>
                     % if len(tasks) > 0:
                     <% inv_flag = inv_flag + 1 %>
-                    <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a> (${len(tasks)})
+                    <p><a href='${urls.build("case.view", dict(case_id=case.id))|h}'>${case.case_name|h}</a> (${len(tasks)})
                         % for task in tasks:
-                            <br /><span class="side_indent"><a href='${urls.build("task.view", dict(task_id=task.task_name,case_id=task.case.case_name))|h}'>${task.task_name|h}</a></span>
+                            <br /><span class="side_indent"><a href='${urls.build("task.view", dict(task_id=task.id,case_id=task.case.id))|h}'>${task.task_name|h}</a></span>
                         % endfor
                     </p>
                     % endif
@@ -201,9 +248,9 @@
                     <% tasks = [task for task in case.tasks if current_user in task.investigators and task.status == task_statuses['deliver']] %>
                     % if len(tasks) > 0:
                     <% inv_flag = inv_flag + 1 %>
-                    <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a> (${len(tasks)})
+                    <p><a href='${urls.build("case.view", dict(case_id=case.id))|h}'>${case.case_name|h}</a> (${len(tasks)})
                         % for task in tasks:
-                            <br /><span class="side_indent"><a href='${urls.build("task.view", dict(task_id=task.task_name,case_id=task.case.case_name))|h}'>${task.task_name|h}</a></span>
+                            <br /><span class="side_indent"><a href='${urls.build("task.view", dict(task_id=task.id,case_id=task.case.id))|h}'>${task.task_name|h}</a></span>
                         % endfor
                     </p>
                     % endif
@@ -218,9 +265,9 @@
                     <% tasks = [task for task in case.tasks if current_user in task.QAs and task.status in qaRoles] %>
                     % if len(tasks) > 0:
                     <% inv_flag = inv_flag + 1 %>
-                    <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a> (${len(tasks)})
+                    <p><a href='${urls.build("case.view", dict(case_id=case.id))|h}'>${case.case_name|h}</a> (${len(tasks)})
                         % for task in tasks:
-                            <br /><span class="side_indent"><a href='${urls.build("task.view", dict(task_id=task.task_name,case_id=task.case.case_name))|h}'>${task.task_name|h}</a></span>
+                            <br /><span class="side_indent"><a href='${urls.build("task.view", dict(task_id=task.id,case_id=task.case.id))|h}'>${task.task_name|h}</a></span>
                         % endfor
                     </p>
                     % endif
@@ -235,9 +282,9 @@
                     <% tasks = [task for task in case.tasks if current_user in task.investigators and task.status in qaRoles] %>
                     % if len(tasks) > 0:
                     <% inv_flag = inv_flag + 1 %>
-                    <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>${case.case_name|h}</a> (${len(tasks)})
+                    <p><a href='${urls.build("case.view", dict(case_id=case.id))|h}'>${case.case_name|h}</a> (${len(tasks)})
                         % for task in tasks:
-                            <br /><span class="side_indent"><a href='${urls.build("task.view", dict(task_id=task.task_name,case_id=task.case.case_name))|h}'>${task.task_name|h}</a></span>
+                            <br /><span class="side_indent"><a href='${urls.build("task.view", dict(task_id=task.id,case_id=task.case.id))|h}'>${task.task_name|h}</a></span>
                         % endfor
                     </p>
                     % endif

@@ -24,8 +24,7 @@
             ${forms.formTextField("Middle Name", "middlename", "middlename", "form_label", "input_long", required=False)}
             ${forms.formTextField("Surname", "surname", "surname", "form_label", "input_long")}
             ${forms.formTextField("Job Title", "job_title", "job_title", "form_label", "input_long")}
-            ${forms.formTextField("Team", "team", "team", "form_label", "input_long")}
-            ${forms.formTextField("Department", "department", "department", "form_label", "input_long")}
+            ${forms.formSelectBox("Team & Department", "team", "team", "form_label", "input_long", teams, please_select=True)}
             ${forms.formTextField("Telephone Number", "telephone", "telephone", "form_label", "input_long", required=False)}
             ${forms.formTextField("Alternative Telephone Number", "alt_telephone", "alt_telephone", "form_label", "input_long", required=False)}
             ${forms.formTextField("Fax", "fax", "fax", "form_label", "input_long", required=False)}

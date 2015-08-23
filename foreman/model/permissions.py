@@ -1,6 +1,5 @@
 from userModel import UserRoles
-from caseModel import CaseStatus, TaskStatus
-
+from caseModel import CaseStatus, TaskStatus, ForemanOptions
 
 class BaseChecker(object):
     def check(self, user, obj):
@@ -151,6 +150,28 @@ class QAForCaseChecker(BaseChecker):
         return False
 
 
+class AuthoriserForCaseChecker(BaseChecker):
+    def check(self, user, case):
+        authoriser = case.authoriser
+        if authoriser and user.id == authoriser.id:
+                return True
+        return False
+
+
+class AuthoriserForTaskChecker(BaseChecker):
+    def check(self, user, task):
+        authoriser = task.case.authoriser
+        options = ForemanOptions.get_options()
+        if options.auth_view_tasks and authoriser and user.id == authoriser.id:
+                return True
+        return False
+
+
+class AuthoriserChecker(BaseChecker):
+    def check(self, user, obj):
+        return UserRoles.check_user_has_active_role(user, UserRoles.AUTH)
+
+
 class QAChecker(BaseChecker):
     def check(self, user, obj):
         return UserRoles.check_user_has_active_role(user, UserRoles.QA)
@@ -189,6 +210,18 @@ class RequesterForEvidenceChecker(BaseChecker):
         else:
             return False
 
+
+class AuthoriserForEvidenceChecker(BaseChecker):
+    def check(self, user, evidence):
+        if evidence.case_id is not None:
+            authoriser = evidence.case.authoriser
+            options = ForemanOptions.get_options()
+            if options.auth_view_evidence and authoriser and user.id == authoriser.id:
+                return True
+            return False
+        return False
+
+
 class PrivateEvidenceChecker(BaseChecker):
     def check(self, user, evidence):
         if evidence.case_id is not None:
@@ -212,22 +245,61 @@ class ArchivedTaskChecker(BaseChecker):
         return task.case.status == CaseStatus.ARCHIVED
 
 
-class ArchivedEvidenceChecker(BaseChecker):
-    def check(self, user, evidence):
-        if evidence.case_id is not None:
-            return evidence.case.status == CaseStatus.ARCHIVED
+class ArchivedCaseChecker(BaseChecker):
+    def check(self, user, case):
+        if case:
+            return case.status == CaseStatus.ARCHIVED
         else:
             return False
 
 
-class ArchivedCaseChecker(BaseChecker):
-    def check(self, user, case):
-        return case.status == CaseStatus.ARCHIVED
-
-
 class ClosedCaseChecker(BaseChecker):
     def check(self, user, case):
-        return case.status == CaseStatus.CLOSED
+        if case:
+            return case.status == CaseStatus.CLOSED
+        else:
+            return False
+
+
+class RejectedCaseChecker(BaseChecker):
+    def check(self, user, case):
+        if case:
+            return case.status == CaseStatus.REJECTED
+        else:
+            return False
+
+
+class NotApprovedCaseChecker(BaseChecker):
+    def check(self, user, case):
+        if case:
+            return case.status == CaseStatus.PENDING
+        else:
+            return False
+
+
+class CaseEditableChecker(BaseChecker):
+    def check(self, user, case):
+        return ArchivedCaseChecker().check(user, case) or RejectedCaseChecker().check(user, case) or \
+               NotApprovedCaseChecker().check(user, case)
+
+
+class TaskEditableChecker(BaseChecker):
+    def check(self, user, task):
+        return ArchivedCaseChecker().check(user, task.case) or RejectedCaseChecker().check(user, task.case) or \
+               NotApprovedCaseChecker().check(user, task.case)
+
+
+class EvidenceEditableChecker(BaseChecker):
+    def check(self, user, evidence):
+        return ArchivedCaseChecker().check(user, evidence.case) or RejectedCaseChecker().check(user, evidence.case) or \
+               NotApprovedCaseChecker().check(user, evidence.case)
+
+
+class CaseApprovedChecker(BaseChecker):
+    def check(self, user, case):
+        if case.status in CaseStatus.approved_statuses:
+            return True
+        return False
 
 
 class Not(BaseChecker):
@@ -267,8 +339,12 @@ class And(BaseChecker):
 
 permissions = {
     ('Case', 'admin'): AdminChecker(),
-    ('Case', 'view-all'): Or(AdminChecker(), InvestigatorChecker(), QAChecker(), CaseManagerChecker()),
-    ('Case', 'edit'): And(Or(AdminChecker(), CaseManagerForCaseChecker()), Not(ArchivedCaseChecker())),
+    ('Case', 'view-all'): Or(AdminChecker(), InvestigatorChecker(), QAChecker(), CaseManagerChecker(),
+                             RequesterChecker(), AuthoriserChecker()),
+    ('Case', 'edit'): And(Or(AdminChecker(),
+                             And(CaseManagerForCaseChecker(), CaseApprovedChecker()),
+                             And(RequesterForCaseChecker(), RejectedCaseChecker())),
+                          Not(ArchivedCaseChecker())),
     ('Case', 'close'): And(
                         Or(AdminChecker(),
                             CaseManagerForCaseChecker()),
@@ -277,25 +353,33 @@ permissions = {
                                 Not(ClosedCaseChecker())))),
     ('Case', 'view'): Or(
                         AdminChecker(),
+                        AuthoriserForCaseChecker(),
                         And(
+                            CaseApprovedChecker(),
                             Or(CaseManagerChecker(),
                                 InvestigatorChecker(),
                                 QAChecker(),
                                 RequesterForCaseChecker()),
                             Not(PrivateCaseChecker())),
                         And(
+                            CaseApprovedChecker(),
                             Or(InvestigatorForCaseChecker(),
                                 QAForCaseChecker(),
                                 RequesterForCaseChecker(),
                                 CaseManagerForCaseChecker()),
-                            PrivateCaseChecker())),
+                            PrivateCaseChecker()),
+                        And(
+                            Not(CaseApprovedChecker()), RequesterForCaseChecker())),
     ('Case', 'add'): Or(AdminChecker(), CaseManagerChecker(), RequesterChecker()),
-    ('Task', 'edit'): And(Or(AdminChecker(), CaseManagerForTaskChecker()), Not(ArchivedTaskChecker())),
+    ('Case', 'authorise'): AuthoriserForCaseChecker(),
+    ('Case', 'report'): AdminChecker(),
+    ('Task', 'edit'): And(Or(AdminChecker(), CaseManagerForTaskChecker()), Not(TaskEditableChecker())),
     ('Task', 'close'): And(Or(AdminChecker(), CaseManagerForTaskChecker()), Not(ArchivedTaskChecker())),
     ('Task', 'view-all'): Or(AdminChecker(), InvestigatorChecker(), QAChecker(), CaseManagerChecker()),
     ('Task', 'view-qas'): Or(AdminChecker(), InvestigatorChecker(), QAChecker(), CaseManagerChecker()),
     ('Task', 'view'): Or(
                         RequesterForTaskChecker(),
+                        AuthoriserForTaskChecker(),
                         AdminChecker(),
                         And(
                             Or(CaseManagerChecker(),
@@ -307,19 +391,21 @@ permissions = {
                                 QAForCaseChecker(),
                                 CaseManagerForTaskChecker()),
                             PrivateTaskChecker())),
-    ('Case', 'add-task'): Or(AdminChecker(), CaseManagerForCaseChecker(), RequesterForCaseChecker()),
-    ('Task', 'work'): And(Or(AdminChecker(), CompleteInvestigationForTaskChecker()), Not(ArchivedTaskChecker())),
+    ('Case', 'add-task'): And(Or(AdminChecker(), CaseManagerForCaseChecker(), RequesterForCaseChecker()),
+                              Not(CaseEditableChecker())),
+    ('Task', 'work'): And(Or(AdminChecker(), CompleteInvestigationForTaskChecker()), Not(TaskEditableChecker())),
     ('Task', 'add_file'): And(Or(AdminChecker(), CompleteInvestigationForTaskChecker(),
-                                    CaseManagerForTaskChecker()), Not(ArchivedTaskChecker())),
+                                    CaseManagerForTaskChecker()), Not(TaskEditableChecker())),
     ('Task', 'delete_file'): And(Or(AdminChecker(), CompleteInvestigationForTaskChecker(),
-                                    CaseManagerForTaskChecker()), Not(ArchivedTaskChecker())),
-    ('Task', 'assign-self'): And(Or(AdminChecker(), StartInvestigationForTaskChecker()), Not(ArchivedTaskChecker())),
-    ('Task', 'assign-other'): And(Or(AdminChecker(), CaseManagerForTaskChecker()), Not(ArchivedTaskChecker())),
-    ('Task', 'qa'): And(Or(AdminChecker(), CompleteQAForTaskChecker()), Not(ArchivedTaskChecker())),
+                                    CaseManagerForTaskChecker()), Not(TaskEditableChecker())),
+    ('Task', 'assign-self'): And(Or(AdminChecker(), StartInvestigationForTaskChecker()), Not(TaskEditableChecker())),
+    ('Task', 'assign-other'): And(Or(AdminChecker(), CaseManagerForTaskChecker()), Not(TaskEditableChecker())),
+    ('Task', 'qa'): And(Or(AdminChecker(), CompleteQAForTaskChecker()), Not(TaskEditableChecker())),
     ('Evidence', 'view-all'): Or(AdminChecker(), InvestigatorChecker(), QAChecker(), CaseManagerChecker()),
     ('Evidence', 'view'): Or(
                         AdminChecker(),
                         RequesterForEvidenceChecker(),
+                        AuthoriserForEvidenceChecker(),
                         And(
                             Or(CaseManagerChecker(),
                                 InvestigatorChecker(),
@@ -331,14 +417,14 @@ permissions = {
                                 CaseManagerForEvidenceChecker()),
                             PrivateTaskChecker())),
     ('Evidence', 'add_file'): And(Or(AdminChecker(), InvestigatorForEvidenceChecker(), QAForEvidenceChecker(),
-                                    CaseManagerForEvidenceChecker()), Not(ArchivedEvidenceChecker())),
+                                    CaseManagerForEvidenceChecker()), Not(EvidenceEditableChecker())),
     ('Evidence', 'delete_file'): And(Or(AdminChecker(), InvestigatorForEvidenceChecker(), QAForEvidenceChecker(),
-                                    CaseManagerForTaskChecker()), Not(ArchivedEvidenceChecker())),
+                                    CaseManagerForTaskChecker()), Not(EvidenceEditableChecker())),
     ('Evidence', 'associate'): And(Or(AdminChecker(), CaseManagerChecker(), InvestigatorChecker()),
-                                   Not(ArchivedEvidenceChecker())),
+                                   Not(EvidenceEditableChecker())),
     ('Evidence', 'dis-associate'): And(Or(AdminChecker(), CaseManagerForEvidenceChecker(),
-                                          InvestigatorForEvidenceChecker()), Not(ArchivedEvidenceChecker())),
-    ('Evidence', 'remove'): And(Or(AdminChecker(), CaseManagerChecker()), Not(ArchivedEvidenceChecker())),
+                                          InvestigatorForEvidenceChecker()), Not(EvidenceEditableChecker())),
+    ('Evidence', 'remove'): And(Or(AdminChecker(), CaseManagerChecker()), Not(EvidenceEditableChecker())),
     ('Evidence', 'add'): And(Or(AdminChecker(), InvestigatorChecker(), CaseManagerChecker())),
     ('Evidence', 'edit'): And(
                             Or(AdminChecker(),
@@ -352,14 +438,15 @@ permissions = {
                                     QAForEvidenceChecker(),
                                     CaseManagerForEvidenceChecker()),
                                 PrivateTaskChecker())),
-                            Not(ArchivedEvidenceChecker())),
+                            Not(EvidenceEditableChecker())),
     ('Evidence', 'check-in-out'): And(
                             Or(AdminChecker(),
                                 CaseManagerForEvidenceChecker(),
                                 InvestigatorForEvidenceChecker(),
                                 QAForEvidenceChecker()),
-                            Not(ArchivedEvidenceChecker())),
-    ('Case', 'add-evidence'): Or(AdminChecker(), CaseManagerForCaseChecker(), InvestigatorForCaseChecker()),
+                            Not(EvidenceEditableChecker())),
+    ('Case', 'add-evidence'): And(Or(AdminChecker(), CaseManagerForCaseChecker(), InvestigatorForCaseChecker()),
+                                 Not(CaseEditableChecker())),
     ('User', 'edit-password'): Or(AdminChecker(), UserIsCurrentUserChecker()),
     ('User', 'edit'): Or(AdminChecker(), UserIsCurrentUserChecker()),
     ('User', 'edit-roles'): AdminChecker(),

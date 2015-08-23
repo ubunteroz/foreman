@@ -2,7 +2,15 @@
 <%namespace file="/utils/sidebars.html" name="sidebars" />
 
 <%def name="javascripts()" filter="trim">
-
+    <link rel="StyleSheet" href="${urls.build('css', dict(file='jquery-ui-1.10.4.custom.css'))|h}" type="text/css" />
+    <script src="${urls.build('javascript', dict(file='jquery-1.10.2.js'))|h}"></script>
+    <script src="${urls.build('javascript', dict(file='jquery-ui-1.10.4.custom.min.js'))|h}"></script>
+    <script>
+        $(function() {
+        $( "#tabs" ).tabs();
+        $( "#tabs" ).tabs({ active: 0});
+        });
+    </script>
 </%def>
 
 
@@ -17,7 +25,26 @@
     <h1>Profile for ${user.fullname|h}</h1>
     % endif
 
+    % if check_perms(user, 'view-changes') or check_perms(user, 'view-active-roles'):
+    <div id="tabs">
+        <ul>
+        <li><a href="#tabs-1">View Details</a></li>
+        % if check_perms(user, 'view-changes'):
+            <li><a href="#tabs-2">View Changes Made</a></li>
+        % endif
+        % if check_perms(user, 'view-active-roles'):
+            <li><a href="#tabs-3">View Active Roles</a></li>
+        % endif
+        </ul>
+
+        <div id="tabs-1" class="forensics_work_contents">
+    % endif
+
+
     <h2>Basic Details</h2>
+
+     <img src="${urls.build("files", dict(file='user_profile_photos/' + user.photo))|h}" class="profile_pic"/>
+
     <table class="userdetails">
         <tr>
             <th>Username</th>
@@ -25,8 +52,14 @@
         </tr>
         % if user.validated is False:
         <tr>
-            <th>Validated</th>
-            <td><a href='${urls.build("general.admin", dict(active_tab=4))|h}'>False</a></td>
+
+                % if current_user.is_admin():
+                    <th><span class="highlight">Validated</span></th>
+                    <td><a href='${urls.build("general.admin", dict(active_tab=5))|h}'>False</a></td>
+                % else:
+                    <th>Validated</th>
+                    <td>False</td>
+                % endif
         </tr>
         % endif
         <tr>
@@ -49,13 +82,25 @@
         </tr>
         <tr>
             <th>Team</th>
-            <td>${user.team|h}</td>
+            <td><a href="${urls.build('user.view_team', dict(team_id=user.team.id,department_id=user.team.department.id))|h}">${user.team|h}</a></td>
         </tr>
         <tr>
             <th>Department</th>
-            <td>${user.department|h}</td>
+            <td><a href="${urls.build('user.view_department', dict(department_id=user.team.department.id))|h}">${user.department|h}</a></td>
+        </tr>
+        <tr>
+            <th>Active user</th>
+            <td>
+                % if user.active:
+                    Yes
+                % else:
+                    No
+                % endif
+            </td>
         </tr>
     </table>
+
+    <div style="clear:both"></div>
 
     <h2>Contact Details</h2>
     <table class="userdetails">
@@ -112,88 +157,124 @@
     <p><a href="${urls.build("user.edit", dict(user_id=user.id, tab="edit_roles"))|h}">Edit Role Groups</a></p>
     % endif
 
+    % if check_perms(user, 'view-changes') or check_perms(user, 'view-active-roles'):
+        </div>
+    % endif
+
     % if check_perms(user, 'view-changes'):
-        % if len(user_changes_history) > 0:
-        <h2>Changes Made</h2>
-        <table>
-            <tr>
-                <th>Date</th>
-                <th>Item Changed</th>
-                <th>Change Details</th>
-            </tr>
-            % for history in user_changes_history:
+        <div id="tabs-2" class="forensics_work_contents">
+            <h2>Changes Made</h2>
+            % if len(user_changes_history) > 0:
+            <table class="history">
                 <tr>
-                    <td>${history['date']|h}</td>
-                    <td>
-                        ${history['object'][0]|h}: ${history['object'][1]|h}
-                    </td>
-                    <td>
-                        % if not isinstance(history['change_log'], basestring):
-                        % for entry, change in history['change_log'].iteritems():
-                            % if change[0] == "ADD":
-                                % if history['object'][0] == "Role":
-                                The ${entry|h} Role was assigned to ${change[1]|h} <br/>
+                    <th>Date</th>
+                    <th>Item Changed</th>
+                    <th>Change Details</th>
+                </tr>
+                % for history in user_changes_history:
+                    <tr>
+                        <td>${history['date']|h}</td>
+                        <td>
+                            ${history['object'][0]|h}:
+                            % if history['object'][0] == "Case":
+                                <a href="${urls.build("case.view", dict(case_id=history['object'][2]))|h}">${history['object'][1]|h}</a>
+                            % elif history['object'][0] == "Task":
+                                <a href="${urls.build("task.view", dict(case_id=history['object'][3],task_id=history['object'][2]))|h}">${history['object'][1]|h}</a>
+                            % elif history['object'][0] == "User":
+                                <a href="${urls.build("user.view", dict(user_id=history['object'][2]))|h}">${history['object'][1]|h}</a>
+                            % elif history['object'][0] == "Role":
+                                <a href="${urls.build("user.view", dict(user_id=history['object'][2]))|h}">${history['object'][1]|h}</a>
+                            % elif history['object'][0] == "Evidence":
+                                <% evi_case = get_evidence_case(history['object'][2]).case %>
+                                % if evi_case is not None:
+                                    <a href="${urls.build("evidence.view", dict(case_id=evi_case.id,evidence_id=history['object'][2]))|h}">${history['object'][1]|h}</a>
                                 % else:
-                                The ${entry|h} was assigned to ${change[1]|h} <br/>
-                                % endif
-                            % elif change[0] == "DEL":
-                                % if history['object'][0] == "Role":
-                                ${change[1]|h} was removed from the ${entry|h} Role<br/>
-                                % else:
-                                ${change[1]|h} was removed from ${entry|h}<br/>
+                                    <a href="${urls.build("evidence.view_caseless", dict(evidence_id=history['object'][2]))|h}">${history['object'][1]|h}</a>
                                 % endif
                             % else:
-                                The ${entry|h} changed from ${change[0]|h} to ${change[1]|h} <br/>
+                                ${history['object'][1]|h}
                             % endif
-                        % endfor
-                        % else:
-                            ${history['change_log']|h}
-                        % endif
-                    </td>
-                </tr>
-            % endfor
-        </table>
-        % endif
+
+                        </td>
+                        <td>
+                            % if not isinstance(history['change_log'], basestring):
+                                % for entry, change in history['change_log'].iteritems():
+                                    % if change[0] == "ADD":
+                                        % if history['object'][0] == "Role":
+                                        The <i>${entry|h}</i> role was assigned to ${change[1]|h} <br/>
+                                        % else:
+                                        The <i>${entry|h}</i> was assigned to ${change[1]|h} <br/>
+                                        % endif
+                                    % elif change[0] == "DEL":
+                                        % if history['object'][0] == "Role":
+                                        ${change[1]|h} was removed from the <i>${entry|h}</i> role<br/>
+                                        % else:
+                                        ${change[1]|h} was removed from <i>${entry|h}</i><br/>
+                                        % endif
+                                    % elif change[0] == "LINK":
+                                        A link to case <span class="change">${change[1]|h}</span> was added<br/>
+                                    % elif change[0] == "UNLINK":
+                                        The link to case <span class="change">${change[1]|h}</span> was removed<br/>
+                                    % else:
+                                        The <i>${entry|h}</i> changed from
+                                        <span class="change">${change[0]|h}</span>
+                                        to
+                                        <span class="change">${change[1]|h}</span><br/>
+                                    % endif
+                                % endfor
+                            % else:
+                                ${history['change_log']|h}
+                            % endif
+                        </td>
+                    </tr>
+                % endfor
+            </table>
+            % else:
+                <p>No changes made yet. </p>
+            % endif
+        </div>
     % endif
 
     % if check_perms(user, 'view-active-roles'):
-        % if len(cases_worked_on) > 0:
-        <h3>Active roles</h3>
-
-        <table>
-            <tr>
-                <th>Case</th>
-                <th>Case Roles</th>
-                <th>Task</th>
-                <th>Task Roles</th>
-            </tr>
-            % for case in cases_worked_on:
-                % for x, task in enumerate(case.tasks):
+        <div id="tabs-3" class="forensics_work_contents">
+            <h2>Active roles</h2>
+            <p>Roles in cases that are not currently closed or archived.</p>
+            % if len(cases_working_on) > 0:
+            <table class="history">
                 <tr>
-                    % if x == 0:
-                    <td rowspan="${len(case.tasks)}">${case.case_name|h}</td>
-                    <td rowspan="${len(case.tasks)}">
-                        % if len(case.get_user_roles(user.id)) > 0:
-                            % for roles in case.get_user_roles(user.id):
-                            ${roles.role|h}
-                            % endfor
-                        % endif
-                    </td>
-                    % endif
-
-                    <td>${task.task_name|h}</td>
-                    <td>
-                        % if len(task.get_user_roles(user.id)) > 0:
-                            % for roles in task.get_user_roles(user.id):
-                            ${roles.role|h}
-                            % endfor
-                        % endif
-                    </td>
+                    <th style="min-width:150px">Case / Task</th>
+                    <th style="min-width:150px">Status</th>
+                    <th style="min-width:250px">Role</th>
                 </tr>
+                % for case in cases_working_on:
+                    <tr>
+                        % if len(case.get_user_roles(user.id)) > 0:
+                        <td>Case: <a href="${urls.build("case.view", dict(case_id=case.id))|h}">${case.case_name|h}</a></td>
+                        <td>${case.status|h}</td>
+                        <td>
+                            % for roles in case.get_user_roles(user.id):
+                                ${roles.role|h}
+                            % endfor
+                        </td>
+                        % endif
+                    </tr>
+                    % for x, task in enumerate(case.tasks):
+                        % if len(task.get_user_roles(user.id)) > 0:
+                            <tr>
+                                <td>Task: <a href="${urls.build("task.view", dict(case_id=task.case.id, task_id=task.id))|h}">${task.task_name|h}</a></td>
+                                <td>${task.status|h}</td>
+                                <td>
+                                    ${", ".join(roles.role for roles in task.get_user_roles(user.id))|h}
+                                </td>
+                            </tr>
+                        % endif
+                    % endfor
                 % endfor
-            % endfor
-        </table>
-        % endif
-   % endif
-
+            </table>
+            % else:
+                <p>No active roles yet.</p>
+            % endif
+        </div>
+    % endif
+    </div>
 </div>

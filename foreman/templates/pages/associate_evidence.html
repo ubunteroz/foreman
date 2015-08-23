@@ -18,8 +18,8 @@
     <div class="success">
         <h1>Success!</h1>
         <p>${evidence.reference|h} has successfully been associated with ${evidence.case.case_name|h}.</p>
-        <p><a href="${urls.build('evidence.view', dict(evidence_id=evidence.id, case_id=evidence.case.case_name))|h}">Back to Evidence</a> |
-       <a href="${urls.build('case.view', dict(case_id=evidence.case.case_name))|h}">Back to Case</a></p>
+        <p><a href="${urls.build('evidence.view', dict(evidence_id=evidence.id, case_id=evidence.case.id))|h}">Back to Evidence</a> |
+       <a href="${urls.build('case.view', dict(case_id=evidence.case.id))|h}">Back to Case</a></p>
     </div>
     % endif
 

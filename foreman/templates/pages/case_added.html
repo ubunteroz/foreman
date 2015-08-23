@@ -13,6 +13,6 @@
     <div class="confirmclosurebox">
         <p>Your case has been assigned the name <b>${case.case_name|h}</b>. A case manager will be in contact
         to discuss your case shortly. </p>
-        <p><a href='${urls.build("case.view", dict(case_id=case.case_name))|h}'>View your case here.</a></p>
+        <p><a href='${urls.build("case.view", dict(case_id=case.id))|h}'>View your case here.</a></p>
     </div>
 </div>

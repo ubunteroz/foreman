@@ -1,5 +1,6 @@
 ﻿<%inherit file="/base/base.html"/>
 <%namespace file="/utils/sidebars.html" name="sidebars" />
+<%namespace file="/utils/format.html" name="formatting" />
 
 <%def name="javascripts()" filter="trim">
 
@@ -19,15 +20,13 @@
 
     <h1>Evidence ${evidence.reference|h}</h1>
 
-    <h2>Details</h2>
-
     % if check_perms(evidence, 'edit'):
             <p><a href='${urls.build("evidence.edit", dict(evidence_id=evidence.id))|h}'>Edit Evidence</a>
     % endif
 
     % if evidence.case_id is not None:
         % if check_perms(evidence, 'dis-associate'):
-            | <a href='${urls.build("evidence.disassociate", dict(case_id=evidence.case.case_name, evidence_id=evidence.id))|h}'>Remove Evidence from case</a></p>
+            | <a href='${urls.build("evidence.disassociate", dict(case_id=evidence.case.id, evidence_id=evidence.id))|h}'>Remove Evidence from case</a></p>
         % else:
             </p>
         % endif
@@ -42,98 +41,9 @@
         % endif
     % endif
 
-    <table>
-        % if evidence.case_id is not None:
-         <tr>
-            <td>Case</td>
-            <td><a href='${urls.build("case.view", dict(case_id=evidence.case.case_name))|h}'>${evidence.case.case_name|h}</a>
-            % if evidence.case.status == "Archived":
-                    <span class="archived">[${evidence.case.status|h}]</span>
-            % endif
+    <h2>Details</h2>
 
-            % if evidence.case.private:
-                    <span class="archived">[Private Case]</span>
-                    <img alt="lock icon" src="${urls.build("images", dict(file='siteimages/icons/Keychain.png'))|h}" width="20px" />
-            % endif
-            </td>
-        </tr>
-        % endif
-        <tr>
-            <td>Date Evidence Added</td>
-            <td>${evidence.date|h}</td>
-        </tr>
-         <tr>
-            <td>Evidence Type</td>
-            <td>${evidence.type|h}</td>
-        </tr>
-         <tr>
-            <td>User who added evidence</td>
-            <td><a href='${urls.build("user.view", dict(user_id=evidence.user.id))|h}'>${evidence.user.fullname|h}</a></td>
-        </tr>
-         <tr>
-            <td>Originator</td>
-            <td>${evidence.originator|h}</td>
-        </tr>
-         <tr>
-            <td>Bag Number</td>
-            <td>${evidence.evidence_bag_number|h}</td>
-        </tr>
-         <tr>
-            <td>Location Seized From</td>
-            <td>${evidence.location|h}</td>
-        </tr>
-         <tr>
-            <td>Current status</td>
-            <td>
-                % if evidence.current_status.check_in == True:
-                In storage
-                % else:
-                Checked out by ${evidence.current_status.user.fullname|h}
-                % endif
-            </td>
-        </tr>
-        <tr>
-            <td>Comments</td>
-            <td>${evidence.comment|h}</td>
-        </tr>
-    </table>
-
-    <h2>Chain of Custody</h2>
-
-    <table>
-        <tr>
-            <th>Record Date</th>
-            <th>User</th>
-            <th>Date of Movement</th>
-            <th>Custodian / Location</th>
-            <th>Action</th>
-            <th>Comment</th>
-            <th>Attachments</th>
-        </tr>
-        % for chain in evidence.user_handled:
-        <tr>
-            <td>${chain.date|h}</td>
-            <td><a href='${urls.build("user.view", dict(user_id=chain.user.id))|h}'>${chain.user.fullname|h}</a></td>
-            <td>${chain.custody_date|h}</td>
-            <td>${chain.custodian|h}</td>
-            <td>
-                % if chain.check_in == True:
-                Evidence checked in
-                % else:
-                Evidence checked out
-                % endif
-            </td>
-            <td>${chain.comment|h}</td>
-            <td>
-                % if chain.custody_receipt is not None:
-                    <a href="${urls.build('evidence_custody_receipts', dict(file=chain.custody_receipt))|h}">${chain.custody_receipt_label|h}</a>
-                % else:
-                    None.
-                % endif
-            </td>
-        </tr>
-        % endfor
-    </table>
+    ${formatting.evidence_details(evidence)}
 
     % if check_perms(evidence, 'check-in-out'):
         <br />

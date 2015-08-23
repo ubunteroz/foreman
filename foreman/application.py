@@ -129,6 +129,7 @@ class Application(object):
         map.add(Rule('/cases/<case_id>/<task_id>/close/', endpoint='task.close'))
         map.add(Rule('/cases/<case_id>/<task_id>/change_status/', endpoint='task.change_status'))
         map.add(Rule('/cases/<case_id>/change_statuses/', endpoint='case.change_task_statuses'))
+        map.add(Rule('/cases/<case_id>/authorise/', endpoint='case.authorise'))
 
         map.add(Rule('/evidence/', endpoint='evidence.view_all'))
         map.add(Rule('/evidence/<evidence_id>/associate/', endpoint='evidence.associate'))
@@ -155,15 +156,23 @@ class Application(object):
         map.add(Rule('/users/edit/<user_id>/', endpoint='user.edit'))
         map.add(Rule('/users/edit_password/<user_id>/', endpoint='user.edit_password'))
 
+        map.add(Rule('/department/<department_id>/', endpoint='user.view_department'))
+        map.add(Rule('/department/<department_id>/team/<team_id>/', endpoint='user.view_team'))
+
         map.add(Rule('/users/<user_id>/case_history/', endpoint='user.case_history'))
 
         map.add(Rule('/reporting/', endpoint='report.report'))
         map.add(Rule('/json/jason_tasks_assigned_to_inv/', endpoint='report.jason_tasks_assigned_to_inv'))
         map.add(Rule('/json/jason_tasks_qaed/', endpoint='report.jason_tasks_qaed'))
 
-        map.add(Rule('/export/<case_id>/<task_id>.pdf', endpoint='export.pdf'))
-        map.add(Rule('/export/<case_id>/<task_id>.rtf', endpoint='export.rtf'))
-        map.add(Rule('/export/<case_id>/<task_id>.csv', endpoint='export.csv'))
+        map.add(Rule('/cases/<case_id>/report.pdf', endpoint='export.case_report_pdf'))
+        map.add(Rule('/cases/<case_id>/report.rtf', endpoint='export.case_report_rtf'))
+        map.add(Rule('/cases/<case_id>/report.html', endpoint='export.case_report_html'))
+        map.add(Rule('/cases/<case_id>/report/', endpoint='export.report'))
+
+        map.add(Rule('/export/<case_id>/<task_id>.pdf', endpoint='export.notes_pdf'))
+        map.add(Rule('/export/<case_id>/<task_id>.rtf', endpoint='export.notes_rtf'))
+        map.add(Rule('/export/<case_id>/<task_id>.csv', endpoint='export.notes_csv'))
 
         map.add(Rule('/cases/<case_id>/<task_id>/uploads/<upload_id>', endpoint='task.view_upload'))
         map.add(Rule('/cases/<case_id>/<task_id>/uploads/<upload_id>/delete/', endpoint='task.delete_upload'))

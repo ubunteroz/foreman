@@ -1,0 +1,23 @@
+﻿## -*- coding: utf-8 -*-
+
+<html>
+<%def name="javascripts()"></%def>
+<%def name="bodyload()"></%def>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=windows-1252" />
+    <link href='http://fonts.googleapis.com/css?family=Nunito:400,300' rel='stylesheet' type='text/css'>
+	<link rel="StyleSheet" href="${urls.build("css", dict(file='style.css'))|h}" type="text/css" />
+	<link rel="icon" type="image/png" href="${urls.build("images", dict(file='site/favicon.png'))|h}" />
+	<title></title>
+</head>
+
+<body ${self.bodyload()}>
+<div id="body">
+
+    <div id="wholemiddle">
+            ${self.body()}
+    </div>
+
+</div>
+</body>
+</html>

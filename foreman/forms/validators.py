@@ -6,7 +6,7 @@ from formencode import validators as v, Invalid
 from formencode.compound import CompoundValidator
 # local imports
 from ..model import User, UserTaskRoles, UserRoles, TaskStatus, Task, CaseStatus, Case, ForemanOptions, TaskType
-from ..model import CaseType, CaseClassification, TaskCategory, CasePriority
+from ..model import CaseType, CaseClassification, TaskCategory, CasePriority, Department, Team, EvidenceType
 from ..utils.utils import session, ROOT_DIR
 
 
@@ -299,6 +299,22 @@ class GetCaseManager(GetUser):
             return None
 
 
+class GetAuthoriser(GetUser):
+    null_value = True
+
+    def getObject(self, user_id):
+        if user_id.isdigit():
+            user = session.query(User).get(int(user_id))
+            if user is not None:
+                for role in user.roles:
+                    if role.role == UserRoles.AUTH:
+                        return user
+                return None
+            return None
+        else:
+            return None
+
+
 class GetTaskStatus(GetObject):
     messages = {
         'invalid': 'Status is invalid.',
@@ -325,11 +341,7 @@ class GetCaseClassification(GetObject):
     allow_null = False
 
     def getObject(self, classification):
-        for ct in CaseClassification.get_classifications():
-            if classification == ct.replace(" ", "").lower():
-                return ct
-        else:
-            return None
+        return CaseClassification.get(classification)
 
 
 class GetPriority(GetObject):
@@ -359,11 +371,7 @@ class GetCaseType(GetObject):
     allow_null = False
 
     def getObject(self, case_type):
-        for ct in CaseType.get_case_types():
-            if case_type == ct.replace(" ", "").lower():
-                return ct
-        else:
-            return None
+        return CaseType.get(case_type)
 
 
 class GetCaseStatus(GetObject):
@@ -414,6 +422,38 @@ class GetCase(GetObject):
             return None
 
 
+class GetDepartment(GetObject):
+    messages = {
+        'invalid': 'Department is invalid.',
+        'null': 'Please select an option.'
+    }
+
+    allow_new = False
+    allow_null = False
+
+    def getObject(self, department):
+        try:
+            return Department.get(int(department))
+        except ValueError:
+            return None
+
+
+class GetTeam(GetObject):
+    messages = {
+        'invalid': 'Team is invalid.',
+        'null': 'Please select an option.'
+    }
+
+    allow_new = False
+    allow_null = False
+
+    def getObject(self, team):
+        try:
+            return Team.get(int(team))
+        except ValueError:
+            return None
+
+
 class GetTaskTypes(GetObject):
     messages = {
         'invalid': 'Task Type is invalid.',
@@ -424,7 +464,10 @@ class GetTaskTypes(GetObject):
     allow_null = False
 
     def getObject(self, task_type):
-        return TaskType.get_type_from_list(task_type)
+        try:
+            return TaskType.get(int(task_type))
+        except ValueError:
+            return None
 
 
 class GetTaskCategory(GetObject):
@@ -437,7 +480,10 @@ class GetTaskCategory(GetObject):
     allow_null = False
 
     def getObject(self, category):
-        return TaskCategory.get_category_from_list(category)
+        try:
+            return TaskCategory.get(int(category))
+        except ValueError:
+            return None
 
 
 class GetEvidenceType(GetObject):
@@ -450,10 +496,9 @@ class GetEvidenceType(GetObject):
     allow_null = False
 
     def getObject(self, evidence_type):
-        for evi in ForemanOptions.get_evidence_types():
-                if evidence_type == evi.replace(" ","").lower():
-                    return evi
-        else:
+        try:
+            return EvidenceType.get(int(evidence_type))
+        except ValueError:
             return None
 
 
@@ -468,6 +513,22 @@ class GetBooleanYesNo(v.UnicodeString):
         if value == "yes":
             return True
         elif value == "no":
+            return False
+        else:
+            raise Invalid(self.message('invalid', state), value, state)
+
+
+class GetBooleanAuthReject(v.UnicodeString):
+    messages = {
+        'null': 'Please select an option.',
+        'invalid': 'Please select Authorised or Rejected.',
+    }
+    allow_null = False
+
+    def _to_python(self, value, state):
+        if value == "Authorised":
+            return True
+        elif value == "Rejected":
             return False
         else:
             raise Invalid(self.message('invalid', state), value, state)
@@ -586,3 +647,10 @@ class UploadNames(Upload):
     }
     folder = path.join(ROOT_DIR, 'static', 'case_names')
     type = 'txt'
+
+
+class UploadProfilePhoto(UploadWithoutStorage):
+    messages = {
+        'invalid': 'An invalid image file was uploaded.'
+    }
+    type = 'image'

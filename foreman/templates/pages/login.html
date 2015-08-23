@@ -15,6 +15,12 @@
                 <p>Your administrator has not yet confirmed your registration. You will not be able to login
                     until this occurs. Please contact your administrator for help. </p>
             </div>
+        % elif active is False:
+            <div class="no_success">
+                <h1>Deactivated Account</h1>
+                <p>Your administrator has deactivated your account. You will not be able to login
+                    until your account is reactivated. Please contact your administrator for help. </p>
+            </div>
         % endif
 
 

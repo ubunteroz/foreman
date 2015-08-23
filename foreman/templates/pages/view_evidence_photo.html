@@ -34,7 +34,7 @@
             <th>Evidence</th>
             <td>
                 % if upload.evidence.case_id is not None:
-                <a href='${urls.build("evidence.view", dict(evidence_id=upload.evidence.id, case_id=upload.evidence.case.case_name))|h}'>${upload.evidence.reference|h}</a>
+                <a href='${urls.build("evidence.view", dict(evidence_id=upload.evidence.id, case_id=upload.evidence.case.id))|h}'>${upload.evidence.reference|h}</a>
                 % else:
                 <a href='${urls.build("evidence.view_caseless", dict(evidence_id=upload.evidence.id))|h}'>${upload.evidence.reference|h}</a>
                 % endif

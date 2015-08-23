@@ -4,27 +4,26 @@ from sqlalchemy import asc, desc
 # local imports
 from baseController import BaseController
 from ..utils.utils import ROOT_DIR, multidict_to_dict, session
-from ..model import Evidence, Case, EvidenceHistory, ForemanOptions, EvidencePhotoUpload
+from ..model import Evidence, Case, EvidenceHistory, ForemanOptions, EvidencePhotoUpload, EvidenceType
 from ..forms.forms import ChainOfCustodyForm, EditEvidenceForm, EditEvidenceQRCodesForm, EvidenceAssociateForm, \
     AddEvidenceForm, AddEvidencePhotoForm
 from ..utils.utils import upload_file
 
 
 class EvidenceController(BaseController):
-
     def _create_task_specific_breadcrumbs(self, evidence, case):
         if case is not None:
             self.breadcrumbs.append({'title': 'Cases', 'path': self.urls.build('case.view_all')})
             self.breadcrumbs.append({'title': case.case_name,
-                                     'path': self.urls.build('case.view', dict(case_id=case.case_name))})
+                                     'path': self.urls.build('case.view', dict(case_id=case.id))})
             self.breadcrumbs.append({'title': evidence.reference,
-                                 'path': self.urls.build('evidence.view', dict(case_id=case.case_name,
-                                                                           evidence_id=evidence.id))})
+                                     'path': self.urls.build('evidence.view', dict(case_id=case.id,
+                                                                                   evidence_id=evidence.id))})
         else:
             self.breadcrumbs.append({'title': "Evidence",
                                      'path': self.urls.build('evidence.view_all')})
             self.breadcrumbs.append({'title': evidence.reference,
-                                 'path': self.urls.build('evidence.view_caseless', dict(evidence_id=evidence.id))})
+                                     'path': self.urls.build('evidence.view_caseless', dict(evidence_id=evidence.id))})
 
     def add_no_case(self):
         return self.add(None)
@@ -41,7 +40,7 @@ class EvidenceController(BaseController):
             self.check_permissions(self.current_user, 'Evidence', 'add')
 
         if self.validate_form(AddEvidenceForm()):
-            evi = Evidence(case, self.form_result['reference'], self.form_result['type'],
+            evi = Evidence(case, self.form_result['reference'], self.form_result['type'].evidence_type,
                            self.form_result['comments'], self.form_result['originator'], self.form_result['location'],
                            self.current_user, self.form_result['bag_num'], self.form_result['qr'])
             session.add(evi)
@@ -50,8 +49,8 @@ class EvidenceController(BaseController):
             evi.add_change(self.current_user)
             return self.custody_in(evi.id, True, initial=True)
         else:
-            evidence_type_options = [(evi.replace(" ", "").lower(), evi) for evi in
-                                     ForemanOptions.get_evidence_types()]
+            evidence_type_options = [(et.id, et.evidence_type) for et in EvidenceType.get_all() if
+                                     et.evidence_type != "Undefined"]
             return self.return_response('pages', 'add_evidence.html', case=case, errors=self.form_error,
                                         evidence_type_options=evidence_type_options)
 
@@ -63,8 +62,8 @@ class EvidenceController(BaseController):
             self.breadcrumbs.append({'title': "Edit", 'path': self.urls.build('evidence.edit',
                                                                               dict(evidence_id=evidence_id))})
             form_type = multidict_to_dict(self.request.args)
-            evidence_type_options = [(evi.replace(" ", "").lower(), evi) for evi in
-                                         ForemanOptions.get_evidence_types()]
+            evidence_type_options = [(et.id, et.evidence_type) for et in EvidenceType.get_all() if
+                                     et.evidence_type != "Undefined"]
             success = False
             active_tab = 0
             default_qr_code_text = evidence.generate_qr_code_text()
@@ -73,7 +72,7 @@ class EvidenceController(BaseController):
                 if self.validate_form(EditEvidenceForm()):
                     evidence.reference = self.form_result['reference']
                     evidence.evidence_bag_number = self.form_result['bag_num']
-                    evidence.type = self.form_result['type']
+                    evidence.type = self.form_result['type'].evidence_type
                     evidence.originator = self.form_result['originator']
                     evidence.comment = self.form_result['comments']
                     evidence.location = self.form_result['location']
@@ -124,7 +123,8 @@ class EvidenceController(BaseController):
                 evidence.add_change(self.current_user)
                 closed = True
 
-            return self.return_response('pages', 'disassociate_evidence.html', evidence=evidence, closed=closed, case=case)
+            return self.return_response('pages', 'disassociate_evidence.html', evidence=evidence, closed=closed,
+                                        case=case)
         else:
             return self.return_404()
 
@@ -134,7 +134,7 @@ class EvidenceController(BaseController):
             self.check_permissions(self.current_user, evidence, 'remove')
             self._create_task_specific_breadcrumbs(evidence, evidence.case)
             self.breadcrumbs.append({'title': "Remove", 'path': self.urls.build('evidence.remove',
-                                                                              dict(evidence_id=evidence_id))})
+                                                                                dict(evidence_id=evidence_id))})
 
             closed = False
             reference = evidence.reference
@@ -167,7 +167,7 @@ class EvidenceController(BaseController):
         self.check_permissions(self.current_user, 'Evidence', 'view-all')
         self.breadcrumbs.append({'title': 'Evidence', 'path': self.urls.build('evidence.view_all')})
 
-        sort_by = multidict_to_dict(self.request.args).get('sort_by','date')
+        sort_by = multidict_to_dict(self.request.args).get('sort_by', 'date')
         evidence = Evidence.get_all_evidence(self.current_user, self.check_permissions)
         if sort_by == "date":
             evidence = sorted(evidence, key=lambda evidence: evidence.date_added, reverse=True)
@@ -218,18 +218,19 @@ class EvidenceController(BaseController):
                                        self.form_result['comments'], self.form_result['attach'],
                                        self.form_result['label'])
                 if evidence.case is not None:
-                    return self.view(evidence.case.case_name, evidence_id)
+                    return self.view(evidence.case.id, evidence_id)
                 else:
                     return self.view_caseless(evidence_id)
             else:
                 self._create_task_specific_breadcrumbs(evidence, evidence.case)
                 if check_in:
                     self.breadcrumbs.append({'title': "Check in evidence",
-                                             'path': self.urls.build('evidence.custody_in', dict(evidence_id=evidence_id))})
+                                             'path': self.urls.build('evidence.custody_in',
+                                                                     dict(evidence_id=evidence_id))})
                 else:
                     self.breadcrumbs.append({'title': "Check out evidence",
                                              'path': self.urls.build('evidence.custody_out',
-                                                                 dict(evidence_id=evidence_id))})
+                                                                     dict(evidence_id=evidence_id))})
                 return self.return_response('pages', 'evidence_custody_change.html', evidence=evidence,
                                             checkin=check_in, errors=self.form_error)
         else:
@@ -294,7 +295,7 @@ class EvidenceController(BaseController):
             session.commit()
             success_upload = True
 
-        return self.return_response('pages', 'add_evidence_photos.html',errors=self.form_error, evidence=evidence,
+        return self.return_response('pages', 'add_evidence_photos.html', errors=self.form_error, evidence=evidence,
                                     success_upload=success_upload, upload=upload)
 
     @staticmethod

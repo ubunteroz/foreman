@@ -2,27 +2,60 @@
 <%namespace file="/utils/sidebars.html" name="sidebars" />
 <%namespace file="/utils/format.html" name="format" />
 
-<%def name="javascripts()" filter="trim"></%def>
+<%def name="javascripts()" filter="trim">
+    <script>
+        $(document).ready(function() {
+            $("#open_cases").click(function(){
+                $("#open_case_options").show();
+            });
+           if ("${case_status|h}" != "Open" && "${case_status|h}" != "Queued"){
+                $("#open_case_options").hide();
+           }
+        });
+    </script>
+</%def>
+
+<%def name="case_option_div_id(opt)">
+    % if case_status == opt:
+        id="highlighted_case_option"
+    % endif
+</%def>
 
 <div id="sidebar">
     ${sidebars.tasks_menu()}
 </div>
 <div id="mainbar">
 
+         <div class="case_options">
+             <h2>Search Options</h2>
+
+            % if current_user.is_authoriser() or current_user.is_requester() or current_user.is_case_manager():
+            <a href='${urls.build("case.view_all", dict(view="Pending"))|h}'><div ${case_option_div_id("Pending")} class="case_option">Pending Authorisation</div></a>
+            <a href='${urls.build("case.view_all", dict(view="Rejected"))|h}'><div ${case_option_div_id("Rejected")} class="case_option">Rejected</div></a>
+            % endif
+
+            % if current_user.is_authoriser():
+                <a href='${urls.build("case.view_all", dict(view="Authorised"))|h}'><div ${case_option_div_id("Authorised")} class="case_option">Authorised</div></a>
+            % endif
+
+            % if current_user.is_worker() or current_user.is_requester():
+
+            <a href='${urls.build("case.view_all", dict(view="Created"))|h}'><div ${case_option_div_id("Created")} class="case_option">Created</div></a>
+            <a href='#' id="open_cases"><div ${case_option_div_id("Open")} ${case_option_div_id("Queued")} class="case_option">Open</div></a>
+            <a href='${urls.build("case.view_all", dict(view="Closed"))|h}'><div ${case_option_div_id("Closed")} class="case_option">Closed</div></a>
+            <a href='${urls.build("case.view_all", dict(view="Archived"))|h}'><div ${case_option_div_id("Archived")} class="case_option">Archived</div></a>
+            <a href='${urls.build("case.view_all", dict(view="All"))|h}'><div ${case_option_div_id("All")} class="case_option">All</div></a>
+            <br/>
+            <div id="open_case_options">
+            <a href='${urls.build("case.view_all", dict(view="Open"))|h}'><div ${case_option_div_id("Open")} class="case_option">All Open</div></a>
+            <a href='${urls.build("case.view_all", dict(view="Queued"))|h}'><div ${case_option_div_id("Queued")} class="case_option">Open with Unassigned Tasks</div></a>
+            </div>
+            % endif
+
+         </div>
+        <div style="clear:both"></div>
+
         <h1>${case_status|h} Cases</h1>
-
-         <p>
-            <a href='${urls.build("case.view_all", dict(view="My"))|h}'>View my cases</a> |
-            <a href='${urls.build("case.view_all", dict(view="Unassigned"))|h}'>View unassigned cases</a> |
-            <a href='${urls.build("case.view_all", dict(view="Created"))|h}'>View created cases</a> |
-            <a href='${urls.build("case.view_all", dict(view="Queued"))|h}'>View open cases with unassigned tasks</a> |
-            <a href='${urls.build("case.view_all", dict(view="Open"))|h}'>View open cases</a> |
-            <a href='${urls.build("case.view_all", dict(view="Closed"))|h}'>View closed cases</a> |
-            <a href='${urls.build("case.view_all", dict(view="Archived"))|h}'>View archived cases</a> |
-            <a href='${urls.build("case.view_all", dict(view="All"))|h}'>View all cases</a>
-         </p>
-
-
         % if len(cases) > 0 :
             ${format.case_table(cases)}
         % else:
@@ -31,7 +64,11 @@
             % elif case_status == "My":
             <p>You do not manage any cases.</p>
             % else:
-            <p>There are no ${case_status.lower()|h} cases.</p>
+                % if current_user.is_case_manager and (case_status == "Pending" or case_status == "Rejected"):
+                    <p>You have no ${case_status.lower()|h} cases.</p>
+                % else:
+                    <p>There are no ${case_status.lower()|h} cases.</p>
+                % endif
             % endif
         % endif
 </div>

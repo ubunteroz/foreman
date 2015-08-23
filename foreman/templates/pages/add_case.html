@@ -25,6 +25,7 @@
         % endif
         ${forms.formTextArea("Case Background", "background", "background", "form_label", "addeditcase" )}
         ${forms.formTextArea("Case Justification", "justification", "justification", "form_label", "addeditcase_short")}
+        ${forms.formSelectBox("Authoriser", "authoriser", "authoriser", "form_label", "input_long", authorisers, please_select=True)}
         ${forms.formTextField("Reference", "reference", "reference", "form_label", "input_long", required=False)}
         ${forms.formSelectBox("Classification", "classification", "classification", "form_label", "input_long", classifications, please_select=True)}
         ${forms.formSelectBox("Priority", "priority", "priority", "form_label", "input_long", priorities, please_select=True)}

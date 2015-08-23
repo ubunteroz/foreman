@@ -1,0 +1,53 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+
+<%def name="javascripts()" filter="trim">
+</%def>
+
+<%def name="team_view(team_list, team_title)" filter="trim">
+    % if len(team_list) > 0:
+        <h2>${team_title|h}</h2>
+        <% team_list = sorted(team_list, key = lambda user: user.job_title) %>
+        <% job = None %>
+        % for user in team_list:
+            % if user.job_title != job:
+                <div style="clear:both"></div>
+                <h3>${user.job_title|h}</h3>
+                <% job = user.job_title %>
+            % endif
+            <div class="team_people">
+                <img src="${urls.build("files", dict(file='user_profile_photos/' + user.photo))|h}" width="100px" />
+
+                <p><a href='${urls.build("user.view", dict(user_id=user.id))|h}'>${user.fullname|h}</a></p>
+            </div>
+
+        % endfor
+        <div style="clear:both"></div>
+    % endif
+</%def>
+
+<div id="sidebar">
+    ${sidebars.user_menu()}
+</div>
+
+<div id="mainbar">
+
+    <h1>${team.team|h}</h1>
+
+
+    <% admins = [user for user in team.team_members if user.is_admin()] %>
+    ${team_view(admins, "Administrators")}
+
+    <% auths = [user for user in team.team_members if user.is_authoriser() and not user.is_admin()] %>
+    ${team_view(auths, "Authorisers")}
+
+    <% requesters = [user for user in team.team_members if user.is_requester() and not user.is_admin()] %>
+    ${team_view(requesters, "Requesters")}
+
+    <% casem = [user for user in team.team_members if user.is_case_manager() and not user.is_admin()] %>
+    ${team_view(casem, "Case Managers")}
+
+    <% examiners = [user for user in team.team_members if user.is_examiner() and not user.is_admin()] %>
+    ${team_view(examiners, "Forensic Investigators / QAs")}
+
+</div>

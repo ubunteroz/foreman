@@ -10,11 +10,13 @@ from werkzeug import Response, redirect
 from baseController import BaseController, jsonify
 from ..model.caseModel import Task, User, ForemanOptions, Case, Evidence, CaseStatus
 from ..model.generalModel import TaskType, TaskCategory, EvidenceType, CaseClassification, CaseType, CasePriority
-from ..model.userModel import UserRoles
+from ..model.userModel import UserRoles, Department, Team, User
 from ..forms.forms import LoginForm, OptionsForm, AddEvidenceTypeForm, RegisterForm, AddClassificationForm
 from ..forms.forms import AddCaseTypeForm, RemoveCaseTypeForm, RemoveClassificationForm, RemoveEvidenceTypeForm
 from ..forms.forms import MoveTaskTypeForm, AddTaskTypeForm, RemoveTaskTypeForm, AddTaskCategoryForm, RemoveCategoryForm
-from ..forms.forms import AddPriorityForm, RemovePriorityForm
+from ..forms.forms import AddTeamForm, RenameTeamForm, RemoveTeamForm, AddDepartmentForm, RenameDepartmentForm
+from ..forms.forms import RemoveDepartmentForm, DeactivateUser, ReactivateUser
+from ..forms.forms import AddPriorityForm, RemovePriorityForm, AuthOptionsForm
 from ..utils.utils import multidict_to_dict, session, ROOT_DIR, config
 from ..utils.mail import email
 
@@ -36,6 +38,10 @@ class GeneralController(BaseController):
                 if user.validated is False:
                     self.breadcrumbs.append({'title': 'Login', 'path': self.urls.build('general.login')})
                     return self.return_response('pages', 'login.html', validated=False, company=opts.company,
+                                                department=opts.department)
+                elif user.active is False:
+                    self.breadcrumbs.append({'title': 'Login', 'path': self.urls.build('general.login')})
+                    return self.return_response('pages', 'login.html', active=False, company=opts.company,
                                                 department=opts.department)
                 else:
                     # successful login
@@ -66,6 +72,8 @@ class GeneralController(BaseController):
     def register(self):
         self.breadcrumbs.append({'title': 'Register for Foreman', 'path': self.urls.build('general.register')})
         success = False
+        teams = sorted([(team.id, team.department.department + ": " + team.team) for team in Team.get_all()],
+                       key=lambda t: t[1])
         opts = ForemanOptions.get_options()
         if self.validate_form(RegisterForm()):
             if self.form_result['middlename'] == "":
@@ -76,6 +84,8 @@ class GeneralController(BaseController):
                             middle=self.form_result['middlename'])
             session.add(new_user)
             session.flush()
+            new_user.team = self.form_result['team']
+
             success = True
 
             # start with no roles, admin must assign roles
@@ -111,7 +121,7 @@ Foreman
              config.get('admin', 'website_domain')), config.get('email', 'from_address'))
 
         return self.return_response('pages', 'register.html', errors=self.form_error, success=success,
-                                    company=opts.company, department=opts.department)
+                                    company=opts.company, department=opts.department, teams=teams)
 
     def admin(self):
         self.check_permissions(self.current_user, "Case", 'admin')
@@ -155,12 +165,12 @@ Foreman
 
         elif 'form' in form_type and form_type['form'] == "add_evidence_types" and self.validate_form(
                 AddEvidenceTypeForm()):
-            new_evidence_type = EvidenceType(self.form_result['evi_type'], self.form_result['icon_input'])
+            new_evidence_type = EvidenceType(self.form_result['evi_type_new'], self.form_result['icon_input'])
             session.add(new_evidence_type)
             session.flush()
         elif 'form' in form_type and form_type['form'] == "remove_evidence_types" and self.validate_form(
                 RemoveEvidenceTypeForm()):
-            evidence_type = EvidenceType.get_filter_by(evidence_type=self.form_result['evi_type']).first()
+            evidence_type = self.form_result['evi_type']
             if evidence_type:
                 session.delete(evidence_type)
                 session.commit()
@@ -168,7 +178,8 @@ Foreman
                 evidences = Evidence.get_filter_by(type=evidence_type.evidence_type).all()
                 for evidence in evidences:
                     evidence.type = EvidenceType.undefined()
-        elif 'form' in form_type and form_type['form'] == "remove_priority" and self.validate_form(RemovePriorityForm()):
+        elif 'form' in form_type and form_type['form'] == "remove_priority" and self.validate_form(
+                RemovePriorityForm()):
             number_left = CasePriority.get_amount()
             if number_left > 1:
                 priority = self.form_result['priority_remove']
@@ -186,6 +197,14 @@ Foreman
                                         self.form_result['default'])
             session.add(new_priority)
             session.commit()
+        elif 'form' in form_type and form_type['form'] == "deactiviate_user" and self.validate_form(DeactivateUser()):
+            user = self.form_result['deactivate_user']
+            user.deactivate()
+            session.flush()
+        elif 'form' in form_type and form_type['form'] == "reactivate_user" and self.validate_form(ReactivateUser()):
+            user = self.form_result['reactivate_user']
+            user.activate()
+            session.flush()
         elif 'validate_user' in form_type:
             user = self._validate_user(form_type['validate_user'])
             if user:
@@ -207,7 +226,7 @@ Foreman
 
         elif 'form' in form_type and form_type['form'] == 'remove_classification' and self.validate_form(
                 RemoveClassificationForm):
-            classification = CaseClassification.get_filter_by(classification=self.form_result['classification']).first()
+            classification = self.form_result['classification']
             if classification:
                 session.delete(classification)
                 session.commit()
@@ -217,11 +236,11 @@ Foreman
                     case.classification = CaseClassification.undefined()
         elif 'form' in form_type and form_type['form'] == 'add_classification' and self.validate_form(
                 AddClassificationForm):
-            new_cls = CaseClassification(self.form_result['classification'])
+            new_cls = CaseClassification(self.form_result['new_classification'])
             session.add(new_cls)
             session.commit()
         elif 'form' in form_type and form_type['form'] == 'remove_case_type' and self.validate_form(RemoveCaseTypeForm):
-            case_type = CaseType.get_filter_by(case_type=self.form_result['case_type']).first()
+            case_type = self.form_result['case_type']
             if case_type:
                 session.delete(case_type)
                 session.commit()
@@ -230,7 +249,7 @@ Foreman
                 for case in cases:
                     case.case_type = CaseType.undefined()
         elif 'form' in form_type and form_type['form'] == 'add_case_type' and self.validate_form(AddCaseTypeForm):
-            new_type = CaseType(self.form_result['case_type'])
+            new_type = CaseType(self.form_result['new_case_type'])
             session.add(new_type)
             session.commit()
         elif 'form' in form_type and form_type['form'] == 'move_task_type' and self.validate_form(MoveTaskTypeForm):
@@ -253,7 +272,7 @@ Foreman
             session.commit()
         elif 'form' in form_type and form_type['form'] == 'add_task_category' and self.validate_form(
                 AddTaskCategoryForm):
-            new_tc = TaskCategory(self.form_result['add_task_category'])
+            new_tc = TaskCategory(self.form_result['new_task_category'])
             session.add(new_tc)
             session.commit()
         elif 'form' in form_type and form_type['form'] == 'remove_task_category' and self.validate_form(
@@ -261,10 +280,41 @@ Foreman
             category = self.form_result['remove_task_category']
             session.delete(category)
             session.commit()
-
+        elif 'form' in form_type and form_type['form'] == 'authoriser_options' and self.validate_form(
+                AuthOptionsForm):
+            options = ForemanOptions.get_options()
+            options.auth_view_tasks = self.form_result['see_tasks']
+            options.auth_view_evidence = self.form_result['see_evidence']
+        elif 'form' in form_type and form_type['form'] == 'remove_department' and self.validate_form(
+                RemoveDepartmentForm):
+            session.delete(self.form_result['remove_department_name'])
+            session.flush()
+        elif 'form' in form_type and form_type['form'] == 'add_department' and self.validate_form(
+                AddDepartmentForm):
+            dep = Department(self.form_result['department_name'])
+            session.add(dep)
+            session.commit()
+        elif 'form' in form_type and form_type['form'] == 'rename_department' and self.validate_form(
+                RenameDepartmentForm):
+            dep = self.form_result['old_department_name']
+            dep.department = self.form_result['new_dep_name']
+        elif 'form' in form_type and form_type['form'] == 'add_team' and self.validate_form(
+                AddTeamForm):
+            new_team = Team(self.form_result['new_team_name'], self.form_result['t_department_name'])
+            session.add(new_team)
+            session.commit()
+        elif 'form' in form_type and form_type['form'] == 'rename_team' and self.validate_form(
+                RenameTeamForm):
+            team = self.form_result['old_team_name']
+            team.team = self.form_result['rename_team']
+        elif 'form' in form_type and form_type['form'] == 'remove_team' and self.validate_form(
+                RemoveTeamForm):
+            session.delete(self.form_result['team_name'])
+            session.flush()
         all_priorities = CasePriority.get_all()
         priorities = [(priority.case_priority, priority.case_priority) for priority in CasePriority.get_all()]
-        users = User.get_filter_by(validated=False).all()
+        unvalidated_users = User.get_filter_by(validated=False).all()
+        deactivated_users = [(user.id, user.username) for user in User.get_filter_by(active=False).all()]
         options = ForemanOptions.get_options()
 
         if 'active_tab' in form_type:
@@ -274,24 +324,33 @@ Foreman
                 active_tab = 0
         else:
             active_tab = 0
-        task_types = [(tt.replace(" ", "").lower(), tt) for tt in TaskType.get_task_types()]
-        task_categories = [(tc.replace(" ", "").lower(), tc) for tc in TaskCategory.get_categories()]
-        evidence_types = EvidenceType.get_evidence_types()
-        classifications = [(cl.replace(" ", "").lower(), cl) for cl in CaseClassification.get_classifications()]
-        case_types = [(ct.replace(" ", "").lower(), ct) for ct in CaseType.get_case_types()]
-        evi_types = [(et.replace(" ", "").lower(), et) for et in evidence_types]
+        task_types = [(tt.id, tt.task_type) for tt in TaskType.get_all() if tt.task_type != "Undefined"]
+        task_categories = [(tc.id, tc.category) for tc in TaskCategory.get_all()]
+        evidence_types = [et.evidence_type for et in EvidenceType.get_all() if et.evidence_type != "Undefined"]
+        classifications = [(cl.id, cl.classification) for cl in CaseClassification.get_all() if cl != "Undefined"]
+        case_types = [(ct.id, ct.case_type) for ct in CaseType.get_all() if ct.case_type != "Undefined"]
+        evi_types = [(et.id, et.evidence_type) for et in EvidenceType.get_all() if et.evidence_type != "Undefined"]
         icons = [f for f in listdir(icon_path) if isfile(join(icon_path, f)) and f != "Thumbs.db"]
-        empty_categories = [(ct.replace(" ", "").lower(), ct) for ct in TaskCategory.get_empty_categories()]
+        empty_categories = [(ct.id, ct.category) for ct in TaskCategory.get_empty_categories()]
         case_name_options = [(cn, cn) for cn in ForemanOptions.CASE_NAME_OPTIONS]
         task_name_options = [(tn, tn) for tn in ForemanOptions.TASK_NAME_OPTIONS]
+        authoriser_options = [("yes", "Yes"), ("no", "No")]
+        department_options = [(dep.id, dep.department) for dep in Department.get_all()]
+        del_department_options = [(dep.id, dep.department) for dep in Department.get_all() if len(dep.teams) == 0]
+        team_options = [(t.id, t.team) for t in Team.get_all()]
+        del_team_options = [(t.id, t.team) for t in Team.get_all() if len(t.team_members) == 0]
+        users = [(user.id, user.username) for user in User.get_all() if user.id != 1 and user.active]
         return self.return_response('pages', 'admin.html', options=options, active_tab=active_tab, icons=icons,
-                                    task_types=task_types, evidence_types=evidence_types, users=users,
+                                    task_types=task_types, evidence_types=evidence_types,
+                                    unvalidated_users=unvalidated_users, deactivated_users=deactivated_users,
                                     classifications=classifications, case_types=case_types, evi_types=evi_types,
                                     empty_categories=empty_categories, task_categories=task_categories,
                                     errors=self.form_error, over_load=over_load, case_name_options=case_name_options,
-                                    task_name_options=task_name_options, number_cases=number_cases,
+                                    task_name_options=task_name_options, number_cases=number_cases, users=users,
                                     number_tasks=number_tasks, validated=validated, val_user=val_user,
-                                    all_priorities=all_priorities, priorities=priorities)
+                                    all_priorities=all_priorities, priorities=priorities, team_options=team_options,
+                                    authoriser_options=authoriser_options, department_options=department_options,
+                                    del_department_options=del_department_options, del_team_options=del_team_options)
 
     def report(self):
         start_date = ForemanOptions.get_date_created()
@@ -363,5 +422,3 @@ Foreman
                                                                                                        category,
                                                                                                        start_date)])
         return tasks_assigned_inv
-
-        return URL.getTop(num=amount, highlight_funcs=highlight_funcs, remove_funcs=remove_funcs)

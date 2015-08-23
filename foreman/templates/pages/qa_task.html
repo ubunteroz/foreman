@@ -17,7 +17,7 @@
      <div class="success">
         <h1>Success!</h1>
         <p>The task has been QA ${qa_result|h}. The forensic investigators have been alerted.</p>
-        <p><a href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>Back to task summary.</a></p>
+        <p><a href='${urls.build("task.view", dict(task_id=task.id, case_id=task.case.id))|h}'>Back to task summary.</a></p>
     </div>
     % else:
 
@@ -47,7 +47,7 @@
     % endif
 
     <h2>QA Task</h2>
-    <form method="post" action="${urls.build('forensics.qa', dict(task_id=task.task_name, case_id=task.case.case_name))|h}">
+    <form method="post" action="${urls.build('forensics.qa', dict(task_id=task.id, case_id=task.case.id))|h}">
         ${forms.formTextArea("Notes", "notes", "notes", "form_label", "addeditcase", first=True)}
         <% options = [('qa_pass', 'QA Pass'),('qa_fail', 'QA Fail')] %>
         ${forms.formRadioButtons("QA pass/fail", options, "qa_decision", "qa_decision", "form_label", "addeditcase", "radio")}

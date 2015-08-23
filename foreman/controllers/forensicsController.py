@@ -17,10 +17,10 @@ class ForensicsController(BaseController):
     def _create_task_specific_breadcrumbs(self, task, case):
         self.breadcrumbs.append({'title': 'Cases', 'path': self.urls.build('case.view_all')})
         self.breadcrumbs.append({'title': case.case_name,
-                                 'path': self.urls.build('case.view', dict(case_id=case.case_name))})
+                                 'path': self.urls.build('case.view', dict(case_id=case.id))})
         self.breadcrumbs.append({'title': task.task_name,
-                                 'path': self.urls.build('task.view', dict(case_id=case.case_name,
-                                                                           task_id=task.task_name))})
+                                 'path': self.urls.build('task.view', dict(case_id=case.id,
+                                                                           task_id=task.id))})
     
     def work(self, case_id, task_id):
         task = self._validate_task(case_id, task_id)
@@ -28,8 +28,8 @@ class ForensicsController(BaseController):
             self.check_permissions(self.current_user, task, 'work')
             self._create_task_specific_breadcrumbs(task, task.case)
             self.breadcrumbs.append({'title': "Conduct Investigation",
-                                 'path': self.urls.build('forensics.work', dict(case_id=task.case.case_name,
-                                                                           task_id=task.task_name))})
+                                 'path': self.urls.build('forensics.work', dict(case_id=task.case.id,
+                                                                           task_id=task.id))})
             qa_partner_list = [(user.id, user.fullname) for user in UserRoles.get_qas() if user not in task.QAs]
 
             form_type = multidict_to_dict(self.request.args)
@@ -108,8 +108,8 @@ class ForensicsController(BaseController):
             self.check_permissions(self.current_user, task, 'qa')
             self._create_task_specific_breadcrumbs(task, task.case)
             self.breadcrumbs.append({'title': "Conduct QA",
-                                 'path': self.urls.build('forensics.qa', dict(case_id=task.case.case_name,
-                                                                           task_id=task.task_name))})
+                                 'path': self.urls.build('forensics.qa', dict(case_id=task.case.id,
+                                                                           task_id=task.id))})
 
             if self.validate_form(QACheckerForm()):
                 if self.form_result['qa_decision']:

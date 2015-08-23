@@ -23,7 +23,56 @@ if hash_algorithm not in hashlib.algorithms:
 hash_library = getattr(hashlib, hash_algorithm)
 
 
-class LinkedCase(Base, Model):
+class CaseAuthorisation(Base, Model):
+    __tablename__ = 'case_auth'
+
+    id = Column(Integer, primary_key=True)
+    case_id = Column(Integer, ForeignKey('cases.id'))
+    reason = Column(Unicode)
+    date_time = Column(DateTime)
+    auth_id = Column(Integer, ForeignKey('users.id'))
+    case_authorised = Column(Unicode)
+
+    STATUS = {'AUTH': {'description': 'Authorised'},
+              'NOAUTH': {'description': 'Rejected'},
+              'PENDING': {'description': 'Pending'}, }
+
+    case = relation('Case', backref=backref('authorisations', order_by=desc(date_time)))
+    authoriser = relation('User', backref=backref('cases_authorised'))
+
+    def __init__(self, authoriser, case, authorised, reason):
+        self.authoriser = authoriser
+        self.case = case
+        self.case_authorised = authorised
+        self.reason = reason
+        self.date_time = datetime.now()
+
+    @property
+    def date(self):
+        return ForemanOptions.get_date(self.date_time)
+
+    @staticmethod
+    def get_changes(case):
+        history_list = session.query(CaseAuthorisation).filter_by(case_id=case.id)
+
+        change_log = []
+        for entry in history_list.all():
+            if entry.case_authorised == "NOAUTH":
+                change_log.append({'date': entry.date,
+                                   'date_time': entry.date_time,
+                                   'user': entry.authoriser,
+                                   'object': ("Case", entry.case.case_name, entry.case.id),
+                                   'change_log': {'Case': ('NOAUTH', entry.reason)}})
+            elif entry.case_authorised == "AUTH":
+                change_log.append({'date': entry.date,
+                                   'date_time': entry.date_time,
+                                   'user': entry.authoriser,
+                                   'object': ("Case", entry.case.case_name, entry.case.id),
+                                   'change_log': {'Case': ('AUTH', entry.reason)}})
+        return change_log
+
+
+class LinkedCase(Base, HistoryModel):
     __tablename__ = 'linked_cases'
 
     id = Column(Integer, primary_key=True)
@@ -37,6 +86,11 @@ class LinkedCase(Base, Model):
     case_linkers = relation('Case', backref=backref('linked'), foreign_keys=case_linker_id)
     case_linkees = relation('Case', backref=backref('linkees'), foreign_keys=case_linkee_id)
     user = relation('User', backref=backref('case_link_changes'))
+
+    history_backref = "linked"
+    comparable_fields = {}
+    object_name = "Case"
+    history_name = ("Case", "case_name", "case_linker_id")
 
     def __init__(self, linker, linkee, reason, user, removed=False):
         self.case_linker_id = linker.id
@@ -91,11 +145,36 @@ class LinkedCase(Base, Model):
     def date(self):
         return ForemanOptions.get_date(self.date_time)
 
+    @property
+    def previous(self):
+        q = session.query(LinkedCase)
+        q = q.filter_by(case_linker_id=self.case_linker_id).filter(LinkedCase.id < self.id)
+        q = q.order_by(desc(LinkedCase.id))
+        q1 = q.count()
+        if q1 == 0:
+            return self
+        else:
+            return q.first()
+
+    def difference(self, link_history):
+        differences = HistoryModel.difference(self, link_history)
+        if link_history.removed is False:
+            differences['Case Link'] = ("LINK", Case.get(link_history.case_linkee_id).case_name)
+        else:
+            differences['Case Link'] = ("UNLINK", Case.get(link_history.case_linkee_id).case_name)
+        return differences
+
+    @property
+    def case_name(self):
+        return Case.get(self.case_linker_id).case_name
+
 
 class CaseStatus(Base, HistoryModel):
     __tablename__ = 'case_statuses'
 
     CREATED = 'Created'
+    PENDING = 'Awaiting authorisation'
+    REJECTED = 'Rejected'
     OPEN = 'Open'
     CLOSED = 'Closed'
     ARCHIVED = 'Archived'
@@ -110,12 +189,15 @@ class CaseStatus(Base, HistoryModel):
     user = relation('User', backref=backref('case_status_changes'))
 
     closedStatuses = [CLOSED, ARCHIVED]
-    all_statuses = [CREATED, OPEN, CLOSED, ARCHIVED]
+    all_statuses = [CREATED, OPEN, CLOSED, ARCHIVED, PENDING, REJECTED]
+    approved_statuses = [CREATED, OPEN, CLOSED, ARCHIVED]
+    active_statuses = [CREATED, PENDING, REJECTED, OPEN]
+    workable_statuses = [CREATED, OPEN]
 
     history_backref = "statuses"
     comparable_fields = {'Status': 'status'}
     object_name = "Case"
-    history_name = ("Case", "case_name")
+    history_name = ("Case", "case_name", "case_id")
 
     def __init__(self, case_id, status, user):
         self.status = status
@@ -127,7 +209,12 @@ class CaseStatus(Base, HistoryModel):
     def previous(self):
         q = session.query(CaseStatus)
         q = q.filter_by(case_id=self.case_id).filter(CaseStatus.id < self.id)
-        return q.order_by(desc(CaseStatus.id)).first()
+        q = q.order_by(desc(CaseStatus.id))
+        q1 = q.count()
+        if q1 == 0:
+            return False
+        else:
+            return q.first()
 
     @property
     def date(self):
@@ -162,7 +249,7 @@ class CaseHistory(HistoryModel, Base):
     comparable_fields = {'Case Name': 'case_name', 'Reference': 'reference', 'Background': 'background',
                          "Case Files Location": 'location', 'Classification': 'classification',
                          'Case Type:': 'case_type', 'Justification': 'justification', "Case Priority": 'case_priority'}
-    history_name = ("Case", "case_name")
+    history_name = ("Case", "case_name", "case_id")
 
     def __init__(self, case, user):
         self.case_id = case.id
@@ -182,8 +269,12 @@ class CaseHistory(HistoryModel, Base):
     @property
     def previous(self):
         q = session.query(CaseHistory)
-        q = q.filter_by(case_id=self.case_id).filter(CaseHistory.id != self.id)
-        return q.order_by(desc(CaseHistory.id)).first()
+        q = q.filter_by(case_id=self.case_id).filter(CaseHistory.id < self.id).order_by(desc(CaseHistory.id))
+        return q.first()
+
+    @property
+    def object_id(self):
+        return self.case_id
 
     @property
     def date(self):
@@ -217,7 +308,7 @@ class Case(Base, Model):
                  classification=None, case_type=None, justification=None, priority=None):
         self.case_name = case_name
         self.reference = reference
-        self.set_status(CaseStatus.CREATED, user)
+        self.set_status(CaseStatus.PENDING, user)
         self.private = private
         self.background = background
         self.classification = classification
@@ -233,6 +324,16 @@ class Case(Base, Model):
         else:
             self.location = location
         self.creation_date = datetime.now()
+
+    def authorise(self, authoriser, reason, authorisation):
+        auth = CaseAuthorisation(authoriser, self, authorisation, reason)
+        session.add(auth)
+        session.commit()
+
+        if self.authorised.case_authorised == "AUTH":
+            self.set_status(CaseStatus.CREATED, authoriser)
+        elif self.authorised.case_authorised == "NOAUTH":
+            self.set_status(CaseStatus.REJECTED, authoriser)
 
     @property
     def date_created(self):
@@ -264,11 +365,35 @@ class Case(Base, Model):
     def archive_case(self):
         self.set_status(CaseStatus.ARCHIVED)
 
-    def get_links(self):
-        return LinkedCase.get_links(self)
+    def get_links(self, perm_checker=None, user=None):
+        links = LinkedCase.get_links(self)
+        output = []
+        for link in links:
+            try:
+                if perm_checker and user:
+                    perm_checker(user, link, "view")
+                output.append(link)
+            except Forbidden:
+                pass
+        return output
 
-    def get_from_links(self):
-        return LinkedCase.get_from_links(self)
+    def get_from_links(self, perm_checker=None, user=None):
+        links = LinkedCase.get_from_links(self)
+        output = []
+        for link in links:
+            try:
+                if perm_checker and user:
+                    perm_checker(user, link, "view")
+                output.append(link)
+            except Forbidden:
+                pass
+        return output
+
+    @property
+    def authorised(self):
+        if len(self.authorisations) == 0:
+            return None
+        return self.authorisations[0]
 
     @staticmethod
     def get_num_cases_opened_on_date(date_required, on_status, case_type=None, by_month=False):
@@ -289,9 +414,12 @@ class Case(Base, Model):
             return q.scalar()
 
     @staticmethod
-    def cases_with_user_involved(user_id):
+    def cases_with_user_involved(user_id, active=False):
         q_case_roles = session.query(Case).join('case_roles').filter_by(user_id=user_id)
         q_task_roles = session.query(Case).join('tasks').join(Task.task_roles).filter_by(user_id=user_id)
+        if active:
+            q_case_roles = q_case_roles.filter(Case.currentStatus.in_(CaseStatus.active_statuses))
+            q_task_roles = q_task_roles.filter(Case.currentStatus.in_(CaseStatus.active_statuses))
         q = q_case_roles.union(q_task_roles)
         return q.all()
 
@@ -313,8 +441,8 @@ class Case(Base, Model):
     def get_completed_cases(case_manager, case_perm_checker, current_user):
         q = session.query(Case)
         q = q.join(UserCaseRoles).filter(UserCaseRoles.user_id == case_manager.id).filter(or_(
-                UserCaseRoles.role == UserCaseRoles.PRINCIPLE_CASE_MANAGER,
-                UserCaseRoles.role == UserCaseRoles.SECONDARY_CASE_MANAGER))
+            UserCaseRoles.role == UserCaseRoles.PRINCIPLE_CASE_MANAGER,
+            UserCaseRoles.role == UserCaseRoles.SECONDARY_CASE_MANAGER))
         q = q.filter(or_(Case.currentStatus == CaseStatus.CLOSED, Case.currentStatus == CaseStatus.ARCHIVED))
         return Case._check_perms(current_user, q, case_perm_checker)
 
@@ -322,33 +450,44 @@ class Case(Base, Model):
     def get_current_cases(case_manager, case_perm_checker, current_user):
         q = session.query(Case)
         q = q.join(UserCaseRoles).filter(UserCaseRoles.user_id == case_manager.id).filter(or_(
-                UserCaseRoles.role == UserCaseRoles.PRINCIPLE_CASE_MANAGER,
-                UserCaseRoles.role == UserCaseRoles.SECONDARY_CASE_MANAGER))
+            UserCaseRoles.role == UserCaseRoles.PRINCIPLE_CASE_MANAGER,
+            UserCaseRoles.role == UserCaseRoles.SECONDARY_CASE_MANAGER))
         q = q.filter(or_(Case.currentStatus == CaseStatus.OPEN, Case.currentStatus == CaseStatus.CREATED))
         return Case._check_perms(current_user, q, case_perm_checker)
 
     @staticmethod
     def get_cases_requested(requester, case_perm_checker, current_user, statuses):
         q = session.query(Case)
-        q = q.join(UserCaseRoles).filter(UserCaseRoles.user_id == requester.id).\
+        q = q.join(UserCaseRoles).filter(UserCaseRoles.user_id == requester.id). \
             filter(UserCaseRoles.role == UserCaseRoles.REQUESTER)
         q = q.filter(Case.currentStatus.in_(statuses))
         return Case._check_perms(current_user, q, case_perm_checker)
 
     @staticmethod
-    def get_cases(status, current_user, user=False, QA=False, current_user_perms=False, case_perm_checker=None,
-                  case_man=False):
+    def get_cases_authorised(authoriser, case_perm_checker, current_user, statuses):
         q = session.query(Case)
-        if status != 'All' and status != "Queued":
+        q = q.join(UserCaseRoles).filter(UserCaseRoles.user_id == authoriser.id). \
+            filter(UserCaseRoles.role == UserCaseRoles.AUTHORISER)
+        q = q.filter(Case.currentStatus.in_(statuses))
+        return Case._check_perms(current_user, q, case_perm_checker)
+
+    @staticmethod
+    def get_cases(status, current_user, user=False, QA=False, case_perm_checker=None, case_man=False):
+        q = session.query(Case)
+        if status != 'All' and status != "Queued" and status != "Workable":
             q = q.filter_by(currentStatus=status)
         elif status == "Queued":
             q = q.filter_by(currentStatus=CaseStatus.OPEN).join('tasks').filter(Task.currentStatus == TaskStatus.QUEUED)
+        elif status == "Workable":
+            q = q.filter(Case.currentStatus.in_(CaseStatus.workable_statuses))
         if user is True:
             q = q.join('tasks').join(Task.task_roles)
             if QA:
-                q = q.filter(and_(UserTaskRoles.user_id == current_user.id, UserTaskRoles.role.in_(UserTaskRoles.qa_roles)))
+                q = q.filter(
+                    and_(UserTaskRoles.user_id == current_user.id, UserTaskRoles.role.in_(UserTaskRoles.qa_roles)))
             else:
-                q = q.filter(and_(UserTaskRoles.user_id == current_user.id, UserTaskRoles.role.in_(UserTaskRoles.inv_roles)))
+                q = q.filter(
+                    and_(UserTaskRoles.user_id == current_user.id, UserTaskRoles.role.in_(UserTaskRoles.inv_roles)))
             return q.order_by(desc(Case.creation_date)).all()
         else:
             cases = q.order_by(desc(Case.creation_date)).all()
@@ -384,6 +523,10 @@ class Case(Base, Model):
     @property
     def requester(self):
         return User.get_user_with_role(UserCaseRoles.REQUESTER, case_id=self.id)
+
+    @property
+    def authoriser(self):
+        return User.get_user_with_role(UserCaseRoles.AUTHORISER, case_id=self.id)
 
 
 class ChainOfCustody(Base, Model):
@@ -431,6 +574,52 @@ class ChainOfCustody(Base, Model):
     def custody_date(self):
         return ForemanOptions.get_date(self.date_of_custody)
 
+    @staticmethod
+    def get_changes_for_user(user):
+        q_checkin = session.query(ChainOfCustody).filter_by(user_id=user.id, check_in=True)
+        q_checkout = session.query(ChainOfCustody).filter_by(user_id=user.id, check_in=False)
+
+        change_log = []
+        for entry in q_checkin.all():
+            cr = ". Custody receipt uploaded" if entry.custody_receipt is not None else ""
+            change_log.append({'date': entry.date,
+                               'date_time': entry.date_recorded,
+                               'object': ("Evidence", entry.evidence.reference, entry.evidence.id,
+                                          entry.evidence.case.id),
+                               'change_log': "Evidence checked in{}".format(cr)})
+        for entry in q_checkout.all():
+            cr = ". Custody receipt uploaded" if entry.custody_receipt is not None else ""
+            change_log.append({'date': entry.date,
+                               'date_time': entry.date_recorded,
+                               'object': ("Evidence", entry.evidence.reference, entry.evidence.id,
+                                          entry.evidence.case.id),
+                               'change_log': "Evidence checked out{}".format(cr)})
+        return change_log
+
+    @staticmethod
+    def get_changes(evidence):
+        q_checkin = session.query(ChainOfCustody).filter_by(evidence_id=evidence.id, check_in=True)
+        q_checkout = session.query(ChainOfCustody).filter_by(evidence_id=evidence.id, check_in=False)
+
+        change_log = []
+        for entry in q_checkin.all():
+            cr = ". Custody receipt uploaded" if entry.custody_receipt is not None else ""
+            change_log.append({'date': entry.date,
+                               'date_time': entry.date_recorded,
+                               'user': entry.user,
+                               'object': ("Evidence", entry.evidence.reference, entry.evidence.id,
+                                          entry.evidence.case.id),
+                               'change_log': "Evidence checked in{}".format(cr)})
+        for entry in q_checkout.all():
+            cr = ". Custody receipt uploaded" if entry.custody_receipt is not None else ""
+            change_log.append({'date': entry.date,
+                               'date_time': entry.date_recorded,
+                               'user': entry.user,
+                               'object': ("Evidence", entry.evidence.reference, entry.evidence.id,
+                                          entry.evidence.case.id),
+                               'change_log': "Evidence checked out{}".format(cr)})
+        return change_log
+
 
 class EvidenceHistory(HistoryModel, Base):
     __tablename__ = 'evidence_history'
@@ -451,7 +640,6 @@ class EvidenceHistory(HistoryModel, Base):
 
     evidence = relation('Evidence', backref=backref('history', order_by=asc(date_time)))
     user = relation('User', backref=backref('evidence_history_changes'))
-    #case = relation('Case', backref=backref('evidence_history', order_by=asc(reference)))
 
     object_name = "Evidence"
     comparable_fields = {'Type': 'type',
@@ -460,12 +648,14 @@ class EvidenceHistory(HistoryModel, Base):
                          'Evidence Bag Number': 'evidence_bag_number',
                          'Originator': 'originator',
                          'Associated Case': 'case_id'}
-    history_name = ("Evidence", "reference")
+    history_name = ("Evidence", "reference", "evidence_id", "case_id")
 
     def __init__(self, evidence, user):
         self.evidence = evidence
-        #self.case = evidence.case
-        self.case_id = evidence.case_id
+        if evidence.case:
+            self.case_id = evidence.case.id
+        else:
+            self.case_id = None
         self.type = evidence.type
         self.qr_code = evidence.qr_code
         self.qr_code_text = evidence.qr_code_text
@@ -480,8 +670,13 @@ class EvidenceHistory(HistoryModel, Base):
     @property
     def previous(self):
         q = session.query(EvidenceHistory)
-        q = q.filter_by(evidence_id=self.evidence_id).filter(EvidenceHistory.id != self.id)
-        return q.order_by(desc(EvidenceHistory.id)).first()
+        q = q.filter_by(evidence_id=self.evidence_id).filter(EvidenceHistory.id < self.id).order_by(
+            desc(EvidenceHistory.id))
+        return q.first()
+
+    @property
+    def object_id(self):
+        return self.evidence_id
 
     @property
     def date(self):
@@ -545,7 +740,7 @@ class Evidence(Base, Model):
     def generate_qr_code_text(self):
         if self.case is not None:
             return "Case: {} | Ref: {} | Date Added: {} | Added by: {}".format(self.case.case_name, self.reference,
-                                                                           self.date_added, self.user.fullname)
+                                                                               self.date_added, self.user.fullname)
         else:
             return "Case: None Assigned | Ref: {} | Date Added: {} | Added by: {}".format(self.reference,
                                                                                           self.date_added,
@@ -578,7 +773,7 @@ class Evidence(Base, Model):
         img.save(qr_image_location, "PNG")
 
     def disassociate(self):
-        self.case_id = None
+        self.case = None
         session.flush()
 
     def associate(self, case):
@@ -634,6 +829,7 @@ class TaskStatus(Base, HistoryModel):
 
     id = Column(Integer, primary_key=True)
     task_id = Column(Integer, ForeignKey('tasks.id'))
+    case_id = Column(Integer, ForeignKey('cases.id'))
     date_time = Column(DateTime)
     status = Column(Unicode)
     note = Column(Unicode)
@@ -645,19 +841,27 @@ class TaskStatus(Base, HistoryModel):
     history_backref = "statuses"
     comparable_fields = {'Status': 'status'}
     object_name = "Task"
-    history_name = ("Task", "task_name")
+    history_name = ("Task", "task_name", "task_id", "case_id")
 
-    def __init__(self, task_id, status, user):
+    def __init__(self, task_id, status, user, case=None):
         self.status = status
         self.date_time = datetime.now()
         self.task_id = task_id
+        if case:
+            self.case_id = case.id
+        else:
+            self.case_id = Task.get(task_id).case.id
         self.user = user
 
     @property
     def previous(self):
         q = session.query(TaskStatus)
-        q = q.filter_by(task_id=self.task_id).filter(TaskStatus.id != self.id)
-        return q.order_by(desc(TaskStatus.id)).first()
+        q = q.filter_by(task_id=self.task_id).filter(TaskStatus.id < self.id).order_by(desc(TaskStatus.id))
+        q1 = q.count()
+        if q1 == 0:
+            return False
+        else:
+            return q.first()
 
     @property
     def date(self):
@@ -669,7 +873,6 @@ class TaskStatus(Base, HistoryModel):
 
 
 class UploadModel(Model):
-
     id = Column(Integer, primary_key=True)
 
     date_time = Column(DateTime)
@@ -736,8 +939,10 @@ class EvidencePhotoUpload(UploadModel, Base):
 
     evidence_id = Column(Integer, ForeignKey('evidence.id'))
     evidence = relation('Evidence', backref=backref('evidence_photos'))
-    uploader = relation('User', backref=backref('evidence_photos_uploaded'), foreign_keys='EvidencePhotoUpload.uploader_id')
-    deleter = relation('User', backref=backref('evidence_photos_deleted'), foreign_keys='EvidencePhotoUpload.deleter_id')
+    uploader = relation('User', backref=backref('evidence_photos_uploaded'),
+                        foreign_keys='EvidencePhotoUpload.uploader_id')
+    deleter = relation('User', backref=backref('evidence_photos_deleted'),
+                       foreign_keys='EvidencePhotoUpload.deleter_id')
     DEFAULT_FOLDER = 'evidence_photos'
 
     def __init__(self, uploader_id, evidence_id, file_name, file_note, title):
@@ -749,18 +954,40 @@ class EvidencePhotoUpload(UploadModel, Base):
     def get_changes_for_user(user):
         q_added = session.query(EvidencePhotoUpload).filter_by(uploader_id=user.id)
         q_removed = session.query(EvidencePhotoUpload).filter_by(deleter_id=user.id)
-
         change_log = []
         for entry in q_added.all():
             change_log.append({'date': entry.date,
                                'date_time': entry.date_time,
-                               'object': ("Evidence", entry.evidence.reference),
+                               'object': ("Evidence", entry.evidence.reference, entry.evidence.id),
                                'change_log': "File '{}' was uploaded".format(entry.file_title)})
 
         for entry in q_removed.all():
             change_log.append({'date': entry.deleted_date,
                                'date_time': entry.date_deleted,
-                               'object': ("Evidence", entry.evidence.reference),
+                               'object': ("Evidence", entry.evidence.reference, entry.evidence.id),
+                               'change_log': "File '{}' was deleted".format(entry.file_title)})
+        return change_log
+
+    @staticmethod
+    def get_changes(evidence):
+        q_added = session.query(EvidencePhotoUpload).filter_by(evidence_id=evidence.id)
+        q_removed = session.query(EvidencePhotoUpload).filter_by(evidence_id=evidence.id, deleted=True)
+
+        change_log = []
+        for entry in q_added.all():
+            change_log.append({'date': entry.date,
+                               'date_time': entry.date_time,
+                               'current': entry,
+                               'user': entry.uploader,
+                               'object': ("Evidence", entry.evidence.reference, entry.evidence.id),
+                               'change_log': "File '{}' was uploaded".format(entry.file_title)})
+
+        for entry in q_removed.all():
+            change_log.append({'date': entry.deleted_date,
+                               'date_time': entry.date_deleted,
+                               'current': entry,
+                               'user': entry.deleter,
+                               'object': ("Evidence", entry.evidence.reference, entry.evidence.id),
                                'change_log': "File '{}' was deleted".format(entry.file_title)})
         return change_log
 
@@ -788,15 +1015,38 @@ class TaskUpload(UploadModel, Base):
         for entry in q_added.all():
             change_log.append({'date': entry.date,
                                'date_time': entry.date_time,
-                               'object': ("Task", entry.task.task_name),
+                               'object': ("Task", entry.task.task_name, entry.task.id, entry.task.case.id),
                                'change_log': "File '{}' was uploaded".format(entry.file_title)})
 
         for entry in q_removed.all():
             change_log.append({'date': entry.deleted_date,
                                'date_time': entry.date_deleted,
-                               'object': ("Task", entry.task.task_name),
+                               'object': ("Task", entry.task.task_name, entry.task.id, entry.task.case.id),
                                'change_log': "File '{}' was deleted".format(entry.file_title)})
         return change_log
+
+    @staticmethod
+    def get_changes(task):
+        q_added = session.query(TaskUpload).filter_by(task_id=task.id)
+        q_removed = session.query(TaskUpload).filter_by(task_id=task.id, deleted=True)
+
+        change_log = []
+        for entry in q_added.all():
+            change_log.append({'date': entry.date,
+                               'date_time': entry.date_time,
+                               'user': entry.uploader,
+                               'current': entry,
+                               'object': ("Task", entry.task.task_name, entry.task.id, entry.task.case.id),
+                               'change_log': "File '{}' was uploaded".format(entry.file_title)})
+        for entry in q_removed.all():
+            change_log.append({'date': entry.deleted_date,
+                               'date_time': entry.date_deleted,
+                               'user': entry.deleter,
+                               'current': entry,
+                               'object': ("Task", entry.task.task_name, entry.task.id, entry.task.case.id),
+                               'change_log': "File '{}' was deleted".format(entry.file_title)})
+        return change_log
+
 
 class TaskNotes(Base, Model):
     __tablename__ = 'notes'
@@ -825,6 +1075,31 @@ class TaskNotes(Base, Model):
     def check_hash(self):
         return self.hash == hash_library(self.note.encode("utf-8")).hexdigest()
 
+    @staticmethod
+    def get_changes_for_user(user):
+        q_added = session.query(TaskNotes).filter_by(author_id=user.id)
+
+        change_log = []
+        for entry in q_added.all():
+            change_log.append({'date': entry.date,
+                               'date_time': entry.date_time,
+                               'object': ("Task", entry.task.task_name, entry.task.id, entry.task.case.id),
+                               'change_log': "Task notes were written"})
+        return change_log
+
+    @staticmethod
+    def get_changes(task):
+        q_added = session.query(TaskNotes).filter_by(task_id=task.id)
+
+        change_log = []
+        for entry in q_added.all():
+            change_log.append({'date': entry.date,
+                               'date_time': entry.date_time,
+                               'user': entry.author,
+                               'current': entry,
+                               'object': ("Task", entry.task.task_name, entry.task.id, entry.task.case.id),
+                               'change_log': "Task notes were written"})
+        return change_log
 
 class TaskHistory(Base, HistoryModel):
     __tablename__ = 'task_history'
@@ -834,6 +1109,7 @@ class TaskHistory(Base, HistoryModel):
     user_id = Column(Integer, ForeignKey('users.id'))
     task_id = Column(Integer, ForeignKey('tasks.id'))
     task_type_id = Column(Integer, ForeignKey('task_types.id'))
+    case_id = Column(Integer, ForeignKey('cases.id'))
     task_name = Column(Unicode)
     location = Column(Unicode)
     background = Column(Unicode)
@@ -843,7 +1119,7 @@ class TaskHistory(Base, HistoryModel):
     task_type = relation('TaskType', backref=backref('task_history', order_by=desc(task_type_id)))
 
     comparable_fields = {'Task Name': 'task_name', 'Background': 'background', "Task Files Location": 'location'}
-    history_name = ("Task", "task_name")
+    history_name = ("Task", "task_name", "task_id", "case_id")
 
     def __init__(self, task, user):
         self.task_id = task.id
@@ -853,12 +1129,13 @@ class TaskHistory(Base, HistoryModel):
         self.location = task.location
         self.date_time = datetime.now()
         self.user = user
+        self.case_id = task.case.id
 
     @property
     def previous(self):
         q = session.query(TaskHistory)
-        q = q.filter_by(task_id=self.task_id).filter(TaskHistory.id != self.id)
-        return q.order_by(desc(TaskHistory.id)).first()
+        q = q.filter_by(task_id=self.task_id).filter(TaskHistory.id < self.id).order_by(desc(TaskHistory.id))
+        return q.first()
 
     @property
     def date(self):
@@ -872,6 +1149,8 @@ class TaskHistory(Base, HistoryModel):
         if self.task_type.category.category != previous_object.task_type.category.category:
             differences['Task Category'] = (self.task_type.category.category,
                                             previous_object.task_type.category.category)
+        if self.case_id != previous_object.case_id:
+            differences['Case'] = (Case.get(self.case_id).case_name, Case.get(previous_object.case_id).case_name)
         return differences
 
 
@@ -917,7 +1196,7 @@ class Task(Base, Model):
 
     def set_status(self, status, user):
         self.currentStatus = status
-        self.statuses.append(TaskStatus(self.id, status, user))
+        self.statuses.append(TaskStatus(self.id, status, user, self.case))
         session.flush()
 
     def get_status(self):
@@ -1065,8 +1344,8 @@ class Task(Base, Model):
     def get_completed_qas(investigator, case_perm_checker, current_user):
         q = session.query(Task)
         q = q.join(UserTaskRoles).filter(UserTaskRoles.user_id == investigator.id).filter(or_(
-                UserTaskRoles.role == UserTaskRoles.PRINCIPLE_QA,
-                UserTaskRoles.role == UserTaskRoles.SECONDARY_QA))
+            UserTaskRoles.role == UserTaskRoles.PRINCIPLE_QA,
+            UserTaskRoles.role == UserTaskRoles.SECONDARY_QA))
         q = q.join(TaskStatus).filter(TaskStatus.status == TaskStatus.DELIVERY)
         return Task._check_perms(current_user, q, case_perm_checker)
 
@@ -1078,8 +1357,8 @@ class Task(Base, Model):
     def get_completed_investigations(investigator, case_perm_checker, current_user):
         q = session.query(Task)
         q = q.join(UserTaskRoles).filter(UserTaskRoles.user_id == investigator.id).filter(or_(
-                UserTaskRoles.role == UserTaskRoles.SECONDARY_INVESTIGATOR,
-                UserTaskRoles.role == UserTaskRoles.PRINCIPLE_INVESTIGATOR))
+            UserTaskRoles.role == UserTaskRoles.SECONDARY_INVESTIGATOR,
+            UserTaskRoles.role == UserTaskRoles.PRINCIPLE_INVESTIGATOR))
         q = q.join(TaskStatus).filter(TaskStatus.status == TaskStatus.COMPLETE)
         return Task._check_perms(current_user, q, case_perm_checker)
 
@@ -1110,8 +1389,8 @@ class Task(Base, Model):
         last_day = datetime(year, month, calendar.monthrange(year, month)[1])
         q = session.query(func.count(Task.id))
         q = q.join(UserTaskRoles).filter(UserTaskRoles.user_id == investigator.id).filter(or_(
-                UserTaskRoles.role == UserTaskRoles.PRINCIPLE_QA,
-                UserTaskRoles.role == UserTaskRoles.SECONDARY_QA))
+            UserTaskRoles.role == UserTaskRoles.PRINCIPLE_QA,
+            UserTaskRoles.role == UserTaskRoles.SECONDARY_QA))
         q = q.join(TaskStatus).filter(and_(TaskStatus.status == TaskStatus.DELIVERY,
                                            TaskStatus.date_time >= first_day,
                                            TaskStatus.date_time <= last_day))

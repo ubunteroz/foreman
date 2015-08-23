@@ -3,14 +3,45 @@ from datetime import datetime
 import random
 import hashlib
 import string
+from os import path
 # library imports
 from sqlalchemy import Table, Column, Integer, Boolean, Float, Unicode, MetaData, ForeignKey, DateTime, CheckConstraint, \
     asc, desc, func, and_
 from sqlalchemy.orm import backref, relation
 # local imports
 from models import Base, Model, UserHistoryModel, HistoryModel
-from ..utils.utils import session
+from ..utils.utils import session, ROOT_DIR
 from generalModel import ForemanOptions
+
+
+class Department(Base, Model):
+    __tablename__ = 'department'
+
+    id = Column(Integer, primary_key=True)
+    department = Column(Unicode)
+
+    def __init__(self, department):
+        self.department = department
+
+    def __str__(self):
+        return self.department
+
+
+class Team(Base, Model):
+    __tablename__ = 'team'
+
+    id = Column(Integer, primary_key=True)
+    team = Column(Unicode)
+    department_id = Column(Integer, ForeignKey('department.id'))
+
+    department = relation('Department', backref=backref('teams'))
+
+    def __init__(self, team, department):
+        self.team = team
+        self.department = department
+
+    def __str__(self):
+        return self.team
 
 
 class UserMessage(Base, Model):
@@ -53,19 +84,20 @@ class UserHistory(Base, HistoryModel):
     telephone = Column(Unicode)
     alt_telephone = Column(Unicode)
     fax = Column(Unicode)
-    department = Column(Unicode)
-    team = Column(Unicode)
     job_title = Column(Unicode)
+    team = Column(Unicode)
+    department = Column(Unicode)
+    photo = Column(Unicode)
 
     original_user = relation('User', backref=backref('history', order_by=asc(date_time)), foreign_keys=original_user_id)
     user = relation('User', backref=backref('user_history_changes'), foreign_keys=user_id)
 
     comparable_fields = {'Forename': 'forename', 'Surname': 'surname', 'Middle Name': 'middle', 'Username': 'username',
                          'Email address': 'email', 'Telephone Number': 'telephone', 'Alternative Telephone Number':
-                         'alt_telephone', 'Fax number': 'fax', 'Department': 'department', 'Team': 'team', 'Job Title':
-                         'job_title'}
+                         'alt_telephone', 'Fax number': 'fax', 'Job Title': 'job_title', "Profile photo": 'photo',
+                         'Team': 'team', 'Department': 'department'}
 
-    history_name = ("User", "username")
+    history_name = ("User", "username", "original_user_id")
     object_name = "User"
 
     def __init__(self, original_user, user_who_made_changes):
@@ -80,15 +112,21 @@ class UserHistory(Base, HistoryModel):
         self.telephone = original_user.telephone
         self.alt_telephone = original_user.alt_telephone
         self.fax = original_user.fax
-        self.department = original_user.department
-        self.team = original_user.team
         self.job_title = original_user.job_title
+        self.photo = original_user.photo
+        if original_user.team is not None:
+            self.team = original_user.team.team
+            self.department = original_user.team.department.department
+        else:
+            self.team = None
+            self.department = None
 
     @property
     def previous(self):
         q = session.query(UserHistory)
-        q = q.filter_by(original_user_id=self.original_user_id).filter(UserHistory.id != self.id)
-        return q.order_by(desc(UserHistory.id)).first()
+        q = q.filter_by(original_user_id=self.original_user_id).filter(UserHistory.id < self.id).order_by(
+            desc(UserHistory.id))
+        return q.first()
 
     @property
     def date(self):
@@ -109,11 +147,15 @@ class User(Base, Model):
     telephone = Column(Unicode)
     alt_telephone = Column(Unicode)
     fax = Column(Unicode)
-    department = Column(Unicode)
-    team = Column(Unicode)
+    team_id = Column(Integer, ForeignKey('team.id'))
     job_title = Column(Unicode)
+    photo = Column(Unicode)
+    active = Column(Boolean)
 
-    def __init__(self, username, password, forename, surname, email, validated=False, middle=None):
+    team = relation('Team', backref=backref('team_members'))
+    PROFILE_PHOTO_FOLDER = path.join(ROOT_DIR, 'files', 'user_profile_photos')
+
+    def __init__(self, username, password, forename, surname, email, validated=False, middle=None, photo='default.png'):
         self.username = username
         self.set_password(password)
         self.forename = forename
@@ -121,11 +163,19 @@ class User(Base, Model):
         self.middle = middle
         self.email = email
         self.validated = validated
+        self.photo = photo
+        self.activate()
 
     def add_change(self, user):
         change = UserHistory(self, user)
         session.add(change)
         session.flush()
+
+    def deactivate(self):
+        self.active = False
+
+    def activate(self):
+        self.active = True
 
     def is_investigator(self):
         return UserRoles.check_user_has_active_role(user=self, role=UserRoles.INV) or \
@@ -151,6 +201,14 @@ class User(Base, Model):
 
     def is_admin(self):
         return UserRoles.check_user_has_active_role(user=self, role=UserRoles.ADMIN)
+
+    def is_authoriser(self):
+        return UserRoles.check_user_has_active_role(user=self, role=UserRoles.AUTH) or \
+               UserRoles.check_user_has_active_role(user=self, role=UserRoles.ADMIN)
+
+    @property
+    def department(self):
+        return self.team.department.department
 
     @property
     def fullname(self):
@@ -199,6 +257,10 @@ class User(Base, Model):
     def get_user_with_username(username):
         return session.query(User).filter_by(username=username).first()
 
+    @staticmethod
+    def get_number_unvalidated():
+        return session.query(User).filter_by(validated=False).count()
+
 
 class UserTaskRolesHistory(Base, UserHistoryModel):
     __tablename__ = 'user_task_roles_history'
@@ -206,6 +268,7 @@ class UserTaskRolesHistory(Base, UserHistoryModel):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
     task_id = Column(Integer, ForeignKey('tasks.id'))
+    case_id = Column(Integer, ForeignKey('cases.id'))
     role = Column(Unicode)
     date_time = Column(DateTime)
     user_change_id = Column(Integer, ForeignKey('users.id'))
@@ -215,7 +278,7 @@ class UserTaskRolesHistory(Base, UserHistoryModel):
     changes_user = relation('User', backref=backref('task_roles_change_history', order_by=desc(id)),
                             foreign_keys=user_change_id)
     task = relation('Task', backref=backref('task_roles_history', order_by=desc(id)))
-    history_name = ("Task", "task")
+    history_name = ("Task", "task", "task_id", "case_id")
 
     def __init__(self, user_task_role, user_change, removed=False):
         self.user = user_task_role.user
@@ -224,6 +287,7 @@ class UserTaskRolesHistory(Base, UserHistoryModel):
         self.changes_user = user_change
         self.date_time = datetime.now()
         self.removed = removed
+        self.case_id = self.task.case.id
 
     @staticmethod
     def get_roles_for_obj(task, role):
@@ -237,8 +301,9 @@ class UserTaskRolesHistory(Base, UserHistoryModel):
     @property
     def previous(self):
         q = session.query(UserTaskRolesHistory)
-        q = q.filter_by(task_id=self.task_id, role=self.role).filter(UserTaskRolesHistory.id != self.id)
-        return q.order_by(desc(UserTaskRolesHistory.id)).first()
+        q = q.filter_by(task_id=self.task_id, role=self.role).filter(UserTaskRolesHistory.id < self.id).order_by(
+            desc(UserTaskRolesHistory.id))
+        return q.first()
 
 
 class UserTaskRoles(Base, Model):
@@ -298,7 +363,7 @@ class UserCaseRolesHistory(Base, UserHistoryModel):
     changes_user = relation('User', backref=backref('case_roles_change_history', order_by=desc(id)),
                             foreign_keys=user_change_id)
     case = relation('Case', backref=backref('case_roles_history', order_by=desc(id)))
-    history_name = ("Case", "case")
+    history_name = ("Case", "case", "case_id")
 
     def __init__(self, user_case_role, user_change, removed=False):
         self.user = user_case_role.user
@@ -320,8 +385,9 @@ class UserCaseRolesHistory(Base, UserHistoryModel):
     @property
     def previous(self):
         q = session.query(UserCaseRolesHistory)
-        q = q.filter_by(case_id=self.case_id, role=self.role).filter(UserCaseRolesHistory.id != self.id)
-        return q.order_by(desc(UserCaseRolesHistory.id)).first()
+        q = q.filter_by(case_id=self.case_id, role=self.role).filter(UserCaseRolesHistory.id < self.id).order_by(
+            desc(UserCaseRolesHistory.id))
+        return q.first()
 
     def __repr__(self):
         return "<CaseRoleHist Object[{}] '{}'>".format(self.role, self.user.fullname)
@@ -374,7 +440,7 @@ class UserRolesHistory(Base, UserHistoryModel):
     user = relation('User', backref=backref('roles_history', order_by=asc(date_time)), foreign_keys=user_id)
     changes_user = relation('User', backref=backref('user_roles_history_changes'), foreign_keys=changes_user_id)
 
-    history_name = ("Role", "role")
+    history_name = ("Role", "role", "user_id")
 
     def __init__(self, user_role, user_who_made_changes):
         self.user_id = user_role.user_id
@@ -386,8 +452,12 @@ class UserRolesHistory(Base, UserHistoryModel):
     @property
     def previous(self):
         q = session.query(UserRolesHistory)
-        q = q.filter_by(user_id=self.user_id, role=self.role).filter(UserRolesHistory.id != self.id)
-        return q.order_by(desc(UserRolesHistory.id)).first()
+        q = q.filter_by(user_id=self.user_id, role=self.role).filter(UserRolesHistory.id < self.id).order_by(
+            desc(UserRolesHistory.id))
+        q1 = q.count()
+        if q1 == 0:
+            return False
+        return q.first()
 
     @property
     def date(self):
@@ -485,6 +555,11 @@ class UserRoles(Base, Model):
     @staticmethod
     def get_managers():
         q = session.query(User).join('roles').filter_by(role=UserRoles.CASE_MAN, removed=False)
+        return q.all()
+
+    @staticmethod
+    def get_authorisers():
+        q = session.query(User).join('roles').filter_by(role=UserRoles.AUTH, removed=False)
         return q.all()
 
     @staticmethod

@@ -38,7 +38,7 @@
     <h1>${task.case.case_name|h}: Task ${task.task_name|h} has been completed</h1>
     % endif
 
-    <p><a href='${urls.build("task.view", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>View task summary</a></p>
+    <p><a href='${urls.build("task.view", dict(task_id=task.id, case_id=task.case.id))|h}'>View task summary</a></p>
 
     <div id="tabs">
         <ul>
@@ -86,9 +86,9 @@
                 % if len(task.notes) != 0:
                     <h2>Case Notes</h2>
 
-                    <p>Export the notes to <a href='${urls.build("export.pdf", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>PDF</a>,
-                        <a href=""></a><a href='${urls.build("export.rtf", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>RTF</a>, and
-                        <a href='${urls.build("export.csv", dict(task_id=task.task_name, case_id=task.case.case_name))|h}'>spreadsheet</a>.</p>
+                    <p>Export the notes to <a href='${urls.build("export.notes_pdf", dict(task_id=task.id, case_id=task.case.id))|h}'>PDF</a>,
+                        <a href=""></a><a href='${urls.build("export.notes_rtf", dict(task_id=task.id, case_id=task.case.id))|h}'>RTF</a>, and
+                        <a href='${urls.build("export.notes_csv", dict(task_id=task.id, case_id=task.case.id))|h}'>spreadsheet</a>.</p>
             % endif
 
             % if len(case_note_dates) > 0:
@@ -136,7 +136,7 @@
             % endif
 
             <h2>Update Case Notes</h2>
-            <form method="post" action="${urls.build('forensics.work', dict(task_id=task.task_name, case_id=task.case.case_name, add_notes='true'))|h}">
+            <form method="post" action="${urls.build('forensics.work', dict(task_id=task.id, case_id=task.case.id, add_notes='true'))|h}">
                 ${forms.formTextArea("Notes", "notes", "notes", "form_label", "addeditcase_notes", first=True)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
             </form>
@@ -163,7 +163,7 @@
                     <p>Assign a second QA investigator.</p>
                     % endif
                     <% assign_num = "2" if len(task.QAs) == 0 else "1" %>
-                    <form method="post" action="${urls.build('forensics.work', dict(task_id=task.task_name, case_id=task.case.case_name, assign_QA='true', assign_num=assign_num))|h}">
+                    <form method="post" action="${urls.build('forensics.work', dict(task_id=task.id, case_id=task.case.id, assign_QA='true', assign_num=assign_num))|h}">
                         % if task.principle_QA is None:
                             ${forms.formSelectBox("Primary QA Investigator", "investigator", "investigator", "form_label", "addeditcase", qa_partner_list, please_select=True)}
                         % endif
@@ -179,7 +179,7 @@
                 % if len(task.QAs) != 0:
                 <h2>Request QA</h2>
 
-                    <form method="post" action="${urls.build('forensics.work', dict(task_id=task.task_name, case_id=task.case.case_name, request_qa='true'))|h}">
+                    <form method="post" action="${urls.build('forensics.work', dict(task_id=task.id, case_id=task.case.id, request_qa='true'))|h}">
                         ${forms.formSelectBox("To", "qa_partners", "qa_partners", "form_label", "addeditcase", qa_partners, please_select=True, first=True)}
                         ${forms.formTextField("Message Subject", "subject", "subject", "form_label", "input_long", value="QA for " + task.case.case_name + " " + task.task_name)}
                         ${forms.formTextArea("Message body", "body", "body", "form_label", "addeditcase")}
@@ -212,13 +212,13 @@
             <div class="success">
                 <h1>Success!</h1>
                 <p>The file has been successfully uploaded. Please go to the
-                    <a href='${urls.build("task.view", dict(case_id=task.case.case_name, task_id=task.task_name))|h}'>task overview</a> to see the uploaded files.</p>
+                    <a href='${urls.build("task.view", dict(case_id=task.case.id, task_id=task.id))|h}'>task overview</a> to see the uploaded files.</p>
             </div>
             % endif
 
             <h2>Upload file</h2>
 
-            <form method="post" enctype="multipart/form-data" action="${urls.build('forensics.work', dict(task_id=task.task_name,case_id=task.case.case_name, upload_file='true'))|h}">
+            <form method="post" enctype="multipart/form-data" action="${urls.build('forensics.work', dict(task_id=task.id,case_id=task.case.id, upload_file='true'))|h}">
                 ${forms.formTextField("File Title", "file_title", "file_title", "form_label", "input_long", first=True)}
                 ${forms.formTextArea("Comments", "comments", "comments", "form_label", "addeditcase")}
                 ${forms.formTextField("File", "file", "file", "form_label", "input_long", input_type="file")}
