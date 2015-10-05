@@ -292,7 +292,8 @@ Foreman
                                                                self.current_user, [CaseStatus.CLOSED,
                                                                                    CaseStatus.ARCHIVED])
                 current_cases_requested = Case.get_cases_requested(user, self.check_permissions, self.current_user,
-                                                                   [CaseStatus.CREATED, CaseStatus.OPEN])
+                                                                   [CaseStatus.CREATED, CaseStatus.OPEN,
+                                                                    CaseStatus.PENDING])
             else:
                 old_cases_requested = None
                 current_cases_requested = None

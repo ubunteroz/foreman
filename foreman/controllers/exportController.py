@@ -6,7 +6,8 @@ from werkzeug import Response, redirect
 from baseController import BaseController
 from foreman.model import CaseAuthorisation, TaskNotes, TaskUpload, EvidenceHistory, ChainOfCustody, EvidencePhotoUpload
 from ..utils.case_note_renders import render_rtf, render_csv, render_pdf
-from ..utils.report_renders import render_pdf_report, render_rtf_report
+from ..utils.report_renders import render_rtf_report
+
 
 class ExportController(BaseController):
 
@@ -47,31 +48,10 @@ class ExportController(BaseController):
         case = self._validate_case(case_id)
         if case is not None:
             self.check_permissions(self.current_user, case, 'report')
+
             case_history, task_histories, evidence_histories = self._get_data_for_case_report(case)
             return self.return_response('pages', 'case_report.html', case=case, case_history=case_history,
                                         task_histories=task_histories, evidence_histories=evidence_histories)
-        else:
-            return self.return_404()
-
-    def case_report_html(self, case_id):
-        case = self._validate_case(case_id)
-        if case is not None:
-            self.check_permissions(self.current_user, case, 'report')
-            case_history, task_histories, evidence_histories = self._get_data_for_case_report(case)
-            return self.return_response('pages', 'case_report.html', case=case, case_history=case_history,
-                                        task_histories=task_histories, evidence_histories=evidence_histories)
-        else:
-            return self.return_404()
-
-    def case_report_pdf(self, case_id):
-        case = self._validate_case(case_id)
-        if case is not None:
-            self.check_permissions(self.current_user, case, 'report')
-            histories = self._get_data_for_case_report(case)
-            stringio = render_pdf_report(case, histories)
-            if stringio is None:
-                return Response(self.error_msg, mimetype='text/html', status=200)
-            return Response(stringio.getvalue(), direct_passthrough=True, mimetype='application/pdf', status=200)
         else:
             return self.return_404()
 

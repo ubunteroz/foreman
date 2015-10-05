@@ -34,6 +34,14 @@
             % endif
         % endif
 
+        % if check_perms(case, "report"):
+            % if check_perms(case, 'edit'):
+                |
+            % endif
+            <a href="${urls.build("export.report", dict(case_id=case.id))|h}" target='_blank'>Generate HTML case report</a> |
+            <a href="${urls.build("export.case_report_rtf", dict(case_id=case.id))|h}">Generate RTF case report</a>
+        % endif
+
     </p>
 
     <h2>Case Background</h2>
