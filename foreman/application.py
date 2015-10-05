@@ -165,9 +165,7 @@ class Application(object):
         map.add(Rule('/json/jason_tasks_assigned_to_inv/', endpoint='report.jason_tasks_assigned_to_inv'))
         map.add(Rule('/json/jason_tasks_qaed/', endpoint='report.jason_tasks_qaed'))
 
-        map.add(Rule('/cases/<case_id>/report.pdf', endpoint='export.case_report_pdf'))
         map.add(Rule('/cases/<case_id>/report.rtf', endpoint='export.case_report_rtf'))
-        map.add(Rule('/cases/<case_id>/report.html', endpoint='export.case_report_html'))
         map.add(Rule('/cases/<case_id>/report/', endpoint='export.report'))
 
         map.add(Rule('/export/<case_id>/<task_id>.pdf', endpoint='export.notes_pdf'))

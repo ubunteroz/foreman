@@ -339,6 +339,8 @@ class And(BaseChecker):
 
 permissions = {
     ('Case', 'admin'): AdminChecker(),
+    ('Case', 'report'): Or(AdminChecker(), InvestigatorForCaseChecker(), CaseManagerForCaseChecker(),
+                           QAForCaseChecker()),
     ('Case', 'view-all'): Or(AdminChecker(), InvestigatorChecker(), QAChecker(), CaseManagerChecker(),
                              RequesterChecker(), AuthoriserChecker()),
     ('Case', 'edit'): And(Or(AdminChecker(),
@@ -372,7 +374,6 @@ permissions = {
                             Not(CaseApprovedChecker()), RequesterForCaseChecker())),
     ('Case', 'add'): Or(AdminChecker(), CaseManagerChecker(), RequesterChecker()),
     ('Case', 'authorise'): AuthoriserForCaseChecker(),
-    ('Case', 'report'): AdminChecker(),
     ('Task', 'edit'): And(Or(AdminChecker(), CaseManagerForTaskChecker()), Not(TaskEditableChecker())),
     ('Task', 'close'): And(Or(AdminChecker(), CaseManagerForTaskChecker()), Not(ArchivedTaskChecker())),
     ('Task', 'view-all'): Or(AdminChecker(), InvestigatorChecker(), QAChecker(), CaseManagerChecker()),

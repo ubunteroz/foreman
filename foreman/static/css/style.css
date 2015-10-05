@@ -244,6 +244,7 @@ div.report_option{
 
 h1.report{
     border-bottom: solid 3px black;
+    font-size: 40pt;
 }
 
 div.report h2, div.report h1{

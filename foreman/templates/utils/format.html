@@ -42,6 +42,9 @@
 </%def>
 
 <%def name="report_histories(histories, name, obj, obj_id)" filter="trim">
+    % if len(histories) == 0:
+        <p>No audit logs.</p>
+    % endif
     % for history_entry in histories:
         <h3 class="spacer">
             <% params = {obj_id: history_entry[0]['current'].id, 'case_id': history_entry[0]['current'].case.id} %>
