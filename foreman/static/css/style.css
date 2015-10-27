@@ -472,6 +472,27 @@ table.task_table td.highlight, table.case_table td.highlight{
     background-color: #FAFAFA;
 }
 
+div.case_timesheet_names{
+    float:left;
+}
+
+div.case_timesheet{
+    float:left;
+    overflow-x:scroll;
+    width: 90%;
+}
+
+td.no_case{
+    background: white;
+}
+
+td.case{
+    background: #EEE;
+}
+
+td.weekend, th.weekend{
+    background: dimgray;
+}
 
 pre.notes{
     white-space: pre-wrap;       /* css-3 */
@@ -619,6 +640,16 @@ input, select{
     border-radius: 5px;
     position: relative;
     width: 190px;
+}
+
+input.timesheet{
+    width: 40px;
+    border-radius: 0px;
+    padding: 0px;
+    float: None;
+    margin:0px;
+    border: solid #EEE 1px;
+    background: #EEE;
 }
 
 .input_long{

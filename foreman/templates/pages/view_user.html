@@ -76,6 +76,22 @@
             <th>Surname</th>
             <td>${user.surname|h}</td>
         </tr>
+
+        % if user.manager is not None:
+        <tr>
+            <th>Manager</th>
+            <td><a href="${urls.build('user.view', dict(user_id=user.manager.id))|h}">${user.manager.fullname|h}</a></td>
+        </tr>
+        % endif
+        % if len(user.direct_reports) != 0:
+        <tr>
+            <th>Manages</th>
+            <td>
+                ${", ".join('<a href="' + urls.build('user.view', dict(user_id=report.id)) + '">' + report.fullname + '</a>' for report in user.direct_reports)}
+            </td>
+        </tr>
+        % endif
+
         <tr>
             <th>Job Title</th>
             <td>${user.job_title|h}</td>
@@ -130,6 +146,14 @@
 
     % if check_perms(user, 'edit'):
     <p><a href="${urls.build("user.edit", dict(user_id=user.id))|h}">Edit Details</a></p>
+    % endif
+
+    % if check_perms(user, "edit_timesheet"):
+            <h2>Management</h2>
+            <p><a href="${urls.build("user.timesheet", dict(user_id=user.id))|h}">Edit Timesheets</a></p>
+    % elif check_perms(user, "view_timesheet"):
+            <h2>Management</h2>
+            <p><a href="${urls.build("user.timesheet", dict(user_id=user.id))|h}">View Timesheets</a></p>
     % endif
 
     <h2>Roles Groups</h2>

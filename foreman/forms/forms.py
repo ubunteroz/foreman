@@ -2,6 +2,7 @@
 from formencode import Schema, Invalid, validators as v
 from formencode.foreach import ForEach
 from formencode.compound import All
+from formencode.variabledecode import NestedVariables
 #local imports
 from validators import *
 
@@ -372,3 +373,26 @@ class RenameDepartmentForm(Schema):
 
 class RemoveDepartmentForm(Schema):
     remove_department_name = GetDepartment(not_empty=True)
+
+
+class TimeSheetCell(Schema):
+    value = v.Number(max=24)
+    datetime = TimeSheetDateTime()
+
+
+class CaseHours(Schema):
+    case = GetCase()
+    timesheet = ForEach(TimeSheetCell())
+
+
+class TaskHours(Schema):
+    task = GetTask()
+    timesheet = ForEach(TimeSheetCell())
+
+
+class CaseTimeSheetForm(Schema):
+    cases = ForEach(CaseHours())
+
+
+class TaskTimeSheetForm(Schema):
+    tasks = ForEach(TaskHours())

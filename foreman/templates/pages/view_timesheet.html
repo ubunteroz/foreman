@@ -1,0 +1,149 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+<%namespace file="/utils/forms.html" name="forms" />
+
+<%def name="javascripts()" filter="trim">
+</%def>
+
+<%def name="timesheets(case_task, timesheet_user, timesheet_times, timesheets)">
+
+        <div class="case_timesheet">
+        <form method="post" action="${urls.build('user.timesheet', dict(user_id=user.id, form=case_task))|h}">
+        <table>
+            <tr>
+                <% from datetime import timedelta, datetime %>
+                <% from calendar import monthrange %>
+                <% today = timesheet_times[0] %>
+                <% month = 0 %>
+                % while today <= timesheet_times[1] + timedelta(days=1):
+                    % if today.month != month:
+                        <th colspan="${monthrange(today.year, today.month)[1] - today.day|h}">
+                            ${today.strftime("%B %Y")|h}
+                        </th>
+                        <% month = today.month %>
+                    % endif
+                    <% today = today + timedelta(days=1) %>
+
+                % endwhile
+            </tr>
+            <tr>
+                <% today = timesheet_times[0] %>
+                % while today <= timesheet_times[1]:
+                    % if today.isoweekday() == 6 or today.isoweekday() == 7:
+                    <th class="weekend">
+                    % else:
+                    <th>
+                    % endif
+                        ${today.strftime("%d")|h}
+                    </th>
+                    <% today = today + timedelta(days=1) %>
+                % endwhile
+            </tr>
+
+            % for (case_counter, case) in enumerate(timesheet_user):
+                <tr>
+                    <% today = timesheet_times[0] %>
+                    % if check_perms(user, "edit_timesheet"):
+                        <% time_counter = 0 %>
+                        ${forms.formTextField_Timesheet(case_task + "s-" + str(case_counter) + "." + case_task, hidden=True, value=str(case.id))}
+                    % endif
+                    % while today <= timesheet_times[1]:
+                            % if today.date() >= case.date_range[0].date() and today.date() <= case.date_range[1].date():
+                                    <td class="case">
+                                        <% ts = timesheets.get(today.strftime("%d%m%Y"), {}).get(case.id, None) %>
+                                        % if check_perms(user, "edit_timesheet"):
+                                        ${forms.formTextField_Timesheet(case_task + "s-" + str(case_counter) + ".timesheet-" + str(time_counter) + ".datetime", hidden=True, value=today.strftime("%d%m%Y"))}
+                                        ${forms.formTextField_Timesheet(case_task + "s-" + str(case_counter) + ".timesheet-" + str(time_counter) + ".value", value=ts)}
+                                        <% time_counter += 1 %>
+                                        % else:
+                                            ${ts if ts is not None else ""|h}
+                                        % endif
+                                    </td>
+                            % else:
+                                    <td class="no_case">&nbsp;</td>
+                            % endif
+                    <% today = today + timedelta(days=1) %>
+                    % endwhile
+                </tr>
+            % endfor
+        </table>
+        </div>
+        % if check_perms(user, "edit_timesheet"):
+        <p style="clear:both; text-align:center"><input type="submit" value="Submit Timesheet" /></p>
+        % endif
+</%def>
+
+
+<div id="sidebar">
+    ${sidebars.user_menu()}
+</div>
+
+<div id="mainbar">
+    % if current_user.id == user.id:
+    <h1>My Timesheet</h1>
+    % else:
+    <h1>Timesheet for ${user.fullname|h}</h1>
+    % endif
+
+    % if user.is_case_manager():
+
+        <h2>Case Timesheet</h2>
+
+        % if len(timesheet_user_cases) > 0:
+            % if check_perms(user, "edit_timesheet"):
+        <p>Enter in the amount of hours done on the case for each day. Number of hours do not have be be whole numbers, e.g. 2.5 hours to mean 2 hours and 30 minutes. </p>
+            % endif
+        <div class="case_timesheet_names">
+        <table>
+            <tr><th></th></tr>
+            <tr><th></th></tr>
+             % for case in timesheet_user_cases:
+                <tr><th><a href='${urls.build("case.view", dict(case_id=case.id))|h}'>${case.case_name|h}</a></th></tr>
+             % endfor
+        </table>
+        </div>
+
+        ${timesheets("case", timesheet_user_cases, case_timesheet_times, case_timesheets)}
+
+        % else:
+            <p>
+                % if user == current_user:
+                    You have
+                % else:
+                    ${user.forename|h} has
+                % endif
+                not been assigned any cases. </p>
+        % endif
+    % endif
+
+    % if user.is_examiner():
+    <h2>Task Timesheet</h2>
+
+        % if len(timesheet_user_tasks) > 0:
+            % if check_perms(user, "edit_timesheet"):
+        <p>Enter in the amount of hours done on the task for each day. Number of hours do not have be be whole numbers, e.g. 2.5 hours to mean 2 hours and 30 minutes. </p>
+            % endif
+        <div class="case_timesheet_names">
+        <table>
+            <tr><th></th></tr>
+            <tr><th></th></tr>
+             % for task in timesheet_user_tasks:
+                <tr><th><a href='${urls.build("task.view", dict(case_id=task.case.id, task_id=task.id))|h}'>${task.task_name|h}</a></th></tr>
+             % endfor
+        </table>
+        </div>
+
+        ${timesheets("task", timesheet_user_tasks, task_timesheet_times, task_timesheets)}
+
+        % else:
+            <p>
+                % if user == current_user:
+                    You have
+                % else:
+                    ${user.forename|h} has
+                % endif
+                not been assigned any tasks.</p>
+        % endif
+
+    % endif
+</div>

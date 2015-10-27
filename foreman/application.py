@@ -161,6 +161,8 @@ class Application(object):
 
         map.add(Rule('/users/<user_id>/case_history/', endpoint='user.case_history'))
 
+        map.add(Rule('/users/<user_id>/timesheet/', endpoint='user.timesheet'))
+
         map.add(Rule('/reporting/', endpoint='report.report'))
         map.add(Rule('/json/jason_tasks_assigned_to_inv/', endpoint='report.jason_tasks_assigned_to_inv'))
         map.add(Rule('/json/jason_tasks_qaed/', endpoint='report.jason_tasks_qaed'))

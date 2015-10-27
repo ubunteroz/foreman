@@ -26,6 +26,19 @@
 	% endif
 </%def>
 
+<%def name="formTextField_Timesheet(name, hidden=False, value=None)" filter="trim">
+        % if hidden:
+        <input type="hidden" value="${value|h}" name="${name|h}" id="${name|h}" />
+        % else:
+            % if value:
+		        <input type="text" class="timesheet ${isError(name)}" value="${value|h}" name="${name|h}" id="${name|h}" />
+            % else:
+		        <input type="text" class="timesheet ${isError(name)}" value="" name="${name|h}" id="${name|h}" />
+            % endif
+        % endif
+</%def>
+
+
 <%def name="formTextField(label, name, id, labelclass, inputclass, input_type='text', first=False, default='', value='',  p_id='', required=True, hidden=False)" filter="trim">
     % if hidden:
         <% hide = " class='hide'" %>

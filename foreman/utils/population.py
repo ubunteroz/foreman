@@ -6,7 +6,7 @@ from utils import session, config, ROOT_DIR
 from random import randint
 from os import path, mkdir, stat
 import shutil
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 def create_admin_user():
@@ -35,7 +35,7 @@ def create_admin_user():
 
 
 def load_initial_values():
-    opts = ForemanOptions("%d %b %Y %H:%M:%S", r"C:\Foreman", "DateNumericIncrement", "NumericIncrement", "A Large Company",
+    opts = ForemanOptions("%d %b %Y %H:%M:%S %Z", r"C:\Foreman", "DateNumericIncrement", "NumericIncrement", "A Large Company",
                           "Investigations")
     session.add(opts)
     session.flush()
@@ -122,10 +122,12 @@ def create_test_investigators(admin):
     session.commit()
     investigators = [u1, u2, u3, u4, u5, u6, u7, u8, u9, u10, u11, u12, u13, u14, u15]
 
+    managers=[]
     for u in investigators:
         sen = randint(0,5)
         if sen == 5:
             u.job_title = "Forensic Investigations Manager"
+            managers.append(u)
         elif sen == 3 or sen == 4:
             u.job_title = "Senior Forensic Investigator"
         else:
@@ -154,6 +156,13 @@ def create_test_investigators(admin):
         ur6.add_change(admin)
         session.flush()
     session.commit()
+
+    for inv in investigators:
+        if inv in managers:
+            inv.manager = admin
+        else:
+            inv.manager = managers[randint(0, len(managers)-1)]
+
     print "15 Investigators added to Foreman."
     return investigators
 
@@ -194,10 +203,12 @@ def create_test_case_managers(admin):
     session.commit()
     case_managers = [u1, u2, u3, u4, u5, u6, u7, u8, u9, u10]
 
+    managers = []
     for u in case_managers:
         sen = randint(0,5)
         if sen == 5:
             u.job_title = "Forensic Case Manager Lead"
+            managers.append(u)
         elif sen == 3 or sen == 4:
             u.job_title = "Senior Forensic Case Manager"
         else:
@@ -226,6 +237,13 @@ def create_test_case_managers(admin):
         ur6.add_change(admin)
         session.flush()
     session.commit()
+
+    for inv in case_managers:
+        if inv in managers:
+            inv.manager = admin
+        else:
+            inv.manager = managers[randint(0, len(managers)-1)]
+
     print "10 Case Managers added to Foreman."
     return case_managers
 
@@ -417,9 +435,12 @@ def create_test_cases(case_managers, requestors, investigators, authorisers):
             is_private = True
         else:
             is_private = False
+
+        created = datetime.now() - timedelta(days=randint(0,100), hours=randint(0,23), seconds=randint(0,59),
+                                           minutes=randint(0,59))
         new_case = Case(ForemanOptions.get_next_case_name(), requestor, background=background, reference=None,
                         private=is_private, location=None, classification=classification, case_type=case_type,
-                        justification=justification)
+                        justification=justification, created=created)
         session.add(new_case)
         session.flush()
         new_case.add_change(requestor)

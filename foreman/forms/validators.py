@@ -80,6 +80,20 @@ class NotEmptyTaskUpload(v.FancyValidator):
             return True
 
 
+class TimeSheetDateTime(v.UnicodeString):
+    messages = {
+        'invalid': 'The date was not entered in the correct format',
+    }
+    allow_null = False
+
+    def _to_python(self, value, state):
+        try:
+            dt = datetime.datetime.strptime(value, "%d%m%Y")
+            return datetime.date(dt.year, dt.month, dt.day)
+        except ValueError:
+            raise Invalid(self.message('invalid', state), value, state)
+
+
 class ValidDate(v.UnicodeString):
     messages = {
         'invalid': 'The date was not entered in the correct format DD MMMM YYYY',
@@ -420,7 +434,6 @@ class GetCase(GetObject):
             return session.query(Case).get(int(case_id))
         else:
             return None
-
 
 class GetDepartment(GetObject):
     messages = {

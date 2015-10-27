@@ -6,7 +6,7 @@ import string
 from os import path
 # library imports
 from sqlalchemy import Table, Column, Integer, Boolean, Float, Unicode, MetaData, ForeignKey, DateTime, CheckConstraint, \
-    asc, desc, func, and_
+    asc, desc, func, and_, Date
 from sqlalchemy.orm import backref, relation
 # local imports
 from models import Base, Model, UserHistoryModel, HistoryModel
@@ -151,8 +151,10 @@ class User(Base, Model):
     job_title = Column(Unicode)
     photo = Column(Unicode)
     active = Column(Boolean)
+    manager_id = Column(Integer, ForeignKey('users.id'))
 
     team = relation('Team', backref=backref('team_members'))
+    manager = relation('User', backref=backref('direct_reports'), remote_side=[id])
     PROFILE_PHOTO_FOLDER = path.join(ROOT_DIR, 'files', 'user_profile_photos')
 
     def __init__(self, username, password, forename, surname, email, validated=False, middle=None, photo='default.png'):
@@ -176,6 +178,9 @@ class User(Base, Model):
 
     def activate(self):
         self.active = True
+
+    def is_manager_of(self, user):
+        return user.manager.id == self.id
 
     def is_investigator(self):
         return UserRoles.check_user_has_active_role(user=self, role=UserRoles.INV) or \
@@ -574,3 +579,42 @@ class UserRoles(Base, Model):
 
     def __repr__(self):
         return "<Role Object[{}] '{}' ({})>".format(self.role, self.user.fullname, self.removed)
+
+
+class TaskTimeSheets(Base, Model):
+    __tablename__ = 'task_timesheets'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    task_id = Column(Integer, ForeignKey('tasks.id'))
+    date = Column(Date)
+    hours = Column(Float)
+
+    user = relation('User', backref=backref('task_timesheet', order_by=desc(id)))
+    task = relation('Task', backref=backref('task_timesheet', order_by=desc(id)))
+
+    def __init__(self, user, task, date, hours):
+        self.user = user
+        self.task = task
+        self.date = date
+        self.hours = hours
+
+
+class CaseTimeSheets(Base, Model):
+    __tablename__ = 'case_timesheets'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    case_id = Column(Integer, ForeignKey('cases.id'))
+    date = Column(Date)
+    hours = Column(Float)
+
+    user = relation('User', backref=backref('case_timesheet', order_by=desc(id)))
+    case = relation('Case', backref=backref('case_timesheet', order_by=desc(id)))
+
+    def __init__(self, user, case, date, hours):
+
+        self.user = user
+        self.case = case
+        self.date = date
+        self.hours = hours

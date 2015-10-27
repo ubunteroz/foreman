@@ -5,7 +5,7 @@ from os import path, rename, remove
 import shutil
 import calendar
 # library imports
-from sqlalchemy import Table, Column, Integer, Boolean, Unicode, ForeignKey, DateTime, asc, desc, and_, or_, func
+from sqlalchemy import Table, Column, Integer, Boolean, Unicode, ForeignKey, DateTime, asc, desc, and_, or_, func, Float
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import backref, relation
 from qrcode import *
@@ -305,7 +305,7 @@ class Case(Base, Model):
     case_priority_colour = Column(Unicode)
 
     def __init__(self, case_name, user, background=None, reference=None, private=False, location=None,
-                 classification=None, case_type=None, justification=None, priority=None):
+                 classification=None, case_type=None, justification=None, priority=None, created=None):
         self.case_name = case_name
         self.reference = reference
         self.set_status(CaseStatus.PENDING, user)
@@ -323,7 +323,11 @@ class Case(Base, Model):
             self.location = ForemanOptions.get_default_location()
         else:
             self.location = location
-        self.creation_date = datetime.now()
+
+        if created is None:
+            self.creation_date = datetime.now()
+        else:
+            self.creation_date = created
 
     def authorise(self, authoriser, reason, authorisation):
         auth = CaseAuthorisation(authoriser, self, authorisation, reason)
@@ -338,6 +342,14 @@ class Case(Base, Model):
     @property
     def date_created(self):
         return ForemanOptions.get_date(self.creation_date)
+
+    @property
+    def date_range(self):
+        status = self.get_status()
+        if status.status in CaseStatus.active_statuses:
+            return self.creation_date, datetime.now()
+        else:
+            return self.creation_date, status.date_time
 
     def set_status(self, status, user):
         self.currentStatus = status
@@ -822,6 +834,7 @@ class TaskStatus(Base, HistoryModel):
     notStarted = [QUEUED]
     preInvestigation = [QUEUED, ALLOCATED]
     notesAllowed = [PROGRESS, QA, DELIVERY, COMPLETE]
+    qaComplete = [DELIVERY, COMPLETE, CLOSED]
     closedStatuses = [COMPLETE, CLOSED]
     invRoles = [ALLOCATED, PROGRESS, DELIVERY, COMPLETE]
     qaRoles = [QA]
@@ -1189,6 +1202,17 @@ class Task(Base, Model):
     def date_created(self):
         return ForemanOptions.get_date(self.creation_date)
 
+    @property
+    def date_range(self):
+        status = self.get_status()
+        c_status = self.case.get_status()
+        if status.status in TaskStatus.openStatuses and c_status.status not in CaseStatus.closedStatuses:
+            return self.creation_date, datetime.now()
+        elif c_status.status in CaseStatus.closedStatuses:
+            return self.creation_date, c_status.date_time
+        else:
+            return self.creation_date, status.date_time
+
     def add_change(self, user):
         change = TaskHistory(self, user)
         session.add(change)
@@ -1346,7 +1370,7 @@ class Task(Base, Model):
         q = q.join(UserTaskRoles).filter(UserTaskRoles.user_id == investigator.id).filter(or_(
             UserTaskRoles.role == UserTaskRoles.PRINCIPLE_QA,
             UserTaskRoles.role == UserTaskRoles.SECONDARY_QA))
-        q = q.join(TaskStatus).filter(TaskStatus.status == TaskStatus.DELIVERY)
+        q = q.join(TaskStatus).filter(TaskStatus.status.in_(TaskStatus.qaComplete))
         return Task._check_perms(current_user, q, case_perm_checker)
 
     @staticmethod

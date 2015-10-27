@@ -2,13 +2,16 @@ from os import path
 
 # library imports
 from werkzeug import Response, redirect
+from datetime import datetime, date
 
 # local imports
 from baseController import BaseController
 from ..model import User, UserRoles, Case, CaseHistory, TaskHistory, TaskStatus, CaseStatus, EvidenceHistory
 from ..model import UserHistory, UserRolesHistory, UserTaskRolesHistory, UserCaseRolesHistory, Task, TaskUpload
-from ..model import EvidencePhotoUpload, Team, Evidence, LinkedCase, TaskNotes, ChainOfCustody
+from ..model import EvidencePhotoUpload, Team, Evidence, LinkedCase, TaskNotes, ChainOfCustody, CaseTimeSheets
+from ..model import TaskTimeSheets
 from ..forms.forms import PasswordChangeForm, EditUserForm, EditRolesForm, AddUserForm, AdminPasswordChangeForm
+from ..forms.forms import CaseTimeSheetForm, TaskTimeSheetForm
 from ..utils.utils import multidict_to_dict, session, config, upload_file
 from ..utils.mail import email
 
@@ -23,6 +26,96 @@ class UserController(BaseController):
         self.check_permissions(self.current_user, "User", 'view-all')
         all_users = User.get_all().all()
         return self.return_response('pages', 'view_users.html', users=all_users)
+
+    def timesheet(self, user_id):
+        user = self._validate_user(user_id)
+        if user is not None:
+            self.check_permissions(self.current_user, user, 'view_timesheet')
+            self.breadcrumbs.append({'title': user.fullname,
+                                     'path': self.urls.build('user.view', dict(user_id=user.id))})
+            self.breadcrumbs.append({'title': "Timesheet",
+                                     'path': self.urls.build('user.timesheet', dict(user_id=user.id))})
+
+            if self.request.args.get('form') == "case" and self.validate_form(CaseTimeSheetForm):
+                for timesheets in self.form_result['cases']:
+                    for entries in timesheets['timesheet']:
+                        timesheet = CaseTimeSheets.get_filter_by(case=timesheets['case'],
+                                                         date=entries['datetime'],
+                                                         user=user).first()
+                        if timesheet is None and entries['value'] is not None:
+                            user_timesheet = CaseTimeSheets(user, timesheets['case'], entries['datetime'],
+                                                            entries['value'])
+                            session.add(user_timesheet)
+                            session.commit()
+                        elif timesheet is not None:
+                            timesheet.hours = entries['value']
+            elif self.request.args.get('form') == "task" and self.validate_form(TaskTimeSheetForm):
+                for timesheets in self.form_result['tasks']:
+                    for entries in timesheets['timesheet']:
+                        timesheet = TaskTimeSheets.get_filter_by(task=timesheets['task'],
+                                                         date=entries['datetime'],
+                                                         user=user).first()
+                        if timesheet is None and entries['value'] is not None:
+                            user_timesheet = TaskTimeSheets(user, timesheets['task'], entries['datetime'],
+                                                            entries['value'])
+                            session.add(user_timesheet)
+                            session.commit()
+                        elif timesheet is not None:
+                            timesheet.hours = entries['value']
+
+            task_timesheet_start = task_timesheet_end = None
+            task_timesheets = {}
+            if user.is_examiner():
+                current_tasks_qaed = Task.get_current_qas(user, self.check_permissions, self.current_user)
+                old_tasks_qaed = Task.get_completed_qas(user, self.check_permissions, self.current_user)
+                current_tasks_investigated = Task.get_current_investigations(user, self.check_permissions,
+                                                                             self.current_user)
+                old_tasks_investigated = Task.get_completed_investigations(user, self.check_permissions,
+                                                                           self.current_user)
+                timesheet_user_tasks = current_tasks_qaed + old_tasks_qaed + current_tasks_investigated + \
+                                       old_tasks_investigated
+                task_timesheet_start = datetime.now()
+                task_timesheet_end = datetime(1970,1,1)
+                for task in timesheet_user_tasks:
+                    start, end = task.date_range
+                    if start < task_timesheet_start:
+                        task_timesheet_start = start
+                    if end > task_timesheet_end:
+                        task_timesheet_end = end
+
+                for ts in TaskTimeSheets.get_filter_by(user=user).all():
+                    task_timesheets.setdefault(ts.date.strftime("%d%m%Y"), {})[ts.task.id] = ts.hours
+            else:
+                timesheet_user_tasks = []
+
+            case_timesheet_start = case_timesheet_end = None
+            case_timesheets = {}
+            if user.is_case_manager():
+                old_cases_managed = Case.get_completed_cases(user, self.check_permissions, self.current_user)
+                current_cases_managed = Case.get_current_cases(user, self.check_permissions, self.current_user)
+
+                timesheet_user_cases = old_cases_managed + current_cases_managed
+                case_timesheet_start = datetime.now()
+                case_timesheet_end = datetime(1970,1,1)
+                for case in timesheet_user_cases:
+                    start, end = case.date_range
+                    if start < case_timesheet_start:
+                        case_timesheet_start = start
+                    if end > case_timesheet_end:
+                        case_timesheet_end = end
+
+                for ts in CaseTimeSheets.get_filter_by(user=user).all():
+                    case_timesheets.setdefault(ts.date.strftime("%d%m%Y"), {})[ts.case.id] = ts.hours
+            else:
+                timesheet_user_cases = []
+            return self.return_response('pages', 'view_timesheet.html', user=user,
+                                        timesheet_user_tasks=timesheet_user_tasks,
+                                        timesheet_user_cases=timesheet_user_cases, errors=self.form_error,
+                                        case_timesheet_times=(case_timesheet_start, case_timesheet_end),
+                                        case_timesheets=case_timesheets, task_timesheets=task_timesheets,
+                                        task_timesheet_times=(task_timesheet_start, task_timesheet_end))
+        else:
+            return self.return_404()
 
     def view(self, user_id):
         user = self._validate_user(user_id)
