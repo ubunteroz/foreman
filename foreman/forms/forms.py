@@ -296,6 +296,7 @@ class EditUserForm(Schema):
     job_title = v.UnicodeString(not_empty=True)
     team = GetTeam(not_empty=True)
     photo = UploadProfilePhoto()
+    manager = GetUser()
 
 
 class AddUserForm(Schema):
@@ -315,6 +316,7 @@ class AddUserForm(Schema):
     authoriser = GetBooleanYesNo(not_empty=True)
     investigator = GetBooleanYesNo(not_empty=True)
     qa = GetBooleanYesNo(not_empty=True)
+    manager = GetUser()
 
 
 class EditRolesForm(Schema):

@@ -88,6 +88,7 @@ class UserHistory(Base, HistoryModel):
     team = Column(Unicode)
     department = Column(Unicode)
     photo = Column(Unicode)
+    manager = Column(Unicode)
 
     original_user = relation('User', backref=backref('history', order_by=asc(date_time)), foreign_keys=original_user_id)
     user = relation('User', backref=backref('user_history_changes'), foreign_keys=user_id)
@@ -95,7 +96,7 @@ class UserHistory(Base, HistoryModel):
     comparable_fields = {'Forename': 'forename', 'Surname': 'surname', 'Middle Name': 'middle', 'Username': 'username',
                          'Email address': 'email', 'Telephone Number': 'telephone', 'Alternative Telephone Number':
                          'alt_telephone', 'Fax number': 'fax', 'Job Title': 'job_title', "Profile photo": 'photo',
-                         'Team': 'team', 'Department': 'department'}
+                         'Team': 'team', 'Department': 'department', "Manager": 'manager'}
 
     history_name = ("User", "username", "original_user_id")
     object_name = "User"
@@ -120,6 +121,10 @@ class UserHistory(Base, HistoryModel):
         else:
             self.team = None
             self.department = None
+        if original_user.manager is not None:
+            self.manager = original_user.manager.fullname
+        else:
+            self.manager = None
 
     @property
     def previous(self):
@@ -181,6 +186,9 @@ class User(Base, Model):
 
     def is_manager_of(self, user):
         return user.manager.id == self.id
+
+    def is_a_manager(self):
+        return len(self.direct_reports) > 0
 
     def is_investigator(self):
         return UserRoles.check_user_has_active_role(user=self, role=UserRoles.INV) or \

@@ -66,6 +66,23 @@
         </div>
      </div>
      % endif
+
+    % if current_user.is_a_manager():
+    <div class="sidebar-panel">
+        <a href="#"><img class="show-hide-sidepanel-up-button" src="${urls.build("images", dict(file='siteimages/up-arrow.png'))|h}" /></a>
+        <a href="#"><img class="show-hide-sidepanel-down-button" src="${urls.build("images", dict(file='siteimages/down-arrow.png'))|h}" /></a>
+
+        <h1>Direct Reports</h1>
+
+        <div class="show-hide-sidepanel">
+            <p><a href='${urls.build("user.timesheet_overview")|h}'>Timesheets overview</a></p>
+            <br/>
+            % for person in current_user.direct_reports:
+                <p><a href='${urls.build("user.timesheet", dict(user_id=person.id))|h}'>${person.fullname|h} timesheet</a></p>
+            % endfor
+        </div>
+     </div>
+    % endif
 </%def>
 
 <%def name="tasks_menu()" filter="trim">

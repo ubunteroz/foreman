@@ -27,6 +27,11 @@ class UserController(BaseController):
         all_users = User.get_all().all()
         return self.return_response('pages', 'view_users.html', users=all_users)
 
+    def timesheet_overview(self):
+        self.check_permissions(self.current_user, "User", 'view_directs_timesheets')
+        self.breadcrumbs.append({'title': "Timesheets", 'path': self.urls.build('user.timesheet_overview')})
+        return self.return_response('pages', 'timesheets.html')
+
     def timesheet(self, user_id):
         user = self._validate_user(user_id)
         if user is not None:
@@ -184,6 +189,8 @@ class UserController(BaseController):
                 self.form_result['fax'] = None
             new_user.fax = self.form_result['fax']
 
+            new_user.manager = self.form_result['manager']
+
             new_user.add_change(self.current_user)
             session.flush()
 
@@ -218,12 +225,12 @@ Foreman
                 role_types.append((role, role.lower().replace(" ", ""), [("yes", "Yes"), ("no", "No")]))
             teams = sorted([(team.id, team.department.department + ": " + team.team) for team in Team.get_all()],
                            key=lambda t: t[1])
+            managers = sorted([(user.id, user.fullname) for user in User.get_all()], key=lambda t: t[1])
             return self.return_response('pages', 'add_user.html', role_types=role_types, errors=self.form_error,
-                                        teams=teams)
+                                        teams=teams, managers=managers)
 
     def edit(self, user_id):
         user = self._validate_user(user_id)
-
         if user is not None:
             form_type = multidict_to_dict(self.request.args)
             if 'tab' in form_type and form_type['tab'] == "edit_roles":
@@ -278,6 +285,7 @@ Foreman
                     if self.form_result['fax'] == "":
                         self.form_result['fax'] = None
                     user.fax = self.form_result['fax']
+                    user.manager= self.form_result['manager']
 
                     user.add_change(self.current_user)
 
@@ -289,9 +297,10 @@ Foreman
             user_role_history = get_user_role_history_changes(user)
             teams = sorted([(team.id, team.department.department + ": " + team.team) for team in Team.get_all()],
                            key=lambda t: t[1])
+            managers = sorted([(u.id, u.fullname) for u in User.get_all()], key=lambda t: t[1])
             return self.return_response('pages', 'edit_user.html', user=user, active_tab=active_tab,
                                         role_types=role_types, user_history=user_history, teams=teams,
-                                        user_role_history=user_role_history, errors=self.form_error)
+                                        user_role_history=user_role_history, errors=self.form_error, managers=managers)
         else:
             return self.return_404()
 
