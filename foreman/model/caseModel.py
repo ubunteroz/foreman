@@ -5,7 +5,8 @@ from os import path, rename, remove
 import shutil
 import calendar
 # library imports
-from sqlalchemy import Table, Column, Integer, Boolean, Unicode, ForeignKey, DateTime, asc, desc, and_, or_, func, Float
+from sqlalchemy import Table, Column, Integer, Boolean, Unicode, ForeignKey, DateTime, asc, desc, and_, or_, func
+from sqlalchemy import Float, distinct
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import backref, relation
 from qrcode import *
@@ -193,6 +194,7 @@ class CaseStatus(Base, HistoryModel):
     approved_statuses = [CREATED, OPEN, CLOSED, ARCHIVED]
     active_statuses = [CREATED, PENDING, REJECTED, OPEN]
     workable_statuses = [CREATED, OPEN]
+    forensic_statuses = [OPEN]
 
     history_backref = "statuses"
     comparable_fields = {'Status': 'status'}
@@ -431,7 +433,7 @@ class Case(Base, Model):
         q_task_roles = session.query(Case).join('tasks').join(Task.task_roles).filter_by(user_id=user_id)
         if active:
             q_case_roles = q_case_roles.filter(Case.currentStatus.in_(CaseStatus.active_statuses))
-            q_task_roles = q_task_roles.filter(Case.currentStatus.in_(CaseStatus.active_statuses))
+            q_task_roles = q_task_roles.filter(Case.currentStatus.in_(CaseStatus.forensic_statuses))
         q = q_case_roles.union(q_task_roles)
         return q.all()
 
@@ -838,6 +840,7 @@ class TaskStatus(Base, HistoryModel):
     closedStatuses = [COMPLETE, CLOSED]
     invRoles = [ALLOCATED, PROGRESS, DELIVERY, COMPLETE]
     qaRoles = [QA]
+    workerRoles = [ALLOCATED, PROGRESS, QA, DELIVERY, COMPLETE]
     all_statuses = [CREATED, QUEUED, ALLOCATED, PROGRESS, QA, DELIVERY, COMPLETE, CLOSED]
 
     id = Column(Integer, primary_key=True)
@@ -1114,6 +1117,7 @@ class TaskNotes(Base, Model):
                                'change_log': "Task notes were written"})
         return change_log
 
+
 class TaskHistory(Base, HistoryModel):
     __tablename__ = 'task_history'
 
@@ -1184,7 +1188,7 @@ class Task(Base, Model):
     case = relation('Case', backref=backref('tasks', order_by=desc(id)))
     task_type = relation('TaskType', backref=backref('tasks', order_by=desc(task_type_id)))
 
-    def __init__(self, case, task_type, task_name, user, background=None, location=None):
+    def __init__(self, case, task_type, task_name, user, background=None, location=None, date=None):
         self.task_name = task_name
         self.case = case
         self.task_type = task_type
@@ -1196,7 +1200,10 @@ class Task(Base, Model):
         self.set_status(TaskStatus.CREATED, user)
         self.princQA = False
         self.seconQA = False
-        self.creation_date = datetime.now()
+        if date is None:
+            self.creation_date = datetime.now()
+        else:
+            self.creation_date = date
 
     @property
     def date_created(self):
@@ -1290,7 +1297,6 @@ class Task(Base, Model):
             session.add(u2)
             session.flush()
             u2.add_change(assignee)
-
 
     def start_work(self, investigator):
         self.set_status(TaskStatus.PROGRESS, investigator)
@@ -1406,6 +1412,28 @@ class Task(Base, Model):
         return q.scalar()
 
     @staticmethod
+    def get_num_completed_tasks_by_user(investigator, category, start, end, status):
+
+        user_roles = [UserTaskRoles.PRINCIPLE_INVESTIGATOR, UserTaskRoles.SECONDARY_INVESTIGATOR]
+        if status == "Performing QA":
+            user_roles = [UserTaskRoles.PRINCIPLE_QA, UserTaskRoles.SECONDARY_QA]
+            status = TaskStatus.QA
+        elif status == "Waiting for QA":
+            status = TaskStatus.QA
+        elif status not in TaskStatus.all_statuses:
+            status = TaskStatus.PROGRESS
+
+        q = session.query(func.count(distinct(Task.id)))
+        q = q.join(TaskStatus).filter(and_(TaskStatus.date_time >= start,
+                                           TaskStatus.date_time <= end,
+                                           TaskStatus.status == status))
+        if category is not None:
+            q = q.join(TaskType).join(TaskCategory).filter(TaskCategory.category == category)
+        q = q.join(UserTaskRoles).filter(UserTaskRoles.user_id == investigator.id).filter(
+            UserTaskRoles.role.in_(user_roles))
+        return q.scalar()
+
+    @staticmethod
     def get_num_completed_qas(investigator, date_required):
         month = date_required.month
         year = date_required.year
@@ -1428,13 +1456,15 @@ class Task(Base, Model):
 
     @staticmethod
     def _get_user_tasks(user=None, usergroups=None, statusgroups=None, case_perm_checker=None, filter_check=None,
-                        current_user=None):
+                        current_user=None, case_status=None):
+        if case_status is None:
+            case_status = [CaseStatus.OPEN]
         q = session.query(Task)
         if statusgroups is not None:
             q = q.filter(Task.currentStatus.in_(statusgroups))
         if filter_check is not None:
             q = q.join('task_roles').filter(and_(UserTaskRoles.user_id == user.id, UserTaskRoles.role.in_(usergroups)))
-        q = q.join('case').filter(Case.currentStatus == CaseStatus.OPEN)
+        q = q.join('case').filter(Case.currentStatus.in_(case_status))
         if case_perm_checker is not None:
             if current_user is None:
                 return Task._check_perms(user, q, case_perm_checker)  # do now want to show private cases
@@ -1463,21 +1493,23 @@ class Task(Base, Model):
         return query
 
     @staticmethod
-    def get_tasks_requiring_QA_by_user(user, all=False):
-        if all:
-            task_statuses = [TaskStatus.DELIVERY, TaskStatus.CLOSED, TaskStatus.COMPLETE]
-        else:
+    def get_tasks_requiring_QA_by_user(user, task_statuses=None, case_status=None):
+        if task_statuses is None:
             task_statuses = [TaskStatus.QA]
-        principle = Task._get_user_tasks(user, [UserTaskRoles.PRINCIPLE_QA], task_statuses, filter_check=True)
-        secondary = Task._get_user_tasks(user, [UserTaskRoles.SECONDARY_QA], task_statuses, filter_check=True)
+        principle = Task._get_user_tasks(user, [UserTaskRoles.PRINCIPLE_QA], task_statuses, filter_check=True,
+                                         case_status=case_status)
+        secondary = Task._get_user_tasks(user, [UserTaskRoles.SECONDARY_QA], task_statuses, filter_check=True,
+                                         case_status=case_status)
         return principle, secondary
 
     @staticmethod
-    def get_tasks_assigned_to_user(user):
-        principle = Task._get_user_tasks(user, [UserTaskRoles.PRINCIPLE_INVESTIGATOR], TaskStatus.openStatuses,
-                                         filter_check=True)
-        secondary = Task._get_user_tasks(user, [UserTaskRoles.SECONDARY_INVESTIGATOR], TaskStatus.openStatuses,
-                                         filter_check=True)
+    def get_tasks_assigned_to_user(user, statuses=None, case_status=None):
+        if statuses is None:
+            statuses = TaskStatus.openStatuses
+        principle = Task._get_user_tasks(user, [UserTaskRoles.PRINCIPLE_INVESTIGATOR], statuses,
+                                         filter_check=True, case_status=case_status)
+        secondary = Task._get_user_tasks(user, [UserTaskRoles.SECONDARY_INVESTIGATOR], statuses,
+                                         filter_check=True, case_status=case_status)
         return principle, secondary
 
     @staticmethod

@@ -471,8 +471,6 @@ def create_test_cases(case_managers, requestors, investigators, authorisers):
         rand = randint(0, 6)
         if rand >= 1:
             new_case.authorise(auth, "Looks acceptable. Please go ahead.", "AUTH")
-            inv = create_test_tasks(new_case, investigators, rand_user)
-            create_evidence(new_case, inv, rand_user)
         else:
             if randint(0,1) == 0:
                 new_case.authorise(auth, "I don't think this meets our requirements.", "NOAUTH")
@@ -480,6 +478,8 @@ def create_test_cases(case_managers, requestors, investigators, authorisers):
         if new_case.authorised.case_authorised != "NOAUTH":
             if rand >=2:
                 new_case.set_status(CaseStatus.OPEN, new_case.principle_case_manager)
+                inv = create_test_tasks(new_case, investigators, rand_user)
+                create_evidence(new_case, inv, rand_user)
             if rand >= 5:
                 new_case.set_status(CaseStatus.CLOSED, new_case.principle_case_manager)
             if rand >= 6:
@@ -519,7 +519,10 @@ def create_test_tasks(case, investigators, rand_user):
         task_type = task_types[randint(0, len(task_types)-1)]
         task_name = ForemanOptions.get_next_task_name(case)
         task_background = generate_task_background(task_type.task_type, rand_user)
-        new_task = Task(case, task_type, task_name, case.principle_case_manager, background=task_background)
+        today = datetime.now()
+        difference = today - case.creation_date
+        date = case.creation_date + timedelta(days=randint(0, difference.days))
+        new_task = Task(case, task_type, task_name, case.principle_case_manager, background=task_background, date=date)
         session.add(new_task)
         print "\tTask added to Case."
         session.flush()

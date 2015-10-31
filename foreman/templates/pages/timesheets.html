@@ -1,8 +1,54 @@
 ﻿<%inherit file="/base/base.html"/>
 <%namespace file="/utils/sidebars.html" name="sidebars" />
 
+<%def name="plot_dimple(svg, chart, cat_axis, measure_axis, series, legend=True)" filter="trim">
+        ${chart} = new dimple.chart(${svg}, data);
+                ${chart}.setBounds(120, 20, "85%", 330);
+                ${chart}.addCategoryAxis("y", "${cat_axis}");
+                ${chart}.addMeasureAxis("x", "${measure_axis}");
+        % if legend is True:
+                ${chart}.addLegend(0, 10, "90%", 400, "right");
+        % endif
+                ${chart}.addSeries("${series}", dimple.plot.bar);
+                ${chart}.draw();
+</%def>
+
 <%def name="javascripts()" filter="trim">
 
+    <% import datetime %>
+    <% today = datetime.datetime.today() %>
+
+    <link rel="StyleSheet" href="${urls.build('css', dict(file='jquery-ui-1.10.4.custom.css'))|h}" type="text/css" />
+    <script src="${urls.build('javascript', dict(file='jquery-1.10.2.js'))|h}"></script>
+    <script src="${urls.build('javascript', dict(file='jquery-ui-1.10.4.custom.min.js'))|h}"></script>
+    <script src="${urls.build('javascript', dict(file='d3.min.js'))|h}"></script>
+    <script src="${urls.build('javascript', dict(file='dimple.v2.0.0.js'))|h}"></script>
+
+    <script>
+        var invChart = null;
+        var qaChart = null;
+
+        $(function() {
+
+            var svg1 = dimple.newSvg("#cases_assigned_inv", 1000, 400);
+            $.getJSON('${urls.build("report.jason_direct_report_tasks")|h}?start_date=${start_day.strftime("%Y%m%d")}&task_type=${task_statuses['progress']|h}', function (data) {
+                ${plot_dimple("svg1", "invChart", "Investigator", "Number of Tasks", "Task Type")}
+            });
+
+            $(".load_inv_month").click(function () {
+                var task_type = $(this).text();
+                $('#load_inv_month_heading').text(task_type);
+                reload_investigators_monthly_tasks(task_type);
+            });
+
+            function reload_investigators_monthly_tasks(task_type) {
+                $.getJSON('${urls.build("report.jason_direct_report_tasks")|h}?start_date=${start_day.strftime("%Y%m%d")}&task_type='+task_type, function (data) {
+                    invChart.data = data;
+                    invChart.draw(500);
+                })
+            }
+        });
+    </script>
 </%def>
 
 
@@ -10,7 +56,9 @@
     ${sidebars.user_menu()}
 </div>
 <div id="mainbar">
-    <h1>Direct Report Timesheets</h1>
+    <h1>Direct Report Metrics ${start_day.isocalendar()[0]|h} Week ${start_day.isocalendar()[1]|h}</h1>
+
+    <h2>Timesheets</h2>
 
     <% from datetime import date, datetime, timedelta %>
     <% today = datetime.now() %>
@@ -50,5 +98,48 @@
         </tr>
     % endfor
     </table>
+
+    <h2>Task Metrics</h2>
+
+    <p>Note that these numbers may contain duplicates - i.e. if a case was allocated, worked on, QAed and delivered all in the same week, a number would appear
+    in each of the columns.</p>
+
+    <table class="history">
+        <tr>
+            <th></th>
+            <th colspan="6" style="text-align: center">
+                <% last_week = start_day - timedelta(days=7) %>
+                <% next_week = start_day + timedelta(days=7) %>
+                <a title="Last week" href="${urls.build("user.timesheet_overview", dict(week=last_week.strftime("%Y%m%d")))|h}"><img src="${urls.build("images", dict(file='siteimages/icons/arrow_left.png'))|h}" width="25px" align="left" alt="Last week" /></a>
+                 ${start_day.isocalendar()[0]|h} Week ${start_day.isocalendar()[1]|h}
+                % if next_week <= today:
+                    <a title="Next week" href="${urls.build("user.timesheet_overview", dict(week=next_week.strftime("%Y%m%d")))|h}"><img src="${urls.build("images", dict(file='siteimages/icons/arrow_right.png'))|h}" width="25px" align="right" alt="Next week" /></a>
+                % endif
+            </th>
+        </tr>
+        <tr>
+            <th>Users</th>
+            % for status in worker_task_statuses:
+            <th width="150px">${status|h}</th>
+            % endfor
+        </tr>
+     % for user in current_user.direct_reports:
+        <tr>
+            <th><a href='${urls.build("user.timesheet", dict(user_id=user.id))|h}'>${user.fullname|h}</a></th>
+            % for status in worker_task_statuses:
+            <td>${get_worker_task_amounts(user, None, start_day, start_day + timedelta(days=7), status)|h}</td>
+            % endfor
+        </tr>
+    % endfor
+    </table>
+
+
+    <h2 title="graph">Task Type Metrics - <span id="load_inv_month_heading">${task_statuses['progress']|h}</span></h2>
+
+    <p>
+        ${" | ".join('<a href="#graph" class="load_inv_month">' + status + '</a>' for status in worker_task_statuses)}
+    </p>
+
+     <div id="cases_assigned_inv"></div>
 
 </div>

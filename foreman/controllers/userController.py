@@ -46,8 +46,11 @@ class UserController(BaseController):
 
         self.check_permissions(self.current_user, "User", 'view_directs_timesheets')
         self.breadcrumbs.append({'title': "Timesheets", 'path': self.urls.build('user.timesheet_overview', dict(week=week))})
-
-        return self.return_response('pages', 'timesheets.html', start_day=start_day)
+        worker_task_statuses = [TaskStatus.ALLOCATED, TaskStatus.PROGRESS, "Waiting for QA", "Performing QA", TaskStatus.DELIVERY, TaskStatus.COMPLETE]
+        get_worker_task_amounts = Task.get_num_completed_tasks_by_user
+        return self.return_response('pages', 'timesheets.html', start_day=start_day,
+                                    get_worker_task_amounts=get_worker_task_amounts,
+                                    worker_task_statuses=worker_task_statuses)
 
     def timesheet(self, user_id):
         user = self._validate_user(user_id)
@@ -88,14 +91,12 @@ class UserController(BaseController):
             task_timesheet_start = task_timesheet_end = None
             task_timesheets = {}
             if user.is_examiner():
-                current_tasks_qaed = Task.get_current_qas(user, self.check_permissions, self.current_user)
-                old_tasks_qaed = Task.get_completed_qas(user, self.check_permissions, self.current_user)
-                current_tasks_investigated = Task.get_current_investigations(user, self.check_permissions,
-                                                                             self.current_user)
-                old_tasks_investigated = Task.get_completed_investigations(user, self.check_permissions,
-                                                                           self.current_user)
-                timesheet_user_tasks = current_tasks_qaed + old_tasks_qaed + current_tasks_investigated + \
-                                       old_tasks_investigated
+                prim, second = Task.get_tasks_assigned_to_user(user, statuses=TaskStatus.notesAllowed,
+                                                               case_status=CaseStatus.all_statuses)
+                prim_qa, second_qa = Task.get_tasks_requiring_QA_by_user(user, case_status=CaseStatus.all_statuses,
+                                                                         task_statuses=TaskStatus.notesAllowed)
+                timesheet_user_tasks = prim + second + prim_qa + second_qa
+                timesheet_user_tasks.sort(key=lambda d: d.creation_date, reverse=True)
                 task_timesheet_start = datetime.now()
                 task_timesheet_end = datetime(1970,1,1)
                 for task in timesheet_user_tasks:

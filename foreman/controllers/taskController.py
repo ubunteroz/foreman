@@ -32,7 +32,7 @@ class TaskController(BaseController):
         completed = multidict_to_dict(self.request.args)
         if 'completed' in completed and completed['completed'] == "True":
             user_primary_qa, user_secondary_qa = Task.get_tasks_requiring_QA_by_user(user=self.current_user,
-                                                                                     all=True)
+                                                                                     task_statuses=TaskStatus.qaComplete)
             completed = True
         else:
             user_primary_qa, user_secondary_qa = Task.get_tasks_requiring_QA_by_user(user=self.current_user)

@@ -1,6 +1,6 @@
 from os import listdir
 from os.path import isfile, join
-from datetime import datetime
+from datetime import datetime, timedelta
 from monthdelta import MonthDelta
 
 # library imports
@@ -8,7 +8,7 @@ from werkzeug import Response, redirect
 
 # local imports
 from baseController import BaseController, jsonify
-from ..model.caseModel import Task, ForemanOptions, Case, CaseStatus
+from ..model.caseModel import Task, ForemanOptions, Case, CaseStatus, TaskStatus
 from ..model.generalModel import TaskCategory, CaseType
 from ..model.userModel import UserRoles
 
@@ -99,4 +99,29 @@ class ReportController(BaseController):
             tasks_assigned_inv.append({
                 "QA Partner": investigator.fullname,
                 "Number of QAs": Task.get_num_completed_qas(investigator, start_date)})
+        return tasks_assigned_inv
+
+
+    @jsonify
+    def jason_direct_report_tasks(self):
+        self.check_permissions(self.current_user, "User", 'view_directs_timesheets')
+        today = datetime.now()
+        try:
+            start_date_str = self.request.args.get('start_date', "")
+            start_date = datetime.strptime(start_date_str, "%Y%m%d")
+            end_date = start_date + timedelta(days=7)
+            if end_date > today:
+                end_date = today
+        except ValueError:
+            start_date = today
+            end_date = today
+        task_status = self.request.args.get('task_type', "")
+        tasks_assigned_inv = []
+        for category in TaskCategory.get_categories():
+            for investigator in self.current_user.direct_reports:
+                tasks_assigned_inv.append({
+                    "Investigator": investigator.fullname,
+                    "Number of Tasks": int(Task.get_num_completed_tasks_by_user(investigator, category,
+                                                                                start_date, end_date, task_status)),
+                    "Task Type": category})
         return tasks_assigned_inv

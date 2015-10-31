@@ -33,7 +33,7 @@
         % endif
     % endif
 
-    % if check_perms(task, 'work'):
+    % if check_perms(task, 'work') and task.case.status == case_statuses['open']:
         % if task.status != task_statuses['queued'] and task.status != task_statuses['created'] and task.status != task_statuses['start'] and task.status != task_statuses['complete']:
         | <a href='${urls.build("forensics.work", dict(task_id=task.id, case_id=task.case.id))|h}'>Work on task</a>
         % elif task.status == task_statuses['start']:
