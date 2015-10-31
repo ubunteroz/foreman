@@ -184,8 +184,29 @@ class User(Base, Model):
     def activate(self):
         self.active = True
 
+    def get_hours_worked(self, date):
+        # cases
+        r1 = session.query(func.sum(CaseTimeSheets.hours)).filter(CaseTimeSheets.user_id == self.id,
+                                                                 CaseTimeSheets.date == date).scalar()
+        # tasks
+        r2 = session.query(func.sum(TaskTimeSheets.hours)).filter(TaskTimeSheets.user_id == self.id,
+                                                                  TaskTimeSheets.date == date).scalar()
+
+        # if there are no entries, r1 or r2 will return None, not 0
+        if r1 is None and r2 is None:
+            return 0
+        elif r1 is None:
+            return r2
+        elif r2 is None:
+            return r1
+        else:
+            return r1 + r2
+
     def is_manager_of(self, user):
-        return user.manager.id == self.id
+        if user.manager is not None:
+            return user.manager.id == self.id
+        else:
+            return False
 
     def is_a_manager(self):
         return len(self.direct_reports) > 0

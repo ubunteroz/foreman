@@ -75,7 +75,7 @@
         <h1>Direct Reports</h1>
 
         <div class="show-hide-sidepanel">
-            <p><a href='${urls.build("user.timesheet_overview")|h}'>Timesheets overview</a></p>
+            <p><a href='${urls.build("user.timesheet_overview_default")|h}'>Timesheets overview</a></p>
             <br/>
             % for person in current_user.direct_reports:
                 <p><a href='${urls.build("user.timesheet", dict(user_id=person.id))|h}'>${person.fullname|h} timesheet</a></p>

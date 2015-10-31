@@ -303,6 +303,11 @@ class CaseApprovedChecker(BaseChecker):
 
 
 class UserIsManager(BaseChecker):
+    def check(self, manager, obj):
+        return manager.is_a_manager()
+
+
+class UserIsManagerOf(BaseChecker):
     def check(self, manager, user):
         return manager.is_manager_of(user)
 
@@ -461,7 +466,7 @@ permissions = {
     ('User', 'view-changes'): Or(AdminChecker()),
     ('User', 'view-all'): AdminChecker(),
     ('User', 'view_directs_timesheets'): Or(AdminChecker(), UserIsManager()),
-    ('User', 'view_timesheet'): Or(AdminChecker(), UserIsCurrentUserChecker(), UserIsManager()),
+    ('User', 'view_timesheet'): Or(AdminChecker(), UserIsCurrentUserChecker(), UserIsManagerOf()),
     ('User', 'edit_timesheet'): Or(AdminChecker(), UserIsCurrentUserChecker()),
     ('User', 'view-history'): Or(AdminChecker(), CaseManagerChecker(), InvestigatorChecker(), QAChecker(),
                                  UserIsCurrentUserChecker()),

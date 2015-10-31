@@ -2,7 +2,7 @@ from os import path
 
 # library imports
 from werkzeug import Response, redirect
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 # local imports
 from baseController import BaseController
@@ -27,10 +27,27 @@ class UserController(BaseController):
         all_users = User.get_all().all()
         return self.return_response('pages', 'view_users.html', users=all_users)
 
-    def timesheet_overview(self):
+    def timesheet_overview_default(self):
         self.check_permissions(self.current_user, "User", 'view_directs_timesheets')
-        self.breadcrumbs.append({'title': "Timesheets", 'path': self.urls.build('user.timesheet_overview')})
-        return self.return_response('pages', 'timesheets.html')
+        today = datetime.now()
+        week = today - timedelta(days=today.isoweekday() - 1)
+        return self.timesheet_overview(week.strftime("%Y%m%d"))
+
+    def timesheet_overview(self, week):
+        try:
+            start_day = datetime.strptime(week, "%Y%m%d")
+            if start_day.isoweekday() != 1:
+                raise ValueError
+            today = datetime.now()
+            if start_day > today:
+                raise ValueError
+        except ValueError:
+            return self.return_404()
+
+        self.check_permissions(self.current_user, "User", 'view_directs_timesheets')
+        self.breadcrumbs.append({'title': "Timesheets", 'path': self.urls.build('user.timesheet_overview', dict(week=week))})
+
+        return self.return_response('pages', 'timesheets.html', start_day=start_day)
 
     def timesheet(self, user_id):
         user = self._validate_user(user_id)

@@ -12,6 +12,43 @@
 <div id="mainbar">
     <h1>Direct Report Timesheets</h1>
 
+    <% from datetime import date, datetime, timedelta %>
+    <% today = datetime.now() %>
 
-    <p>.</p>
+    <p>Click on a user to see their detailed timesheets.</p>
+
+    <table class="history">
+        <tr>
+            <th></th>
+            <th colspan="7" style="text-align: center">
+                <% last_week = start_day - timedelta(days=7) %>
+                <% next_week = start_day + timedelta(days=7) %>
+                <a title="Last week" href="${urls.build("user.timesheet_overview", dict(week=last_week.strftime("%Y%m%d")))|h}"><img src="${urls.build("images", dict(file='siteimages/icons/arrow_left.png'))|h}" width="25px" align="left" alt="Last week" /></a>
+                 ${start_day.isocalendar()[0]|h} Week ${start_day.isocalendar()[1]|h}
+                % if next_week <= today:
+                    <a title="Next week" href="${urls.build("user.timesheet_overview", dict(week=next_week.strftime("%Y%m%d")))|h}"><img src="${urls.build("images", dict(file='siteimages/icons/arrow_right.png'))|h}" width="25px" align="right" alt="Next week" /></a>
+                % endif
+            </th>
+        </tr>
+        <tr>
+            <th>Users</th>
+
+            <% day_tracker = start_day %>
+            % for i in range(0, 7):
+                <th width="150px">${day_tracker.strftime("%a %d %b")|h}</th>
+                <% day_tracker += timedelta(days=1) %>
+            % endfor
+        </tr>
+     % for user in current_user.direct_reports:
+        <tr>
+            <th><a href='${urls.build("user.timesheet", dict(user_id=user.id))|h}'>${user.fullname|h}</a></th>
+            <% day_tracker = start_day %>
+            % for i in range(0, 7):
+                <td>${user.get_hours_worked(date(day_tracker.year,day_tracker.month,day_tracker.day))|h}</td>
+                <% day_tracker += timedelta(days=1) %>
+            % endfor
+        </tr>
+    % endfor
+    </table>
+
 </div>
