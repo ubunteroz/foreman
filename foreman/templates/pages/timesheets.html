@@ -26,13 +26,19 @@
 
     <script>
         var invChart = null;
-        var qaChart = null;
+        var caseChart = null;
 
         $(function() {
+            $("#tabs").tabs();
 
             var svg1 = dimple.newSvg("#cases_assigned_inv", 1000, 400);
             $.getJSON('${urls.build("report.jason_direct_report_tasks")|h}?start_date=${start_day.strftime("%Y%m%d")}&task_type=${task_statuses['progress']|h}', function (data) {
                 ${plot_dimple("svg1", "invChart", "Investigator", "Number of Tasks", "Task Type")}
+            });
+
+            var svg2 = dimple.newSvg("#cases_assigned_casemanager", 1000, 400);
+            $.getJSON('${urls.build("report.jason_direct_report_cases")|h}?start_date=${start_day.strftime("%Y%m%d")}&case_type=${case_statuses['open']|h}', function (data) {
+                ${plot_dimple("svg2", "caseChart", "Case Manager", "Number of Cases", "Case Type")}
             });
 
             $(".load_inv_month").click(function () {
@@ -47,6 +53,19 @@
                     invChart.draw(500);
                 })
             }
+
+            $(".load_casemanager_month").click(function () {
+                var case_type = $(this).text();
+                $('#load_casemanager_month_heading').text(case_type);
+                reload_casemanagers_monthly_tasks(case_type);
+            });
+
+            function reload_casemanagers_monthly_tasks(case_type) {
+                $.getJSON('${urls.build("report.jason_direct_report_cases")|h}?start_date=${start_day.strftime("%Y%m%d")}&case_type='+case_type, function (data) {
+                    caseChart.data = data;
+                    caseChart.draw(500);
+                })
+            }
         });
     </script>
 </%def>
@@ -58,6 +77,8 @@
 <div id="mainbar">
     <h1>Direct Report Metrics ${start_day.isocalendar()[0]|h} Week ${start_day.isocalendar()[1]|h}</h1>
 
+    <p>Use the green arrows to go back or forward a week.</p>
+    
     <h2>Timesheets</h2>
 
     <% from datetime import date, datetime, timedelta %>
@@ -99,47 +120,131 @@
     % endfor
     </table>
 
-    <h2>Task Metrics</h2>
+    <p><a href="${urls.build("user.timesheets_download_csv", dict(week=start_day.strftime("%Y%m%d")))|h}">Download timesheets to CSV</a>.</p>
 
-    <p>Note that these numbers may contain duplicates - i.e. if a case was allocated, worked on, QAed and delivered all in the same week, a number would appear
-    in each of the columns.</p>
-
-    <table class="history">
-        <tr>
-            <th></th>
-            <th colspan="6" style="text-align: center">
-                <% last_week = start_day - timedelta(days=7) %>
-                <% next_week = start_day + timedelta(days=7) %>
-                <a title="Last week" href="${urls.build("user.timesheet_overview", dict(week=last_week.strftime("%Y%m%d")))|h}"><img src="${urls.build("images", dict(file='siteimages/icons/arrow_left.png'))|h}" width="25px" align="left" alt="Last week" /></a>
-                 ${start_day.isocalendar()[0]|h} Week ${start_day.isocalendar()[1]|h}
-                % if next_week <= today:
-                    <a title="Next week" href="${urls.build("user.timesheet_overview", dict(week=next_week.strftime("%Y%m%d")))|h}"><img src="${urls.build("images", dict(file='siteimages/icons/arrow_right.png'))|h}" width="25px" align="right" alt="Next week" /></a>
-                % endif
-            </th>
-        </tr>
-        <tr>
-            <th>Users</th>
-            % for status in worker_task_statuses:
-            <th width="150px">${status|h}</th>
-            % endfor
-        </tr>
-     % for user in current_user.direct_reports:
-        <tr>
-            <th><a href='${urls.build("user.timesheet", dict(user_id=user.id))|h}'>${user.fullname|h}</a></th>
-            % for status in worker_task_statuses:
-            <td>${get_worker_task_amounts(user, None, start_day, start_day + timedelta(days=7), status)|h}</td>
-            % endfor
-        </tr>
+    <% case_metrics = False %>
+    <% task_metrics = False %>
+    % for user in current_user.direct_reports:
+        % if user.is_examiner():
+            <% task_metrics = True %>
+        % elif user.is_case_manager():
+            <% case_metrics = True %>
+        % endif
     % endfor
-    </table>
 
+    % if case_metrics and task_metrics:
+    <p/>
+    <div id="tabs">
+        <ul>
+            <li><a href="#tabs-1">Task Metrics</a></li>
+            <li><a href="#tabs-2">Case Metrics</a></li>
+        </ul>
 
-    <h2 title="graph">Task Type Metrics - <span id="load_inv_month_heading">${task_statuses['progress']|h}</span></h2>
+    <div id="tabs-1" class="forensics_work_contents">
+    % endif
 
-    <p>
-        ${" | ".join('<a href="#graph" class="load_inv_month">' + status + '</a>' for status in worker_task_statuses)}
-    </p>
+    % if task_metrics:
+        <h2>Task Metrics</h2>
 
-     <div id="cases_assigned_inv"></div>
+        <p>Note that these numbers may contain duplicates - i.e. if a task was allocated, worked on, QAed and delivered all in the same week, a number would appear
+        in each of the columns.</p>
+
+        <table class="history">
+            <tr>
+                <th></th>
+                <th colspan="6" style="text-align: center">
+                    <% last_week = start_day - timedelta(days=7) %>
+                    <% next_week = start_day + timedelta(days=7) %>
+                    <a title="Last week" href="${urls.build("user.timesheet_overview", dict(week=last_week.strftime("%Y%m%d")))|h}"><img src="${urls.build("images", dict(file='siteimages/icons/arrow_left.png'))|h}" width="25px" align="left" alt="Last week" /></a>
+                     ${start_day.isocalendar()[0]|h} Week ${start_day.isocalendar()[1]|h}
+                    % if next_week <= today:
+                        <a title="Next week" href="${urls.build("user.timesheet_overview", dict(week=next_week.strftime("%Y%m%d")))|h}"><img src="${urls.build("images", dict(file='siteimages/icons/arrow_right.png'))|h}" width="25px" align="right" alt="Next week" /></a>
+                    % endif
+                </th>
+            </tr>
+            <tr>
+                <th>Users</th>
+                % for status in worker_task_statuses:
+                <th width="150px">${status|h}</th>
+                % endfor
+            </tr>
+            % for user in current_user.direct_reports:
+                % if user.is_examiner():
+                <tr>
+                    <th><a href='${urls.build("user.timesheet", dict(user_id=user.id))|h}'>${user.fullname|h}</a></th>
+                    % for status in worker_task_statuses:
+                    <td>${get_worker_task_amounts(user, None, start_day, start_day + timedelta(days=7), status)|h}</td>
+                    % endfor
+                </tr>
+                % endif
+            % endfor
+        </table>
+
+        <h2 title="graph">Task Type Metrics - <span id="load_inv_month_heading">${task_statuses['progress']|h}</span></h2>
+        <p>Click on one the task statuses to see the distribution of task types each investigator has been working on.</p>
+        <p>
+            ${" | ".join('<a href="#graph" class="load_inv_month">' + status + '</a>' for status in worker_task_statuses)}
+        </p>
+        <div id="cases_assigned_inv"></div>
+
+        <p><a href="${urls.build("user.task_metrics_download_csv", dict(week=start_day.strftime("%Y%m%d")))|h}">Download task metrics to CSV</a>.</p>
+    % endif
+
+    % if case_metrics and task_metrics:
+    </div>
+        <div id="tabs-2" class="forensics_work_contents">
+    % endif
+
+    % if case_metrics:
+        <h2>Case Metrics</h2>
+
+        <p>Note that these numbers may contain duplicates - i.e. if a case was opened & closed all in the same week, a number would appear
+        in each of the columns.</p>
+
+        <table class="history">
+            <tr>
+                <th></th>
+                <th colspan="4" style="text-align: center">
+                    <% last_week = start_day - timedelta(days=7) %>
+                    <% next_week = start_day + timedelta(days=7) %>
+                    <a title="Last week" href="${urls.build("user.timesheet_overview", dict(week=last_week.strftime("%Y%m%d")))|h}"><img src="${urls.build("images", dict(file='siteimages/icons/arrow_left.png'))|h}" width="25px" align="left" alt="Last week" /></a>
+                     ${start_day.isocalendar()[0]|h} Week ${start_day.isocalendar()[1]|h}
+                    % if next_week <= today:
+                        <a title="Next week" href="${urls.build("user.timesheet_overview", dict(week=next_week.strftime("%Y%m%d")))|h}"><img src="${urls.build("images", dict(file='siteimages/icons/arrow_right.png'))|h}" width="25px" align="right" alt="Next week" /></a>
+                    % endif
+                </th>
+            </tr>
+            <tr>
+                <th>Users</th>
+                % for status in worker_case_statuses:
+                <th width="150px">${status|h}</th>
+                % endfor
+            </tr>
+            % for user in current_user.direct_reports:
+                % if user.is_case_manager():
+                <tr>
+                    <th><a href='${urls.build("user.timesheet", dict(user_id=user.id))|h}'>${user.fullname|h}</a></th>
+                    % for status in worker_case_statuses:
+                    <td>${get_worker_case_amounts(user, None, start_day, start_day + timedelta(days=7), status)|h}</td>
+                    % endfor
+                </tr>
+                % endif
+        %    endfor
+        </table>
+
+        <h2 title="graph">Case Type Metrics - <span id="load_casemanager_month_heading">${case_statuses['open']|h}</span></h2>
+        <p>Click on one the case statuses to see the distribution of task types each case manager has been working on.</p>
+        <p>
+            ${" | ".join('<a href="#graph" class="load_casemanager_month">' + status + '</a>' for status in worker_case_statuses)}
+        </p>
+        <div id="cases_assigned_casemanager"></div>
+
+        <p><a href="${urls.build("user.case_metrics_download_csv", dict(week=start_day.strftime("%Y%m%d")))|h}">Download case metrics to CSV</a>.</p>
+    % endif
+
+     % if case_metrics and task_metrics:
+            </div>
+        </div>
+    % endif
 
 </div>

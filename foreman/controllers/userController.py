@@ -1,4 +1,6 @@
 from os import path
+import csv
+from cStringIO import StringIO
 
 # library imports
 from werkzeug import Response, redirect
@@ -9,7 +11,7 @@ from baseController import BaseController
 from ..model import User, UserRoles, Case, CaseHistory, TaskHistory, TaskStatus, CaseStatus, EvidenceHistory
 from ..model import UserHistory, UserRolesHistory, UserTaskRolesHistory, UserCaseRolesHistory, Task, TaskUpload
 from ..model import EvidencePhotoUpload, Team, Evidence, LinkedCase, TaskNotes, ChainOfCustody, CaseTimeSheets
-from ..model import TaskTimeSheets
+from ..model import TaskTimeSheets, TaskCategory, CaseType
 from ..forms.forms import PasswordChangeForm, EditUserForm, EditRolesForm, AddUserForm, AdminPasswordChangeForm
 from ..forms.forms import CaseTimeSheetForm, TaskTimeSheetForm
 from ..utils.utils import multidict_to_dict, session, config, upload_file
@@ -45,12 +47,18 @@ class UserController(BaseController):
             return self.return_404()
 
         self.check_permissions(self.current_user, "User", 'view_directs_timesheets')
-        self.breadcrumbs.append({'title': "Timesheets", 'path': self.urls.build('user.timesheet_overview', dict(week=week))})
-        worker_task_statuses = [TaskStatus.ALLOCATED, TaskStatus.PROGRESS, "Waiting for QA", "Performing QA", TaskStatus.DELIVERY, TaskStatus.COMPLETE]
+        self.breadcrumbs.append(
+            {'title': "Timesheets", 'path': self.urls.build('user.timesheet_overview', dict(week=week))})
+        worker_task_statuses = [TaskStatus.ALLOCATED, TaskStatus.PROGRESS, "Waiting for QA", "Performing QA",
+                                TaskStatus.DELIVERY, TaskStatus.COMPLETE]
+        worker_case_statuses = CaseStatus.approved_statuses
         get_worker_task_amounts = Task.get_num_completed_tasks_by_user
+        get_worker_case_amounts = Case.get_num_completed_case_by_user
         return self.return_response('pages', 'timesheets.html', start_day=start_day,
                                     get_worker_task_amounts=get_worker_task_amounts,
-                                    worker_task_statuses=worker_task_statuses)
+                                    get_worker_case_amounts=get_worker_case_amounts,
+                                    worker_task_statuses=worker_task_statuses,
+                                    worker_case_statuses=worker_case_statuses)
 
     def timesheet(self, user_id):
         user = self._validate_user(user_id)
@@ -65,8 +73,8 @@ class UserController(BaseController):
                 for timesheets in self.form_result['cases']:
                     for entries in timesheets['timesheet']:
                         timesheet = CaseTimeSheets.get_filter_by(case=timesheets['case'],
-                                                         date=entries['datetime'],
-                                                         user=user).first()
+                                                                 date=entries['datetime'],
+                                                                 user=user).first()
                         if timesheet is None and entries['value'] is not None:
                             user_timesheet = CaseTimeSheets(user, timesheets['case'], entries['datetime'],
                                                             entries['value'])
@@ -78,8 +86,8 @@ class UserController(BaseController):
                 for timesheets in self.form_result['tasks']:
                     for entries in timesheets['timesheet']:
                         timesheet = TaskTimeSheets.get_filter_by(task=timesheets['task'],
-                                                         date=entries['datetime'],
-                                                         user=user).first()
+                                                                 date=entries['datetime'],
+                                                                 user=user).first()
                         if timesheet is None and entries['value'] is not None:
                             user_timesheet = TaskTimeSheets(user, timesheets['task'], entries['datetime'],
                                                             entries['value'])
@@ -98,7 +106,7 @@ class UserController(BaseController):
                 timesheet_user_tasks = prim + second + prim_qa + second_qa
                 timesheet_user_tasks.sort(key=lambda d: d.creation_date, reverse=True)
                 task_timesheet_start = datetime.now()
-                task_timesheet_end = datetime(1970,1,1)
+                task_timesheet_end = datetime(1970, 1, 1)
                 for task in timesheet_user_tasks:
                     start, end = task.date_range
                     if start < task_timesheet_start:
@@ -119,7 +127,7 @@ class UserController(BaseController):
 
                 timesheet_user_cases = old_cases_managed + current_cases_managed
                 case_timesheet_start = datetime.now()
-                case_timesheet_end = datetime(1970,1,1)
+                case_timesheet_end = datetime(1970, 1, 1)
                 for case in timesheet_user_cases:
                     start, end = case.date_range
                     if start < case_timesheet_start:
@@ -303,7 +311,7 @@ Foreman
                     if self.form_result['fax'] == "":
                         self.form_result['fax'] = None
                     user.fax = self.form_result['fax']
-                    user.manager= self.form_result['manager']
+                    user.manager = self.form_result['manager']
 
                     user.add_change(self.current_user)
 
@@ -427,6 +435,116 @@ Foreman
                                         current_cases_requested=current_cases_requested)
         else:
             return self.return_404()
+
+    def timesheets_download_csv(self, week):
+        try:
+            start_day = datetime.strptime(week, "%Y%m%d")
+            if start_day.isoweekday() != 1:
+                raise ValueError
+            today = datetime.now()
+            if start_day > today:
+                raise ValueError
+        except ValueError:
+            return self.return_404()
+
+        self.check_permissions(self.current_user, "User", 'view_directs_timesheets')
+
+        titles = ["User"]
+        day_tracker = start_day
+        for day in range(0, 7):
+            titles.append(day_tracker.strftime("%Y-%m-%d"))
+            day_tracker += timedelta(days=1)
+
+        stringio = create_csv(self._create_timesheets(self.current_user.direct_reports, start_day,
+                                                      start_day + timedelta(days=7)), titles)
+        return Response(stringio.getvalue(), direct_passthrough=True, mimetype='text/csv', status=200)
+
+    def task_metrics_download_csv(self, week):
+        try:
+            start_day = datetime.strptime(week, "%Y%m%d")
+            if start_day.isoweekday() != 1:
+                raise ValueError
+            today = datetime.now()
+            if start_day > today:
+                raise ValueError
+        except ValueError:
+            return self.return_404()
+
+        self.check_permissions(self.current_user, "User", 'view_directs_timesheets')
+
+        titles = ["Task Status", "Task Type"]
+        statuses = [TaskStatus.ALLOCATED, TaskStatus.PROGRESS, "Waiting for QA", "Performing QA", TaskStatus.DELIVERY,
+                    TaskStatus.COMPLETE]
+        categories = TaskCategory.get_categories()
+
+        examiners = []
+        for user in self.current_user.direct_reports:
+            if user.is_examiner():
+                examiners.append(user)
+                titles.append(user.fullname)
+        stringio = create_csv(
+            self._create_metrics(examiners, statuses, categories, start_day, start_day + timedelta(days=7),
+                                 Task.get_num_completed_tasks_by_user), titles)
+        return Response(stringio.getvalue(), direct_passthrough=True, mimetype='text/csv', status=200)
+
+    def case_metrics_download_csv(self, week):
+        try:
+            start_day = datetime.strptime(week, "%Y%m%d")
+            if start_day.isoweekday() != 1:
+                raise ValueError
+            today = datetime.now()
+            if start_day > today:
+                raise ValueError
+        except ValueError:
+            return self.return_404()
+
+        self.check_permissions(self.current_user, "User", 'view_directs_timesheets')
+
+        titles = ["Case Status", "Case Type"]
+        statuses = CaseStatus.approved_statuses
+        categories = CaseType.get_case_types()
+
+        case_managers = []
+        for user in self.current_user.direct_reports:
+            if user.is_case_manager():
+                case_managers.append(user)
+                titles.append(user.fullname)
+        stringio = create_csv(
+            self._create_metrics(case_managers, statuses, categories, start_day, start_day + timedelta(days=7),
+                                 Case.get_num_completed_case_by_user), titles)
+        return Response(stringio.getvalue(), direct_passthrough=True, mimetype='text/csv', status=200)
+
+    def _create_timesheets(self, user_list, start, end):
+        entries = []
+        for user in user_list:
+            user_entry = [user.fullname]
+            current = start
+            while current < end:
+                user_entry.append(user.get_hours_worked(date(current.year, current.month, current.day)))
+                current += timedelta(days=1)
+            entries.append(user_entry)
+        return entries
+
+    def _create_metrics(self, user_list, statuses, categories, start, end, case_or_task):
+        entries = []
+        for status in statuses:
+            for category in categories:
+                user_entry = [status, category]
+                for user in user_list:
+                    user_entry.append(case_or_task(user, category, start, end, status))
+                entries.append(user_entry)
+        return entries
+
+
+def create_csv(input_list, titles):
+    render_file = StringIO()
+
+    writer = csv.writer(render_file)
+    writer.writerow(titles)
+    for line in input_list:
+        writer.writerow(line)
+
+    return render_file
 
 
 def get_user_role_history_changes(user):

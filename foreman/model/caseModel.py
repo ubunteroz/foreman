@@ -13,7 +13,7 @@ from qrcode import *
 from werkzeug.exceptions import Forbidden
 # local imports
 from models import Base, Model, HistoryModel
-from generalModel import ForemanOptions, TaskCategory, TaskType, CasePriority
+from generalModel import ForemanOptions, TaskCategory, TaskType, CasePriority, CaseType
 from userModel import UserTaskRoles, User, UserCaseRoles
 from ..utils.utils import session, ROOT_DIR, config, upload_file
 
@@ -484,6 +484,20 @@ class Case(Base, Model):
             filter(UserCaseRoles.role == UserCaseRoles.AUTHORISER)
         q = q.filter(Case.currentStatus.in_(statuses))
         return Case._check_perms(current_user, q, case_perm_checker)
+
+    @staticmethod
+    def get_num_completed_case_by_user(user, category, start, end, case_status):
+        user_roles = [UserCaseRoles.PRINCIPLE_CASE_MANAGER, UserCaseRoles.SECONDARY_CASE_MANAGER]
+
+        q = session.query(func.count(distinct(Case.id)))
+        if category is not None:
+            q = q.filter(Case.case_type == category)
+        q = q.join(CaseStatus).filter(and_(CaseStatus.date_time >= start,
+                                           CaseStatus.date_time <= end,
+                                           CaseStatus.status == case_status))
+        q = q.join(UserCaseRoles).filter(UserCaseRoles.user_id == user.id).filter(
+            UserCaseRoles.role.in_(user_roles))
+        return q.scalar()
 
     @staticmethod
     def get_cases(status, current_user, user=False, QA=False, case_perm_checker=None, case_man=False):

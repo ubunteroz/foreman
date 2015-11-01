@@ -163,8 +163,12 @@ class Application(object):
 
         map.add(Rule('/users/<user_id>/timesheet/', endpoint='user.timesheet'))
         map.add(Rule('/users/timesheets/', endpoint='user.timesheet_overview_default'))
+        map.add(Rule('/users/timesheets/timesheets_<week>.csv', endpoint='user.timesheets_download_csv'))
+        map.add(Rule('/users/timesheets/task_metrics_<week>.csv', endpoint='user.task_metrics_download_csv'))
+        map.add(Rule('/users/timesheets/case_metrics_<week>.csv', endpoint='user.case_metrics_download_csv'))
         map.add(Rule('/users/timesheets/<week>/', endpoint='user.timesheet_overview'))
         map.add(Rule('/json/jason_directs_tasks/', endpoint='report.jason_direct_report_tasks'))
+        map.add(Rule('/json/jason_directs_cases/', endpoint='report.jason_direct_report_cases'))
 
         map.add(Rule('/reporting/', endpoint='report.report'))
         map.add(Rule('/json/jason_tasks_assigned_to_inv/', endpoint='report.jason_tasks_assigned_to_inv'))
