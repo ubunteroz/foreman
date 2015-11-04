@@ -140,6 +140,7 @@ class ReportController(BaseController):
         except ValueError:
             start_date = today
             end_date = today
+            return []
         case_status = self.request.args.get('case_type', "")
         cases_assigned_manager = []
         for category in CaseType.get_case_types():

@@ -297,6 +297,11 @@ class EditUserForm(Schema):
     team = GetTeam(not_empty=True)
     photo = UploadProfilePhoto()
     manager = GetUser()
+    user = GetUser()
+
+    chained_validators = [
+        ManagerCheck('user', 'manager')
+    ]
 
 
 class AddUserForm(Schema):
@@ -398,3 +403,7 @@ class CaseTimeSheetForm(Schema):
 
 class TaskTimeSheetForm(Schema):
     tasks = ForEach(TaskHours())
+
+
+class ManagersInheritForm(Schema):
+    manager_inherit = v.StringBool(not_empty=True)

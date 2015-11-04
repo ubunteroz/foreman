@@ -849,7 +849,7 @@ class TaskStatus(Base, HistoryModel):
     openStatuses = [CREATED, QUEUED, ALLOCATED, PROGRESS, QA, DELIVERY]
     notStarted = [QUEUED]
     preInvestigation = [QUEUED, ALLOCATED]
-    notesAllowed = [PROGRESS, QA, DELIVERY, COMPLETE]
+    notesAllowed = [ALLOCATED, PROGRESS, QA, DELIVERY, COMPLETE]
     qaComplete = [DELIVERY, COMPLETE, CLOSED]
     closedStatuses = [COMPLETE, CLOSED]
     invRoles = [ALLOCATED, PROGRESS, DELIVERY, COMPLETE]

@@ -76,6 +76,7 @@ class CompleteInvestigationForTaskChecker(BaseChecker):
             return True
         return False
 
+
 class InvestigatorForCaseChecker(BaseChecker):
     def check(self, user, obj):
         try:
@@ -120,6 +121,14 @@ class CompleteQAForTaskChecker(BaseChecker):
     def check(self, user, task):
         if user.id in [inv.id for inv in task.QAs] and task.status in TaskStatus.qaRoles:
             return True
+        return False
+
+
+class AddNotesForTaskChecker(BaseChecker):
+    def check(self, user, task):
+        if InvestigatorForTaskChecker().check(user, task) or QAForTaskChecker().check(user, task):
+            if task.status in TaskStatus.notesAllowed:
+                return True
         return False
 
 
@@ -405,6 +414,7 @@ permissions = {
     ('Case', 'add-task'): And(Or(AdminChecker(), CaseManagerForCaseChecker(), RequesterForCaseChecker()),
                               Not(CaseEditableChecker())),
     ('Task', 'work'): And(Or(AdminChecker(), CompleteInvestigationForTaskChecker()), Not(TaskEditableChecker())),
+    ('Task', 'add_notes'): And(Or(AdminChecker(), AddNotesForTaskChecker()), Not(TaskEditableChecker())),
     ('Task', 'add_file'): And(Or(AdminChecker(), CompleteInvestigationForTaskChecker(),
                                     CaseManagerForTaskChecker()), Not(TaskEditableChecker())),
     ('Task', 'delete_file'): And(Or(AdminChecker(), CompleteInvestigationForTaskChecker(),

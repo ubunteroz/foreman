@@ -95,7 +95,7 @@
                 & Deactivate Users
             </a></li>
             <li><a href="#tabs-7">Case Priorities</a></li>
-            <li><a href="#tabs-8">Authorisation Options</a></li>
+            <li><a href="#tabs-8">User Options</a></li>
         </ul>
 
         <div id="tabs-1" class="forensics_work_contents">
@@ -438,6 +438,18 @@
 
         <div id="tabs-8" class="forensics_work_contents">
 
+            <div class="form_background">
+            <h2>Managers</h2>
+            <p>Chose whether managers of managers can see their direct reports, i.e. the head of department can see their team lead's direct report's timesheets & metrics.
+                By default, only the users direct line manager can see timesheets and reports - not managers higher up the chain.</p>
+            <form method="post" action="${urls.build('general.admin', dict(form='managers', active_tab=7))|h}">
+                ${forms.formSelectBox("Managers inherit direct reports", "manager_inherit", "manager_inherit", "form_label", "input_long", manager_inherit_options, value=str(options.manager_inherit), first=True)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+            </form>
+
+            </div>
+
+            <div class="form_background">
             <h2>Authorisation Options</h2>
 
             <form method="post" action="${urls.build('general.admin', dict(form='authoriser_options', active_tab=7))|h}">
@@ -445,6 +457,7 @@
                 ${forms.formSelectBox("Authorisers can view case evidence", "see_evidence", "see_evidence", "form_label", "input_long", authoriser_options, value=str(options.auth_view_evidence))}
                 <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
             </form>
+            </div>
 
         </div>
 

@@ -82,6 +82,7 @@
             <h2>Edit User Details</h2>
 
             <form method="post" enctype="multipart/form-data" action="${urls.build('user.edit', dict(user_id=user.id, form='edit_user'))|h}">
+                ${forms.formTextField("User", "user", "user", "form_label", "input_long", value=user.id, hidden=True)}
                 ${forms.formTextField("Username", "username", "username", "form_label", "input_long", first=True, value=user.username)}
                 ${forms.formTextField("Email address", "email", "email", "form_label", "input_long", value=user.email)}
                 ${forms.formTextField("Forename", "forename", "forename", "form_label", "input_long", value=user.forename)}

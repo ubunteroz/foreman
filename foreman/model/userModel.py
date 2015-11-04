@@ -203,13 +203,33 @@ class User(Base, Model):
             return r1 + r2
 
     def is_manager_of(self, user):
-        if user.manager is not None:
-            return user.manager.id == self.id
-        else:
+        man = user.manager
+        if man is None:
             return False
+
+        if man.id == self.id:
+            return True
+
+        if not ForemanOptions.get_options().manager_inherit:
+            return False
+        else:
+            return self.is_manager_of(man)
 
     def is_a_manager(self):
         return len(self.direct_reports) > 0
+
+    def all_reports(self, override=False):
+        if not ForemanOptions.get_options().manager_inherit and not override:
+            return self.direct_reports
+        else:
+            reports = []
+            for direct_report in self.direct_reports:
+                reports.append(direct_report)
+                reports.extend(direct_report.all_reports())
+            return reports
+
+    def _manager_loop_checker(self):
+        return self.all_reports(True)
 
     def is_investigator(self):
         return UserRoles.check_user_has_active_role(user=self, role=UserRoles.INV) or \

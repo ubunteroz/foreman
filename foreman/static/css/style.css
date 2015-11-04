@@ -559,13 +559,22 @@ div.case_option:hover, div#highlighted_case_option{
     background-color: #ffffff;
 }
 
-div.confirmclosurebox, div.confirmassigninv, div.errorbox{
+div.confirmclosurebox, div.confirmassigninv, div.errorbox, div.warningbox{
     margin: 0px auto;
     width: 600px;
     padding: 10px 10px 10px 60px;
     border: solid black 3px;
     background: url('../images/siteimages/icons/orbhelp.png');
     background-repeat: no-repeat;
+    border-radius: 5px;
+}
+
+div.warningbox{
+    border: solid #ffca59 3px;
+    background: url('../images/siteimages/icons/attention.png');
+    background-repeat: no-repeat;
+    background-position-x: 5px;
+    background-position-y: 5px;
 }
 
 div.confirmassigninv{

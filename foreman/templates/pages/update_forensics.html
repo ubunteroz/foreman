@@ -33,9 +33,15 @@
 <div id="mainbar">
 
     % if task.status != task_statuses['complete']:
-    <h1>Work on ${task.case.case_name|h}: Task ${task.task_name|h}</h1>
+        <h1>Work on ${task.case.case_name|h}: Task ${task.task_name|h} [Status: ${task.status|h}]</h1>
+        % if task.status == task_statuses['qa']:
+            <div class="warningbox">
+                <h2>Warning!</h2>
+                <p>Note this case has been sent for QA, so anything you add to the case notes may not be seen by the QA (${", ".join(u.fullname for u in task.QAs)|h}).</p>
+            </div>
+        % endif
     % else:
-    <h1>${task.case.case_name|h}: Task ${task.task_name|h} has been completed</h1>
+        <h1>${task.case.case_name|h}: Task ${task.task_name|h} has been completed</h1>
     % endif
 
     <p><a href='${urls.build("task.view", dict(task_id=task.id, case_id=task.case.id))|h}'>View task summary</a></p>

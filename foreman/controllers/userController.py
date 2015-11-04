@@ -251,7 +251,8 @@ Foreman
                 role_types.append((role, role.lower().replace(" ", ""), [("yes", "Yes"), ("no", "No")]))
             teams = sorted([(team.id, team.department.department + ": " + team.team) for team in Team.get_all()],
                            key=lambda t: t[1])
-            managers = sorted([(user.id, user.fullname) for user in User.get_all()], key=lambda t: t[1])
+            managers = sorted([(user.id, user.fullname) for user in User.get_all()],
+                              key=lambda t: t[1])
             return self.return_response('pages', 'add_user.html', role_types=role_types, errors=self.form_error,
                                         teams=teams, managers=managers)
 
@@ -323,7 +324,17 @@ Foreman
             user_role_history = get_user_role_history_changes(user)
             teams = sorted([(team.id, team.department.department + ": " + team.team) for team in Team.get_all()],
                            key=lambda t: t[1])
-            managers = sorted([(u.id, u.fullname) for u in User.get_all()], key=lambda t: t[1])
+
+            allowed_managers = User.get_all().all()
+            # don't want any people who report to the user to be added as the user's manager - will create strange loop!
+            for reports in user._manager_loop_checker():
+                allowed_managers.remove(reports)
+            # do not allow yourself to be your own manager
+            try:
+                allowed_managers.remove(user)
+            except ValueError:
+                pass
+            managers = sorted([(u.id, u.fullname) for u in allowed_managers], key=lambda t: t[1])
             return self.return_response('pages', 'edit_user.html', user=user, active_tab=active_tab,
                                         role_types=role_types, user_history=user_history, teams=teams,
                                         user_role_history=user_role_history, errors=self.form_error, managers=managers)

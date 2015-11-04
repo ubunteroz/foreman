@@ -18,7 +18,7 @@ class ForensicsTestCase(URLTestCase):
         self._check_url('/cases/6/23/notes/', 33, 403)  # login as a requester
         self._check_url('/cases/6/23/notes/', 22, 403)  # login as a primary case manager for this case
         self._check_url('/cases/6/23/notes/', 4)  # login as a primary investigator for this case
-        self._check_url('/cases/6/23/notes/', 5, 403)  # login as a primary QA for this case
+        self._check_url('/cases/6/23/notes/', 5)  # login as a primary QA for this case
         self._check_url('/cases/6/23/notes/', 32, 403)  # login as a requester for this case
         self._check_url('/cases/6/24/notes/', 4, 403)  # login as a primary investigator for this case
 

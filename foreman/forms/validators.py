@@ -265,6 +265,7 @@ class GetUser(GetObject):
             return None
 
 
+
 class GetInvestigator(GetUser):
     null_value = True
 
@@ -583,6 +584,27 @@ class PasswordCheck(v.FormValidator):
             return False
         else:
             return User.check_password(username.lower(), password)
+
+
+class ManagerCheck(v.FormValidator):
+    __unpackargs__ = ('user_field', 'manager_field')
+    validate_partial_form = False
+
+    def validate_python(self, vals, state):
+        if not self.check_pass(vals.get(self.user_field), vals.get(self.manager_field)):
+            errors = {
+                self.manager_field: "The manager cannot be the user or one of the user's direct reports"
+            }
+            raise Invalid('', vals, state, error_dict=errors)
+
+    def check_pass(self, user, manager):
+        # check that the manager inputted for the user is not a direct report of the user, or the user themselves
+        if user.id == manager.id:
+            return False
+        elif manager in user._manager_loop_checker():
+            return False
+        else:
+            return True
 
 
 class Upload(v.FieldStorageUploadConverter):

@@ -25,7 +25,7 @@ class ForensicsController(BaseController):
     def work(self, case_id, task_id):
         task = self._validate_task(case_id, task_id)
         if task is not None:
-            self.check_permissions(self.current_user, task, 'work')
+            self.check_permissions(self.current_user, task, 'add_notes')
             self._create_task_specific_breadcrumbs(task, task.case)
             self.breadcrumbs.append({'title': "Conduct Investigation",
                                  'path': self.urls.build('forensics.work', dict(case_id=task.case.id,

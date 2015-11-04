@@ -15,7 +15,7 @@ from ..forms.forms import LoginForm, OptionsForm, AddEvidenceTypeForm, RegisterF
 from ..forms.forms import AddCaseTypeForm, RemoveCaseTypeForm, RemoveClassificationForm, RemoveEvidenceTypeForm
 from ..forms.forms import MoveTaskTypeForm, AddTaskTypeForm, RemoveTaskTypeForm, AddTaskCategoryForm, RemoveCategoryForm
 from ..forms.forms import AddTeamForm, RenameTeamForm, RemoveTeamForm, AddDepartmentForm, RenameDepartmentForm
-from ..forms.forms import RemoveDepartmentForm, DeactivateUser, ReactivateUser
+from ..forms.forms import RemoveDepartmentForm, DeactivateUser, ReactivateUser, ManagersInheritForm
 from ..forms.forms import AddPriorityForm, RemovePriorityForm, AuthOptionsForm
 from ..utils.utils import multidict_to_dict, session, ROOT_DIR, config
 from ..utils.mail import email
@@ -311,6 +311,10 @@ Foreman
                 RemoveTeamForm):
             session.delete(self.form_result['team_name'])
             session.flush()
+        elif 'form' in form_type and form_type['form'] == "managers" and self.validate_form(ManagersInheritForm):
+            options = ForemanOptions.get_options()
+            options.manager_inherit = self.form_result['manager_inherit']
+
         all_priorities = CasePriority.get_all()
         priorities = [(priority.case_priority, priority.case_priority) for priority in CasePriority.get_all()]
         unvalidated_users = User.get_filter_by(validated=False).all()
@@ -335,6 +339,7 @@ Foreman
         case_name_options = [(cn, cn) for cn in ForemanOptions.CASE_NAME_OPTIONS]
         task_name_options = [(tn, tn) for tn in ForemanOptions.TASK_NAME_OPTIONS]
         authoriser_options = [("yes", "Yes"), ("no", "No")]
+        manager_inherit_options = [("True", "True"), ("False", "False")]
         department_options = [(dep.id, dep.department) for dep in Department.get_all()]
         del_department_options = [(dep.id, dep.department) for dep in Department.get_all() if len(dep.teams) == 0]
         team_options = [(t.id, t.team) for t in Team.get_all()]
@@ -350,7 +355,8 @@ Foreman
                                     number_tasks=number_tasks, validated=validated, val_user=val_user,
                                     all_priorities=all_priorities, priorities=priorities, team_options=team_options,
                                     authoriser_options=authoriser_options, department_options=department_options,
-                                    del_department_options=del_department_options, del_team_options=del_team_options)
+                                    del_department_options=del_department_options, del_team_options=del_team_options,
+                                    manager_inherit_options=manager_inherit_options)
 
     def report(self):
         start_date = ForemanOptions.get_date_created()
