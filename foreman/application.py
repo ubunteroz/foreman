@@ -161,7 +161,8 @@ class Application(object):
 
         map.add(Rule('/users/<user_id>/case_history/', endpoint='user.case_history'))
 
-        map.add(Rule('/users/<user_id>/timesheet/', endpoint='user.timesheet'))
+        map.add(Rule('/users/<user_id>/timesheet/', endpoint='user.timesheet_default'))
+        map.add(Rule('/users/<user_id>/timesheet/<week>/', endpoint='user.timesheet'))
         map.add(Rule('/users/timesheets/', endpoint='user.timesheet_overview_default'))
         map.add(Rule('/users/timesheets/timesheets_<week>.csv', endpoint='user.timesheets_download_csv'))
         map.add(Rule('/users/timesheets/task_metrics_<week>.csv', endpoint='user.task_metrics_download_csv'))

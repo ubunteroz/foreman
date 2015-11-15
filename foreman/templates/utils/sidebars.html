@@ -78,7 +78,7 @@
             <p><a href='${urls.build("user.timesheet_overview_default")|h}'>Timesheets overview</a></p>
             <br/>
             % for person in current_user.all_reports():
-                <p><a href='${urls.build("user.timesheet", dict(user_id=person.id))|h}'>${person.fullname|h} timesheet</a></p>
+                <p><a href='${urls.build("user.timesheet_default", dict(user_id=person.id))|h}'>${person.fullname|h} timesheet</a></p>
             % endfor
         </div>
      </div>

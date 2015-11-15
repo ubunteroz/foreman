@@ -1,5 +1,5 @@
 # python imports
-from datetime import datetime
+from datetime import datetime, date
 import hashlib
 from os import path, rename, remove
 import shutil
@@ -353,6 +353,10 @@ class Case(Base, Model):
         else:
             return self.creation_date, status.date_time
 
+    @property
+    def name(self):
+        return self.case_name
+
     def set_status(self, status, user):
         self.currentStatus = status
         self.statuses.append(CaseStatus(self.id, status, user))
@@ -529,6 +533,25 @@ class Case(Base, Model):
                     except Forbidden:
                         pass
             return output
+
+    def _active_before_start(self, user, day_tracker):
+        if date(day_tracker.year, day_tracker.month, day_tracker.day) < date(self.creation_date.year,
+                                                                                 self.creation_date.month,
+                                                                                 self.creation_date.day):
+            return False
+        return True
+
+    def _active_after_end(self, user, day_tracker):
+        case_status = self.get_status()
+        if case_status.status in CaseStatus.closedStatuses and date(day_tracker.year, day_tracker.month,
+                                                                    day_tracker.day) > date(case_status.date_time.year,
+                                                                                            case_status.date_time.month,
+                                                                                            case_status.date_time.day):
+            return False
+        return True
+
+    def active_user(self, user, day_tracker):
+        return self._active_before_start(user, day_tracker) and self._active_after_end(user, day_tracker)
 
     def __repr__(self):
         return "<Case Object[{}] '{}' [{}]>".format(self.id, self.case_name, self.status)
@@ -1234,6 +1257,10 @@ class Task(Base, Model):
         else:
             return self.creation_date, status.date_time
 
+    @property
+    def name(self):
+        return self.task_name
+
     def add_change(self, user):
         change = TaskHistory(self, user)
         session.add(change)
@@ -1561,6 +1588,25 @@ class Task(Base, Model):
                                                                    or_(UserTaskRoles.role == UserTaskRoles.PRINCIPLE_QA,
                                                                        UserTaskRoles.role == UserTaskRoles.SECONDARY_QA)))
         return query.all()
+
+    def _active_before_start(self, user, day_tracker):
+        if date(day_tracker.year, day_tracker.month, day_tracker.day) < date(self.creation_date.year,
+                                                                                 self.creation_date.month,
+                                                                                 self.creation_date.day):
+            return False
+        return True
+
+    def _active_after_end(self, user, day_tracker):
+        case_status = self.case.get_status()
+        if case_status.status in CaseStatus.closedStatuses and date(day_tracker.year, day_tracker.month,
+                                                                    day_tracker.day) > date(case_status.date_time.year,
+                                                                                            case_status.date_time.month,
+                                                                                            case_status.date_time.day):
+            return False
+        return True
+
+    def active_user(self, user, day_tracker):
+        return self._active_before_start(user, day_tracker) and self._active_after_end(user, day_tracker)
 
     def __repr__(self):
         return "<Task Object[{}] '{}' for Case {} [{}]>".format(self.id, self.task_type, self.case.case_name,

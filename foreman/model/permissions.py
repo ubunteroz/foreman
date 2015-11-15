@@ -472,7 +472,7 @@ permissions = {
     ('User', 'edit'): Or(AdminChecker(), UserIsCurrentUserChecker()),
     ('User', 'edit-roles'): AdminChecker(),
     ('User', 'add'): AdminChecker(),
-    ('User', 'view-active-roles'): Or(AdminChecker()),
+    ('User', 'view-active-roles'): Or(AdminChecker(), UserIsManagerOf()),
     ('User', 'view-changes'): Or(AdminChecker()),
     ('User', 'view-all'): AdminChecker(),
     ('User', 'view_directs_timesheets'): Or(AdminChecker(), UserIsManager()),

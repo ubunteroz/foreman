@@ -110,7 +110,7 @@
         </tr>
      % for user in current_user.direct_reports:
         <tr>
-            <th><a href='${urls.build("user.timesheet", dict(user_id=user.id))|h}'>${user.fullname|h}</a></th>
+            <th><a href='${urls.build("user.timesheet_default", dict(user_id=user.id))|h}'>${user.fullname|h}</a></th>
             <% day_tracker = start_day %>
             % for i in range(0, 7):
                 <td>${user.get_hours_worked(date(day_tracker.year,day_tracker.month,day_tracker.day))|h}</td>
@@ -171,7 +171,7 @@
             % for user in current_user.direct_reports:
                 % if user.is_examiner():
                 <tr>
-                    <th><a href='${urls.build("user.timesheet", dict(user_id=user.id))|h}'>${user.fullname|h}</a></th>
+                    <th><a href='${urls.build("user.timesheet_default", dict(user_id=user.id))|h}'>${user.fullname|h}</a></th>
                     % for status in worker_task_statuses:
                     <td>${get_worker_task_amounts(user, None, start_day, start_day + timedelta(days=7), status)|h}</td>
                     % endfor
@@ -223,7 +223,7 @@
             % for user in current_user.direct_reports:
                 % if user.is_case_manager():
                 <tr>
-                    <th><a href='${urls.build("user.timesheet", dict(user_id=user.id))|h}'>${user.fullname|h}</a></th>
+                    <th><a href='${urls.build("user.timesheet_default", dict(user_id=user.id))|h}'>${user.fullname|h}</a></th>
                     % for status in worker_case_statuses:
                     <td>${get_worker_case_amounts(user, None, start_day, start_day + timedelta(days=7), status)|h}</td>
                     % endfor

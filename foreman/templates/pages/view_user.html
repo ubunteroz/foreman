@@ -150,10 +150,10 @@
 
     % if check_perms(user, "edit_timesheet"):
             <h2>Management</h2>
-            <p><a href="${urls.build("user.timesheet", dict(user_id=user.id))|h}">Edit Timesheets</a></p>
+            <p><a href="${urls.build("user.timesheet_default", dict(user_id=user.id))|h}">Edit Timesheets</a></p>
     % elif check_perms(user, "view_timesheet"):
             <h2>Management</h2>
-            <p><a href="${urls.build("user.timesheet", dict(user_id=user.id))|h}">View Timesheets</a></p>
+            <p><a href="${urls.build("user.timesheet_default", dict(user_id=user.id))|h}">View Timesheets</a></p>
     % endif
 
     <h2>Roles Groups</h2>

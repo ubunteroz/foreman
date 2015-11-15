@@ -4,70 +4,73 @@
 
 <%def name="javascripts()" filter="trim">
 </%def>
+<% from datetime import timedelta, datetime, date %>
+<% from calendar import monthrange %>
+<% today = datetime.now() %>
 
-<%def name="timesheets(case_task, timesheet_user, timesheet_times, timesheets)">
+<%def name="timesheets(case_task, timesheets, timesheet_user_items)">
 
-        <div class="case_timesheet">
-        <form method="post" action="${urls.build('user.timesheet', dict(user_id=user.id, form=case_task))|h}">
+        <form method="post" action="${urls.build('user.timesheet', dict(user_id=user.id, week=start_day.strftime("%Y%m%d"), form=case_task))|h}">
+
         <table>
             <tr>
-                <% from datetime import timedelta, datetime %>
-                <% from calendar import monthrange %>
-                <% today = timesheet_times[0] %>
-                <% month = 0 %>
-                % while today <= timesheet_times[1]:
-                    % if today.month != month:
-                        <th colspan="${monthrange(today.year, today.month)[1] - today.day + 1|h}">
-                            ${today.strftime("%B %Y")|h}
-                        </th>
-                        <% month = today.month %>
+                <th></th>
+                <th colspan="7" style="text-align: center">
+                    <% last_week = start_day - timedelta(days=7) %>
+                    <% next_week = start_day + timedelta(days=7) %>
+                    <a title="Last week" href="${urls.build("user.timesheet", dict(user_id=user.id, week=last_week.strftime("%Y%m%d")))|h}"><img src="${urls.build("images", dict(file='siteimages/icons/arrow_left.png'))|h}" width="25px" align="left" alt="Last week" /></a>
+                     ${start_day.isocalendar()[0]|h} Week ${start_day.isocalendar()[1]|h}
+                    % if next_week <= today:
+                        <a title="Next week" href="${urls.build("user.timesheet", dict(user_id=user.id, week=next_week.strftime("%Y%m%d")))|h}"><img src="${urls.build("images", dict(file='siteimages/icons/arrow_right.png'))|h}" width="25px" align="right" alt="Next week" /></a>
                     % endif
-                    <% today = today + timedelta(days=1) %>
-
-                % endwhile
+                </th>
             </tr>
             <tr>
-                <% today = timesheet_times[0] %>
-                % while today <= timesheet_times[1]:
-                    % if today.isoweekday() == 6 or today.isoweekday() == 7:
-                    <th class="weekend">
-                    % else:
-                    <th>
-                    % endif
-                        ${today.strftime("%d")|h}
-                    </th>
-                    <% today = today + timedelta(days=1) %>
-                % endwhile
-            </tr>
+                <th>${case_task.title()|}s</th>
 
-            % for (case_counter, case) in enumerate(timesheet_user):
+                <% day_tracker = start_day %>
+                % for i in range(0, 7):
+                    <th width="150px">${day_tracker.strftime("%a %d %b")|h}</th>
+                    <% day_tracker += timedelta(days=1) %>
+                % endfor
+            </tr>
+             <% not_active = 0 %>
+             % for case_counter, case in enumerate(timesheet_user_items):
+                <% seventh_day = start_day + timedelta(days=6) %>
+                % if case._active_before_start(user, seventh_day) and case._active_after_end(user, start_day):
                 <tr>
-                    <% today = timesheet_times[0] %>
-                    % if check_perms(user, "edit_timesheet"):
-                        <% time_counter = 0 %>
-                        ${forms.formTextField_Timesheet(case_task + "s-" + str(case_counter) + "." + case_task, hidden=True, value=str(case.id))}
+                    % if case_task == "case":
+                    <th><a href="${urls.build("case.view", dict(case_id=case.id))|h}">${case.name|h}</a></th>
+                    % else:
+                    <th><a href="${urls.build("task.view", dict(case_id=case.case.id, task_id=case.id))|h}">${case.name|h}</a></th>
                     % endif
-                    % while today <= timesheet_times[1]:
-                            % if today.date() >= case.date_range[0].date() and today.date() <= case.date_range[1].date():
-                                    <td class="case">
-                                        <% ts = timesheets.get(today.strftime("%d%m%Y"), {}).get(case.id, None) %>
-                                        % if check_perms(user, "edit_timesheet"):
-                                        ${forms.formTextField_Timesheet(case_task + "s-" + str(case_counter) + ".timesheet-" + str(time_counter) + ".datetime", hidden=True, value=today.strftime("%d%m%Y"))}
-                                        ${forms.formTextField_Timesheet(case_task + "s-" + str(case_counter) + ".timesheet-" + str(time_counter) + ".value", value=ts)}
-                                        <% time_counter += 1 %>
-                                        % else:
-                                            ${ts if ts is not None else ""|h}
-                                        % endif
-                                    </td>
-                            % else:
-                                    <td class="no_case">&nbsp;</td>
-                            % endif
-                    <% today = today + timedelta(days=1) %>
-                    % endwhile
+                    ${forms.formTextField_Timesheet(case_task + "s-" + str(case_counter) + "." + case_task, hidden=True, value=case.id)}
+                    <% day_tracker = start_day %>
+                    % for i in range(0, 7):
+                        % if case.active_user(user, day_tracker):
+                            <td class="case">
+                                <% ts = timesheets.get(day_tracker.strftime("%d%m%Y"), {}).get(case.id, None) %>
+                                % if check_perms(user, "edit_timesheet"):
+                                    ${forms.formTextField_Timesheet(case_task + "s-" + str(case_counter) + ".timesheet-" + str(i) + ".datetime", hidden=True, value=day_tracker.strftime("%d%m%Y"))}
+                                    ${forms.formTextField_Timesheet(case_task + "s-" + str(case_counter) + ".timesheet-" + str(i) + ".value", value=ts)}
+                                % else:
+                                    ${ts if ts is not None else ""|h}
+                                % endif
+                            </td>
+                        % else:
+                            <td>&nbsp;</td>
+                        % endif
+                        <% day_tracker += timedelta(days=1) %>
+                    % endfor
                 </tr>
+                % else:
+                    <% not_active += 1 %>
+                % endif
             % endfor
+            % if not_active == len(timesheet_user_items):
+                <tr><td colspan="8">No active ${case_task}s during this week.</td></tr>
+            % endif
         </table>
-        </div>
         % if check_perms(user, "edit_timesheet"):
         <p style="clear:both; text-align:center"><input type="submit" value="Submit Timesheet" /></p>
         % endif
@@ -85,6 +88,7 @@
     <h1>Timesheet for ${user.fullname|h}</h1>
     % endif
 
+
     % if user.is_case_manager():
 
         <h2>Case Timesheet</h2>
@@ -93,17 +97,8 @@
             % if check_perms(user, "edit_timesheet"):
         <p>Enter in the amount of hours done on the case for each day. Number of hours do not have be be whole numbers, e.g. 2.5 hours to mean 2 hours and 30 minutes. </p>
             % endif
-        <div class="case_timesheet_names">
-        <table>
-            <tr><th></th></tr>
-            <tr><th></th></tr>
-             % for case in timesheet_user_cases:
-                <tr><th><a href='${urls.build("case.view", dict(case_id=case.id))|h}'>${case.case_name|h}</a></th></tr>
-             % endfor
-        </table>
-        </div>
 
-        ${timesheets("case", timesheet_user_cases, case_timesheet_times, case_timesheets)}
+        ${timesheets("case", case_timesheets, timesheet_user_cases)}
 
         % else:
             <p>
@@ -114,6 +109,7 @@
                 % endif
                 not been assigned any cases. </p>
         % endif
+    <div style="clear:both" />
     % endif
 
     % if user.is_examiner():
@@ -123,17 +119,7 @@
             % if check_perms(user, "edit_timesheet"):
         <p>Enter in the amount of hours done on the task for each day. Number of hours do not have be be whole numbers, e.g. 2.5 hours to mean 2 hours and 30 minutes. </p>
             % endif
-        <div class="case_timesheet_names">
-        <table>
-            <tr><th></th></tr>
-            <tr><th></th></tr>
-             % for task in timesheet_user_tasks:
-                <tr><th><a href='${urls.build("task.view", dict(case_id=task.case.id, task_id=task.id))|h}'>${task.task_name|h}</a></th></tr>
-             % endfor
-        </table>
-        </div>
-
-        ${timesheets("task", timesheet_user_tasks, task_timesheet_times, task_timesheets)}
+        ${timesheets("task", task_timesheets, timesheet_user_tasks)}
 
         % else:
             <p>
@@ -147,3 +133,4 @@
 
     % endif
 </div>
+

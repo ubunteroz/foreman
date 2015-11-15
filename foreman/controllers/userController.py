@@ -48,7 +48,9 @@ class UserController(BaseController):
 
         self.check_permissions(self.current_user, "User", 'view_directs_timesheets')
         self.breadcrumbs.append(
-            {'title': "Timesheets", 'path': self.urls.build('user.timesheet_overview', dict(week=week))})
+            {'title': "Timesheets", 'path': self.urls.build('user.timesheet_overview_default')})
+        self.breadcrumbs.append({'title': "{} week {}".format(start_day.isocalendar()[0], start_day.isocalendar()[1]),
+                                 'path': self.urls.build('user.timesheet_overview', dict(week=week))})
         worker_task_statuses = [TaskStatus.ALLOCATED, TaskStatus.PROGRESS, "Waiting for QA", "Performing QA",
                                 TaskStatus.DELIVERY, TaskStatus.COMPLETE]
         worker_case_statuses = CaseStatus.approved_statuses
@@ -60,14 +62,35 @@ class UserController(BaseController):
                                     worker_task_statuses=worker_task_statuses,
                                     worker_case_statuses=worker_case_statuses)
 
-    def timesheet(self, user_id):
+    def timesheet_default(self, user_id):
         user = self._validate_user(user_id)
         if user is not None:
+            self.check_permissions(self.current_user, user, 'view_timesheet')
+        today = datetime.now()
+        week = today - timedelta(days=today.isoweekday() - 1)
+        return self.timesheet(user_id, week.strftime("%Y%m%d"))
+
+    def timesheet(self, user_id, week):
+        user = self._validate_user(user_id)
+        if user is not None:
+            try:
+                start_day = datetime.strptime(week, "%Y%m%d")
+                if start_day.isoweekday() != 1:
+                    raise ValueError
+                today = datetime.now()
+                if start_day > today:
+                    raise ValueError
+            except ValueError:
+                return self.return_404()
+
             self.check_permissions(self.current_user, user, 'view_timesheet')
             self.breadcrumbs.append({'title': user.fullname,
                                      'path': self.urls.build('user.view', dict(user_id=user.id))})
             self.breadcrumbs.append({'title': "Timesheet",
-                                     'path': self.urls.build('user.timesheet', dict(user_id=user.id))})
+                                     'path': self.urls.build('user.timesheet_default', dict(user_id=user.id))})
+            self.breadcrumbs.append({'title': "{} week {}".format(start_day.isocalendar()[0],
+                                                                  start_day.isocalendar()[1]),
+                                     'path': self.urls.build('user.timesheet', dict(user_id=user.id, week=week))})
 
             if self.request.args.get('form') == "case" and self.validate_form(CaseTimeSheetForm):
                 for timesheets in self.form_result['cases']:
@@ -96,7 +119,6 @@ class UserController(BaseController):
                         elif timesheet is not None:
                             timesheet.hours = entries['value']
 
-            task_timesheet_start = task_timesheet_end = None
             task_timesheets = {}
             if user.is_examiner():
                 prim, second = Task.get_tasks_assigned_to_user(user, statuses=TaskStatus.notesAllowed,
@@ -105,46 +127,27 @@ class UserController(BaseController):
                                                                          task_statuses=TaskStatus.notesAllowed)
                 timesheet_user_tasks = prim + second + prim_qa + second_qa
                 timesheet_user_tasks.sort(key=lambda d: d.creation_date, reverse=True)
-                task_timesheet_start = datetime.now()
-                task_timesheet_end = datetime(1970, 1, 1)
-                for task in timesheet_user_tasks:
-                    start, end = task.date_range
-                    if start < task_timesheet_start:
-                        task_timesheet_start = start
-                    if end > task_timesheet_end:
-                        task_timesheet_end = end
 
                 for ts in TaskTimeSheets.get_filter_by(user=user).all():
                     task_timesheets.setdefault(ts.date.strftime("%d%m%Y"), {})[ts.task.id] = ts.hours
             else:
                 timesheet_user_tasks = []
 
-            case_timesheet_start = case_timesheet_end = None
             case_timesheets = {}
             if user.is_case_manager():
                 old_cases_managed = Case.get_completed_cases(user, self.check_permissions, self.current_user)
                 current_cases_managed = Case.get_current_cases(user, self.check_permissions, self.current_user)
 
                 timesheet_user_cases = old_cases_managed + current_cases_managed
-                case_timesheet_start = datetime.now()
-                case_timesheet_end = datetime(1970, 1, 1)
-                for case in timesheet_user_cases:
-                    start, end = case.date_range
-                    if start < case_timesheet_start:
-                        case_timesheet_start = start
-                    if end > case_timesheet_end:
-                        case_timesheet_end = end
 
                 for ts in CaseTimeSheets.get_filter_by(user=user).all():
                     case_timesheets.setdefault(ts.date.strftime("%d%m%Y"), {})[ts.case.id] = ts.hours
             else:
                 timesheet_user_cases = []
-            return self.return_response('pages', 'view_timesheet.html', user=user,
+            return self.return_response('pages', 'view_timesheet.html', user=user, start_day=start_day,
                                         timesheet_user_tasks=timesheet_user_tasks,
                                         timesheet_user_cases=timesheet_user_cases, errors=self.form_error,
-                                        case_timesheet_times=(case_timesheet_start, case_timesheet_end),
-                                        case_timesheets=case_timesheets, task_timesheets=task_timesheets,
-                                        task_timesheet_times=(task_timesheet_start, task_timesheet_end))
+                                        case_timesheets=case_timesheets, task_timesheets=task_timesheets)
         else:
             return self.return_404()
 
