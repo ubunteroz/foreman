@@ -24,13 +24,15 @@
             % endif
         % endif
         % if check_perms(case, 'edit'):
-            % if case.status == case_statuses['created']:
+            % if case.status == case_statuses['created'] and current_user.id != case.requester.id:
                 | <a href='${urls.build("case.change_status", dict(case_id=case.id, status=case_statuses["open"]))|h}'>Open this Case for Investigation</a>
             % elif case.status == case_statuses['open']:
                 | <a href='${urls.build("case.change_status", dict(case_id=case.id, status=case_statuses["closed"]))|h}'>Close this Case</a>
             % elif case.status == case_statuses['closed']:
                 | <a href='${urls.build("case.change_status", dict(case_id=case.id, status=case_statuses["open"]))|h}'>Reopen this Case</a>
+                % if current_user.id != case.requester.id:
                 | <a href='${urls.build("case.change_status", dict(case_id=case.id, status=case_statuses["archived"]))|h}'>Archive this Case</a>
+                % endif
             % endif
         % endif
 
@@ -62,9 +64,8 @@
         % if check_perms(case, 'add-task'):
         <a href='${urls.build("case.add_task", dict(case_id=case.id))|h}'>Add Task</a>
         % endif
-        % if check_perms(case, 'edit') and all_tasks_created:
-        | <a href='${urls.build("case.change_task_statuses", dict(case_id=case.id, status=task_statuses["queued"]))|h}'>Set all tasks to Queued</a> |
-        <a href='${urls.build("case.change_task_statuses", dict(case_id=case.id, status=task_statuses["start"]))|h}'>Set all tasks to Allocated</a></p>
+        % if check_perms(case, 'can-assign') and all_tasks_created:
+        | <a href='${urls.build("case.change_task_statuses", dict(case_id=case.id, status=task_statuses["queued"]))|h}'>Set all tasks to Queued</a></p>
         % endif
         </p>
 

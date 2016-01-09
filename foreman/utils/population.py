@@ -161,7 +161,9 @@ def create_test_investigators(admin):
         if inv in managers:
             inv.manager = admin
         else:
-            inv.manager = managers[randint(0, len(managers)-1)]
+            inv.manager = admin
+            if len(managers) > 1:
+                inv.manager = managers[randint(0, len(managers)-1)]
 
     print "15 Investigators added to Foreman."
     return investigators
@@ -242,7 +244,9 @@ def create_test_case_managers(admin):
         if inv in managers:
             inv.manager = admin
         else:
-            inv.manager = managers[randint(0, len(managers)-1)]
+            inv.manager = admin
+            if len(managers) > 1:
+                inv.manager = managers[randint(0, len(managers)-1)]
 
     print "10 Case Managers added to Foreman."
     return case_managers

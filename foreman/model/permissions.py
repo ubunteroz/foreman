@@ -421,6 +421,7 @@ permissions = {
                                     CaseManagerForTaskChecker()), Not(TaskEditableChecker())),
     ('Task', 'assign-self'): And(Or(AdminChecker(), StartInvestigationForTaskChecker()), Not(TaskEditableChecker())),
     ('Task', 'assign-other'): And(Or(AdminChecker(), CaseManagerForTaskChecker()), Not(TaskEditableChecker())),
+    ('Case', 'can-assign'): And(Or(AdminChecker(), CaseManagerForCaseChecker()), Not(CaseEditableChecker())),
     ('Task', 'qa'): And(Or(AdminChecker(), CompleteQAForTaskChecker()), Not(TaskEditableChecker())),
     ('Evidence', 'view-all'): Or(AdminChecker(), InvestigatorChecker(), QAChecker(), CaseManagerChecker()),
     ('Evidence', 'view'): Or(

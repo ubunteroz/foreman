@@ -60,8 +60,7 @@ class CaseController(BaseController):
         if case is not None:
             self.check_permissions(self.current_user, case, 'view')
             if case.tasks:
-                # if all the tasks are in created status, then this adds link to set all the tasks to allocated /
-                # queued in one go
+                # if all the tasks are in created status, then this adds link to set all the tasks to queued in one go
                 all_tasks_created = len(set([task.status for task in case.tasks])) == 1 \
                                     and case.tasks[0].status == TaskStatus.CREATED
             else:
@@ -228,7 +227,7 @@ class CaseController(BaseController):
     def change_task_statuses(self, case_id):
         case = self._validate_case(case_id)
         if case is not None:
-            self.check_permissions(self.current_user, case, 'edit')
+            self.check_permissions(self.current_user, case, 'can-assign')
             self.breadcrumbs.append({'title': case.case_name,
                                      'path': self.urls.build('case.view', dict(case_id=case.id))})
             self.breadcrumbs.append({'title': "Change Task Statuses",

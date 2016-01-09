@@ -66,7 +66,7 @@ class CasesTestCase(URLTestCase):
         self._check_url('/cases/edit/2/', 3, 403)  # login as a secondary investigator for this case
         self._check_url('/cases/edit/2/', 4, 403)  # login as a primary QA for this case
         self._check_url('/cases/edit/2/', 2, 403)  # login as a secondary QA for this case
-        self._check_url('/cases/edit/2/', 28, 403)  # login as a requester for this case
+        self._check_url('/cases/edit/2/', 28)  # login as a requester for this case
 
     def test_close_case(self):
         self._check_url('/cases/close/test_doesnt_exist/', 1, 404)  # login as admin, but wrong case
@@ -98,4 +98,4 @@ class CasesTestCase(URLTestCase):
         self._check_url('/cases/change_status/2/?status=Closed', 3, 403)  # login as a secondary investigator for this case
         self._check_url('/cases/change_status/2/?status=Closed', 4, 403)  # login as a primary QA for this case
         self._check_url('/cases/change_status/2/?status=Closed', 2, 403)  # login as a secondary QA for this case
-        self._check_url('/cases/change_status/2/?status=Closed', 28, 403)  # login as a requester for this case
+        self._check_url('/cases/change_status/2/?status=Closed', 28)  # login as a requester for this case
