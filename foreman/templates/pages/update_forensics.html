@@ -174,7 +174,7 @@
                             ${forms.formSelectBox("Primary QA Investigator", "investigator", "investigator", "form_label", "addeditcase", qa_partner_list, please_select=True)}
                         % endif
                         % if len(task.QAs) == 0:
-                            ${forms.formSelectBox("Secondary QA Investigator (optional)", "investigator2", "investigator2", "form_label", "addeditcase", qa_partner_list, please_select=True)}
+                            ${forms.formSelectBox("Secondary QA Investigator (optional)", "investigator2", "investigator2", "form_label", "addeditcase", qa_partner_list, please_select=True, required=False)}
                         % elif task.secondary_QA is None:
                             ${forms.formSelectBox("Secondary QA Investigator", "investigator", "investigator", "form_label", "addeditcase", qa_partner_list, please_select=True)}
                         % endif

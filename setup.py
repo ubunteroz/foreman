@@ -17,7 +17,6 @@ setup(
                       "Mako==0.9.1",
                       "SQLAlchemy==0.9.1",
                       "Werkzeug==0.9.4",
-                      "pil==1.1.7",
                       "qrcode==4.0.4",
-                      "monthdelta==0.9.1"]
+                      "monthdelta==1.0b"]
 )

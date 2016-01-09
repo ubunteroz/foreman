@@ -364,8 +364,8 @@ permissions = {
                              RequesterChecker(), AuthoriserChecker()),
     ('Case', 'edit'): And(Or(AdminChecker(),
                              And(CaseManagerForCaseChecker(), CaseApprovedChecker()),
-                             And(RequesterForCaseChecker(), RejectedCaseChecker())),
-                          Not(ArchivedCaseChecker())),
+                             And(RequesterForCaseChecker())),
+                          Not(ArchivedCaseChecker()), Not(RejectedCaseChecker())),
     ('Case', 'close'): And(
                         Or(AdminChecker(),
                             CaseManagerForCaseChecker()),

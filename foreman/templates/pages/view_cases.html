@@ -29,7 +29,7 @@
          <div class="case_options">
              <h2>Search Options</h2>
 
-            % if current_user.is_authoriser() or current_user.is_requester() or current_user.is_case_manager():
+            % if current_user.is_authoriser() or current_user.is_requester():
             <a href='${urls.build("case.view_all", dict(view="Pending"))|h}'><div ${case_option_div_id("Pending")} class="case_option">Pending Authorisation</div></a>
             <a href='${urls.build("case.view_all", dict(view="Rejected"))|h}'><div ${case_option_div_id("Rejected")} class="case_option">Rejected</div></a>
             % endif

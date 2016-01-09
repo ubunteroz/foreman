@@ -30,7 +30,6 @@ class ForensicsController(BaseController):
             self.breadcrumbs.append({'title': "Conduct Investigation",
                                  'path': self.urls.build('forensics.work', dict(case_id=task.case.id,
                                                                            task_id=task.id))})
-            qa_partner_list = [(user.id, user.fullname) for user in UserRoles.get_qas() if user not in task.QAs]
 
             form_type = multidict_to_dict(self.request.args)
             success = False
@@ -94,6 +93,8 @@ class ForensicsController(BaseController):
             else:
                 qa_partners = None
 
+            qa_partner_list = [(user.id, user.fullname) for user in UserRoles.get_qas() if user not in task.QAs and
+                               user != self.current_user]
             case_note_dates = list(OrderedDict.fromkeys([notes.date_time.strftime("%d %b %Y") for notes in task.notes]))
             return self.return_response('pages', 'update_forensics.html', task=task, success=success, start=start,
                                        qa_partner_list=qa_partner_list, success_qa=success_qa, qa_partners=qa_partners,
