@@ -113,7 +113,6 @@ class RegisterForm(Schema):
     surname = v.UnicodeString(not_empty=True)
     middlename = v.UnicodeString()
     username = v.UnicodeString(not_empty=True)
-    username = v.UnicodeString(not_empty=True)
     password = v.UnicodeString(not_empty=True)
     password_2 = v.UnicodeString(not_empty=True)
     email = v.UnicodeString(not_empty=True)

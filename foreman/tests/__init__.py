@@ -45,13 +45,13 @@ def build_app_suite(list_name):
 
 # This is for launch.py to run
 def run_tests(config_file, unit_tests=True, functional_tests=True, url_tests=True):
+
     setup(config_file)
 
     if unit_tests:
         print "\n\n~~ Running Unit Tests ~~\n\n"
-        pass
-        #suite_unit_tests = build_app_suite(test_units)
-        #unittest.TextTestRunner(verbosity=2).run(suite_unit_tests)
+        suite_unit_tests = build_app_suite(test_units)
+        unittest.TextTestRunner(verbosity=2).run(suite_unit_tests)
 
     if functional_tests:
         print "\n\n~~ Running Functional Tests ~~\n\n"

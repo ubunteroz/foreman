@@ -7,7 +7,7 @@ from formencode.compound import CompoundValidator
 # local imports
 from ..model import User, UserTaskRoles, UserRoles, TaskStatus, Task, CaseStatus, Case, ForemanOptions, TaskType
 from ..model import CaseType, CaseClassification, TaskCategory, CasePriority, Department, Team, EvidenceType
-from ..utils.utils import session, ROOT_DIR
+from ..utils.utils import ROOT_DIR
 
 
 class RemoveEmpties(v.FancyValidator):
@@ -242,7 +242,7 @@ class GetUsers(GetObject):
 
     def getObject(self, user_id):
         if user_id.isdigit():
-            return session.query(User).get(int(user_id))
+            return User.get(int(user_id))
         if user_id == "both":
             return "both"
         else:
@@ -260,7 +260,7 @@ class GetUser(GetObject):
 
     def getObject(self, user_id):
         if user_id.isdigit():
-            return session.query(User).get(int(user_id))
+            return User.get(int(user_id))
         else:
             return None
 
@@ -271,7 +271,7 @@ class GetInvestigator(GetUser):
 
     def getObject(self, user_id):
         if user_id.isdigit():
-            user = session.query(User).get(int(user_id))
+            user = User.get(int(user_id))
             if user is not None:
                 for role in user.roles:
                     if role.role == UserRoles.INV:
@@ -287,7 +287,7 @@ class GetQA(GetUser):
 
     def getObject(self, user_id):
         if user_id.isdigit():
-            user = session.query(User).get(int(user_id))
+            user = User.get(int(user_id))
             if user is not None:
                 for role in user.roles:
                     if role.role == UserRoles.QA:
@@ -303,7 +303,7 @@ class GetCaseManager(GetUser):
 
     def getObject(self, user_id):
         if user_id.isdigit():
-            user = session.query(User).get(int(user_id))
+            user = User.get(int(user_id))
             if user is not None:
                 for role in user.roles:
                     if role.role == UserRoles.CASE_MAN:
@@ -319,7 +319,7 @@ class GetAuthoriser(GetUser):
 
     def getObject(self, user_id):
         if user_id.isdigit():
-            user = session.query(User).get(int(user_id))
+            user = User.get(int(user_id))
             if user is not None:
                 for role in user.roles:
                     if role.role == UserRoles.AUTH:
@@ -416,7 +416,7 @@ class GetTask(GetObject):
 
     def getObject(self, task_id):
         if task_id.isdigit():
-            return session.query(Task).get(int(task_id))
+            return Task.get(int(task_id))
         else:
             return None
 
@@ -432,7 +432,7 @@ class GetCase(GetObject):
 
     def getObject(self, case_id):
         if case_id.isdigit():
-            return session.query(Case).get(int(case_id))
+            return Case.get(int(case_id))
         else:
             return None
 
