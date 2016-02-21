@@ -10,6 +10,7 @@ from ..utils.utils import multidict_to_dict, session, config
 from ..utils.mail import email
 from ..forms.forms import AddCaseForm, EditCaseForm, AddCaseLinkForm, RemoveCaseLinkForm, RequesterAddTaskForm
 from ..forms.forms import EditCaseManagersForm, ReAssignTasksForm, RequesterAddCaseForm, AddTaskForm, AuthoriseCaseForm
+from ..forms.forms import CloseCaseForm, ChangeCaseStatusForm
 
 
 class CaseController(BaseController):
@@ -92,10 +93,13 @@ class CaseController(BaseController):
                 else:
                     verb = ['archive', 'archived']
                 if 'confirm' in args and args['confirm'] == "true":
-                    case.set_status(status, self.current_user)
-                    change = True
+                    if self.validate_form(ChangeCaseStatusForm()):
+                        reason = self.form_result['change']
+                        case.set_status(status, self.current_user)
+                        case.get_status().reason = reason
+                        change = True
                 return self.return_response('pages', 'confirm_case_status_change.html', case=case, change=change,
-                                            status=status, verb=verb)
+                                            status=status, verb=verb, errors=self.form_error)
             else:
                 return self.return_404(reason="The case or status change you are trying to make does not exist.")
         else:
@@ -412,10 +416,13 @@ class CaseController(BaseController):
             confirm_close = multidict_to_dict(self.request.args)
 
             if 'confirm' in confirm_close and confirm_close['confirm'] == "true":
-                case.close_case()
-                closed = True
+                if self.validate_form(CloseCaseForm()):
+                    reason = self.form_result['closure']
+                    case.close_case(reason, self.current_user)
+                    closed = True
 
-            return self.return_response('pages', 'confirm_close_case.html', case=case, closed=closed)
+            return self.return_response('pages', 'confirm_close_case.html', case=case, closed=closed,
+                                        errors=self.form_error)
         else:
             return self.return_404(reason="You have tried to close an invalid case.")
 

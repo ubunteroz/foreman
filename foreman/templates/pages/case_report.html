@@ -89,10 +89,14 @@
                         % elif change[0] == "NOAUTH":
                             The case was rejected with reason: <br/><span class="change">${change[1]|h}</span><br/>
                         % else:
-                            The <i>${entry|h}</i> changed from
-                            <span class="change">${change[0]|h}</span>
-                            to
-                            <span class="change">${change[1]|h}</span>
+                            % if entry == "Reason":
+                                <br/>The reason was: <span class="change">${change[1]|h}</span>
+                            % else:
+                                The <i>${entry|h}</i> changed from
+                                <span class="change">${change[0]|h}</span>
+                                to
+                                <span class="change">${change[1]|h}</span>
+                            % endif
                         % endif
                     % endfor
                 % else:

@@ -406,3 +406,11 @@ class TaskTimeSheetForm(Schema):
 
 class ManagersInheritForm(Schema):
     manager_inherit = v.StringBool(not_empty=True)
+
+
+class CloseCaseForm(Schema):
+    closure = v.UnicodeString(not_empty=True)
+
+
+class ChangeCaseStatusForm(Schema):
+    change = v.UnicodeString(not_empty=True)

@@ -27,7 +27,7 @@
             % if case.status == case_statuses['created'] and current_user.id != case.requester.id:
                 | <a href='${urls.build("case.change_status", dict(case_id=case.id, status=case_statuses["open"]))|h}'>Open this Case for Investigation</a>
             % elif case.status == case_statuses['open']:
-                | <a href='${urls.build("case.change_status", dict(case_id=case.id, status=case_statuses["closed"]))|h}'>Close this Case</a>
+                | <a href='${urls.build("case.close", dict(case_id=case.id))|h}'>Close this Case</a>
             % elif case.status == case_statuses['closed']:
                 | <a href='${urls.build("case.change_status", dict(case_id=case.id, status=case_statuses["open"]))|h}'>Reopen this Case</a>
                 % if current_user.id != case.requester.id:

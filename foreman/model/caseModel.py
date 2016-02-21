@@ -185,6 +185,7 @@ class CaseStatus(Base, HistoryModel):
     date_time = Column(DateTime)
     status = Column(Unicode)
     user_id = Column(Integer, ForeignKey('users.id'))
+    reason = Column(Unicode)
 
     case = relation('Case', backref=backref('statuses', order_by=asc(date_time)))
     user = relation('User', backref=backref('case_status_changes'))
@@ -197,7 +198,7 @@ class CaseStatus(Base, HistoryModel):
     forensic_statuses = [OPEN]
 
     history_backref = "statuses"
-    comparable_fields = {'Status': 'status'}
+    comparable_fields = {'Status': 'status', 'Reason': 'reason'}
     object_name = "Case"
     history_name = ("Case", "case_name", "case_id")
 
@@ -374,14 +375,10 @@ class Case(Base, Model):
     def status(self):
         return self.currentStatus
 
-    def open_case(self):
-        self.set_status(CaseStatus.OPEN)
-
-    def close_case(self):
-        self.set_status(CaseStatus.CLOSED)
-
-    def archive_case(self):
-        self.set_status(CaseStatus.ARCHIVED)
+    def close_case(self, reason, user):
+        self.set_status(CaseStatus.CLOSED, user)
+        status = self.get_status()
+        status.reason = reason
 
     def get_links(self, perm_checker=None, user=None):
         links = LinkedCase.get_links(self)

@@ -1,5 +1,6 @@
 ﻿<%inherit file="/base/base.html"/>
 <%namespace file="/utils/sidebars.html" name="sidebars" />
+<%namespace file="/utils/forms.html" name="forms" />
 
 <%def name="javascripts()" filter="trim">
     <script>
@@ -18,10 +19,12 @@
 
     % if change == False:
     <h1>Confirm case ${case.case_name|h} status change to ${verb[0]|h}</h1>
-    <div class="confirmclosurebox">
-        <p>Are you sure you want to ${verb[0]|h} ${case.case_name|h}?</p>
-        <p><a href="?confirm=true&status=${status|h}">Yes</a> | <a href="#" onclick="goBack()">No</a></p>
-    </div>
+
+    <form method="post" action="?confirm=true&status=${status|h}">
+        ${forms.formTextArea("Reason for status change", "change", "change", "form_label", "addeditcase", first=True)}
+        <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+    </form>
+
     % else:
     <h1>Case ${case.case_name|h} has been ${verb[1]|h}</h1>
     <p><a href='${urls.build("case.view", dict(case_id=case.id))|h}'>View Case</a></p>

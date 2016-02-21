@@ -1,5 +1,6 @@
 ﻿<%inherit file="/base/base.html"/>
 <%namespace file="/utils/sidebars.html" name="sidebars" />
+<%namespace file="/utils/forms.html" name="forms" />
 
 <%def name="javascripts()" filter="trim">
     <script>
@@ -17,12 +18,15 @@
 <div id="mainbar">
     % if closed == False:
     <h1>Confirm closure of Case ${case.case_name|h}</h1>
-    <div class="confirmclosurebox">
-        <p>Are you sure you want to close ${case.case_name|h}?</p>
-        <p><a href="?confirm=true">Yes</a> | <a href="#" onclick="goBack()">No</a></p>
-    </div>
+
+    <form method="post" action="${urls.build('case.close', dict(case_id=case.id, confirm='true'))|h}">
+        ${forms.formTextArea("Reason for closure", "closure", "closure", "form_label", "addeditcase", first=True)}
+        <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+    </form>
+
     % else:
     <h1>Case ${case.case_name|h} has been closed</h1>
     <p><a href='${urls.build("case.view", dict(case_id=case.id))|h}'>View Case</a></p>
     % endif
+
 </div>
