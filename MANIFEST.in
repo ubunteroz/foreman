@@ -1,7 +1,5 @@
 include README.md
 include license.txt
-include foreman.wsgi
 graft foreman/config
 graft foreman/static
 graft foreman/templates
-graft foreman/notes
