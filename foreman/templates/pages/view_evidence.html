@@ -24,6 +24,10 @@
             <p><a href='${urls.build("evidence.edit", dict(evidence_id=evidence.id))|h}'>Edit Evidence</a>
     % endif
 
+    % if check_perms(evidence, 'destroy'):
+            <p><a href='${urls.build("evidence.destroy", dict(evidence_id=evidence.id))|h}'>Set Evidence Status to Destroyed</a>
+    % endif
+
     % if evidence.case_id is not None:
         % if check_perms(evidence, 'dis-associate'):
             | <a href='${urls.build("evidence.disassociate", dict(case_id=evidence.case.id, evidence_id=evidence.id))|h}'>Remove Evidence from case</a></p>
@@ -47,7 +51,7 @@
 
     % if check_perms(evidence, 'check-in-out'):
         <br />
-        % if evidence.current_status.check_in == True:
+        % if evidence.chain_of_custody_status.check_in == True:
         <p><a href='${urls.build("evidence.custody_out", dict(evidence_id=evidence.id))|h}'>Check out the evidence</a></p>
         % else:
         <p><a href='${urls.build("evidence.custody_in", dict(evidence_id=evidence.id))|h}'>Check in the evidence</a></p>

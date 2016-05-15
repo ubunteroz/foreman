@@ -559,7 +559,7 @@ div.case_option:hover, div#highlighted_case_option{
     background-color: #ffffff;
 }
 
-div.confirmclosurebox, div.confirmassigninv, div.errorbox, div.warningbox{
+div.confirmclosurebox, div.confirmassigninv, div.errorbox, div.warningbox, div.special_note{
     margin: 0px auto;
     width: 600px;
     padding: 10px 10px 10px 60px;
@@ -575,6 +575,14 @@ div.warningbox{
     background-repeat: no-repeat;
     background-position-x: 5px;
     background-position-y: 5px;
+}
+
+div.special_note{
+    background: url('../images/siteimages/icons/safebox.png');
+    background-repeat: no-repeat;
+    background-position-x: 5px;
+    background-position-y: 5px;
+    background-color: #ECECEC;
 }
 
 div.confirmassigninv{

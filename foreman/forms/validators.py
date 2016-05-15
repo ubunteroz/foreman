@@ -7,6 +7,7 @@ from formencode.compound import CompoundValidator
 # local imports
 from ..model import User, UserTaskRoles, UserRoles, TaskStatus, Task, CaseStatus, Case, ForemanOptions, TaskType
 from ..model import CaseType, CaseClassification, TaskCategory, CasePriority, Department, Team, EvidenceType
+from ..model import EvidenceStatus
 from ..utils.utils import ROOT_DIR
 
 
@@ -78,6 +79,26 @@ class NotEmptyTaskUpload(v.FancyValidator):
             return False
         else:
             return True
+
+
+class PositiveNumberAboveZero(v.Number):
+    messages = {
+        'negative': 'Please enter a positive number',
+        'zero': 'Please enter a positive number greater than zero',
+        'invalid': 'Please enter a number'
+    }
+
+    def _to_python(self, value, state):
+        try:
+            value = int(value)
+        except ValueError:
+            raise Invalid(self.message('invalid', state), value, state)
+        if value > 0:
+            return value
+        elif value == 0:
+            raise Invalid(self.message('zero', state), value, state)
+        else:
+            raise Invalid(self.message('negative', state), value, state)
 
 
 class TimeSheetDateTime(v.UnicodeString):
@@ -514,6 +535,20 @@ class GetEvidenceType(GetObject):
             return EvidenceType.get(int(evidence_type))
         except ValueError:
             return None
+
+
+class GetEvidenceStatus(v.UnicodeString):
+    messages = {
+        'null': 'Please select an option.',
+        'invalid': 'Please select a valid status.',
+    }
+    allow_null = False
+
+    def _to_python(self, value, state):
+        if value in EvidenceStatus.statuses:
+            return value
+        else:
+            raise Invalid(self.message('invalid', state), value, state)
 
 
 class GetBooleanYesNo(v.UnicodeString):

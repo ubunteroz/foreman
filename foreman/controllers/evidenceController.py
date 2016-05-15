@@ -4,7 +4,7 @@ from sqlalchemy import asc, desc
 # local imports
 from baseController import BaseController
 from ..utils.utils import ROOT_DIR, multidict_to_dict, session
-from ..model import Evidence, Case, EvidenceHistory, ForemanOptions, EvidencePhotoUpload, EvidenceType
+from ..model import Evidence, Case, EvidenceHistory, ForemanOptions, EvidencePhotoUpload, EvidenceType, EvidenceStatus
 from ..forms.forms import ChainOfCustodyForm, EditEvidenceForm, EditEvidenceQRCodesForm, EvidenceAssociateForm, \
     AddEvidenceForm, AddEvidencePhotoForm
 from ..utils.utils import upload_file
@@ -42,7 +42,8 @@ class EvidenceController(BaseController):
         if self.validate_form(AddEvidenceForm()):
             evi = Evidence(case, self.form_result['reference'], self.form_result['type'].evidence_type,
                            self.form_result['comments'], self.form_result['originator'], self.form_result['location'],
-                           self.current_user, self.form_result['bag_num'], self.form_result['qr'])
+                           self.current_user, self.form_result['bag_num'], self.form_result['qr'],
+                           self.form_result['status'])
             session.add(evi)
             session.flush()
             evi.create_qr_code()
@@ -51,8 +52,28 @@ class EvidenceController(BaseController):
         else:
             evidence_type_options = [(et.id, et.evidence_type) for et in EvidenceType.get_all() if
                                      et.evidence_type != "Undefined"]
+            evidence_status_options = [(es, es) for es in EvidenceStatus.statuses]
             return self.return_response('pages', 'add_evidence.html', case=case, errors=self.form_error,
-                                        evidence_type_options=evidence_type_options)
+                                        evidence_type_options=evidence_type_options,
+                                        evidence_status_options=evidence_status_options)
+
+    def destroy(self, evidence_id):
+        evidence = self._validate_evidence(evidence_id)
+        if evidence is not None:
+            self.check_permissions(self.current_user, evidence, 'destroy')
+            self._create_task_specific_breadcrumbs(evidence, evidence.case)
+            self.breadcrumbs.append({'title': "Destroy", 'path': self.urls.build('evidence.destroy',
+                                                                              dict(evidence_id=evidence_id))})
+            success = False
+            confirm_close = multidict_to_dict(self.request.args)
+
+            if 'confirm' in confirm_close and confirm_close['confirm'] == "true":
+                    evidence.set_status(EvidenceStatus.DESTROYED, self.current_user)
+                    success = True
+
+            return self.return_response('pages', 'confirm_destroy_evidence.html', evidence=evidence, success=success)
+        else:
+            return self.return_404(reason="""You have tried to access an invalid evidence reference.""")
 
     def edit(self, evidence_id):
         evidence = self._validate_evidence(evidence_id)
@@ -64,19 +85,29 @@ class EvidenceController(BaseController):
             form_type = multidict_to_dict(self.request.args)
             evidence_type_options = [(et.id, et.evidence_type) for et in EvidenceType.get_all() if
                                      et.evidence_type != "Undefined"]
+            evidence_status_options = [(es, es) for es in EvidenceStatus.statuses]
+
             success = False
             active_tab = 0
             default_qr_code_text = evidence.generate_qr_code_text()
 
             if 'form' in form_type and form_type['form'] == "edit_evidence":
                 if self.validate_form(EditEvidenceForm()):
-                    evidence.reference = self.form_result['reference']
-                    evidence.evidence_bag_number = self.form_result['bag_num']
-                    evidence.type = self.form_result['type'].evidence_type
-                    evidence.originator = self.form_result['originator']
-                    evidence.comment = self.form_result['comments']
-                    evidence.location = self.form_result['location']
-                    evidence.add_change(self.current_user)
+                    if evidence.reference != self.form_result['reference'] or evidence.evidence_bag_number != \
+                            self.form_result['bag_num'] or evidence.type != self.form_result[
+                        'type'].evidence_type or evidence.originator != self.form_result[
+                        'originator'] or evidence.comment != self.form_result['comments'] or evidence.location != \
+                            self.form_result['location']:
+                        evidence.reference = self.form_result['reference']
+                        evidence.evidence_bag_number = self.form_result['bag_num']
+                        evidence.type = self.form_result['type'].evidence_type
+                        evidence.originator = self.form_result['originator']
+                        evidence.comment = self.form_result['comments']
+                        evidence.location = self.form_result['location']
+                        evidence.add_change(self.current_user)
+
+                    if evidence.status != self.form_result['status']:
+                        evidence.set_status(self.form_result['status'], self.current_user)
                     success = True
 
             elif 'form' in form_type and form_type['form'] == "edit_qr":
@@ -100,7 +131,8 @@ class EvidenceController(BaseController):
             return self.return_response('pages', 'edit_evidence.html', evidence=evidence, active_tab=active_tab,
                                         evidence_history=evidence_history,
                                         success=success, evidence_type_options=evidence_type_options,
-                                        default_qr_code_text=default_qr_code_text, qr_evidence_history=len_qr_hist)
+                                        default_qr_code_text=default_qr_code_text, qr_evidence_history=len_qr_hist,
+                                        evidence_status_options=evidence_status_options)
         else:
             return self.return_404(reason="""You have tried to access an invalid evidence reference.
             Alternatively, you have tried to edit evidence that is from a closed or archived case.
@@ -204,7 +236,8 @@ class EvidenceController(BaseController):
 
         evidence = self._validate_evidence(evidence_id)
 
-        if evidence is not None and (evidence.current_status is None or evidence.current_status.check_in != check_in):
+        if evidence is not None and (
+                evidence.chain_of_custody_status is None or evidence.chain_of_custody_status.check_in != check_in):
             self.check_permissions(self.current_user, evidence, 'check-in-out')
 
             if not initial and self.validate_form(ChainOfCustodyForm()):
@@ -297,9 +330,3 @@ class EvidenceController(BaseController):
 
         return self.return_response('pages', 'add_evidence_photos.html', errors=self.form_error, evidence=evidence,
                                     success_upload=success_upload, upload=upload)
-
-    @staticmethod
-    def _get_evidence_history_changes(evidence):
-        history = EvidenceHistory.get_changes(evidence)
-        history.sort(key=lambda d: d['date_time'])
-        return history

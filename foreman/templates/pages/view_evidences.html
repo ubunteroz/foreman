@@ -50,10 +50,10 @@
         % for evi in evidence:
 
             % if sort_by == "date" or sort_by == "date_old":
-                % if current_date.date() != evi.current_status.date_of_custody.date():
+                % if current_date.date() != evi.date_added.date():
                     <div style="clear:both" />
-                    <h2>${evi.current_status.date_of_custody.date().strftime("%d %b %Y")|h}</h2>
-                    <% current_date = evi.current_status.date_of_custody %>
+                    <h2>${evi.date_added.date().strftime("%d %b %Y")|h}</h2>
+                    <% current_date = evi.date_added %>
                 % endif
             % elif sort_by == "case":
                 % if evi.case_id != current_case_id:

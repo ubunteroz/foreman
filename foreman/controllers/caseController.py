@@ -5,7 +5,7 @@ from baseController import BaseController
 from taskController import TaskController
 from ..model import Case, CaseStatus, UserCaseRoles, Task, UserTaskRoles, LinkedCase, UserRoles
 from ..model import CaseHistory, TaskHistory, TaskStatus, ForemanOptions, CaseClassification, CaseType, TaskType
-from ..model import CasePriority
+from ..model import CasePriority, EvidenceStatus
 from ..utils.utils import multidict_to_dict, session, config
 from ..utils.mail import email
 from ..forms.forms import AddCaseForm, EditCaseForm, AddCaseLinkForm, RemoveCaseLinkForm, RequesterAddTaskForm
@@ -84,6 +84,7 @@ class CaseController(BaseController):
 
             args = multidict_to_dict(self.request.args)
             change = False
+            special_note = None
             if "status" in args and args["status"] in CaseStatus.all_statuses:
                 status = args["status"]
                 if status == CaseStatus.OPEN:
@@ -92,14 +93,24 @@ class CaseController(BaseController):
                     verb = ['close', 'closed']
                 else:
                     verb = ['archive', 'archived']
+                    special_note = """Please note that by archiving the case, you are also automatically archiving any
+                    associated evidence. You will <b>not</b> be able to make any further changes to the case or the evidence,
+                    apart from changing evidence statuses to <i>destroyed</i>."""
                 if 'confirm' in args and args['confirm'] == "true":
                     if self.validate_form(ChangeCaseStatusForm()):
                         reason = self.form_result['change']
                         case.set_status(status, self.current_user)
                         case.get_status().reason = reason
                         change = True
+
+                        if status == CaseStatus.ARCHIVED:
+                            for evidence in case.evidence:
+                                evidence.set_status(EvidenceStatus.ARCHIVED, self.current_user,
+                                                    "Automatic archiving of evidence as the case has been archived.")
+
+                        special_note = None
                 return self.return_response('pages', 'confirm_case_status_change.html', case=case, change=change,
-                                            status=status, verb=verb, errors=self.form_error)
+                                            status=status, verb=verb, errors=self.form_error, special_note=special_note)
             else:
                 return self.return_404(reason="The case or status change you are trying to make does not exist.")
         else:
@@ -112,7 +123,7 @@ class CaseController(BaseController):
         case_loc = ForemanOptions.get_default_location()
         managers = [(user.id, user.fullname) for user in UserRoles.get_managers()]
         authorisers = [(user.id, user.fullname) for user in UserRoles.get_authorisers() if
-                       user.department == self.current_user.department] #only user authorisers in same department
+                       user.department == self.current_user.department]  # only user authorisers in same department
         classifications = [(cl.id, cl.classification) for cl in CaseClassification.get_all() if cl != "Undefined"]
         case_types = [(ct.id, ct.case_type) for ct in CaseType.get_all() if ct.case_type != "Undefined"]
         priorities = [(priority.case_priority, priority.case_priority) for priority in CasePriority.get_all()]

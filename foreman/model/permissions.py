@@ -1,5 +1,5 @@
 from userModel import UserRoles
-from caseModel import CaseStatus, TaskStatus, ForemanOptions
+from caseModel import CaseStatus, TaskStatus, EvidenceStatus, ForemanOptions
 
 class BaseChecker(object):
     def check(self, user, obj):
@@ -262,6 +262,16 @@ class ArchivedCaseChecker(BaseChecker):
             return False
 
 
+class ArchivedEvidenceChecker(BaseChecker):
+    def check(self, user, evidence):
+        return evidence.status == EvidenceStatus.ARCHIVED
+
+
+class DestroyedEvidenceChecker(BaseChecker):
+    def check(selfself, user, evidence):
+        return evidence.status == EvidenceStatus.DESTROYED
+
+
 class ClosedCaseChecker(BaseChecker):
     def check(self, user, case):
         if case:
@@ -301,7 +311,9 @@ class TaskEditableChecker(BaseChecker):
 class EvidenceEditableChecker(BaseChecker):
     def check(self, user, evidence):
         return ArchivedCaseChecker().check(user, evidence.case) or RejectedCaseChecker().check(user, evidence.case) or \
-               NotApprovedCaseChecker().check(user, evidence.case)
+               NotApprovedCaseChecker().check(user, evidence.case) or \
+               DestroyedEvidenceChecker().check(user, evidence) or \
+               ArchivedEvidenceChecker().check(user, evidence)
 
 
 class CaseApprovedChecker(BaseChecker):
@@ -448,6 +460,8 @@ permissions = {
                                           InvestigatorForEvidenceChecker()), Not(EvidenceEditableChecker())),
     ('Evidence', 'remove'): And(Or(AdminChecker(), CaseManagerChecker()), Not(EvidenceEditableChecker())),
     ('Evidence', 'add'): And(Or(AdminChecker(), InvestigatorChecker(), CaseManagerChecker())),
+    ('Evidence', 'destroy'): And(Or(AdminChecker(), InvestigatorForEvidenceChecker(), QAForEvidenceChecker(),
+                                    CaseManagerForEvidenceChecker()), ArchivedEvidenceChecker()),
     ('Evidence', 'edit'): And(
                             Or(AdminChecker(),
                             And(

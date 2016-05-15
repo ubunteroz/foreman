@@ -1,0 +1,33 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+
+<%def name="javascripts()" filter="trim">
+    <script>
+        function goBack(){
+            window.history.back()
+        }
+    </script>
+</%def>
+
+
+<div id="sidebar">
+   ${sidebars.tasks_menu()}
+</div>
+
+<div id="mainbar">
+
+    % if success == False:
+    <h1>Confirm evidence ${evidence.reference|h} has been destroyed</h1>
+    <div class="confirmclosurebox">
+        <p>Are you sure you want to set this evidence to destroyed?</p>
+        <p><a href="?confirm=true">Yes</a> | <a href="#" onclick="goBack()">No</a></p>
+    </div>
+    % else:
+        <h1>Evidence ${evidence.reference|h} has been set to destroyed</h1>
+        % if evidence.case is not None:
+            <p><a href='${urls.build("evidence.view", dict(evidence_id=evidence.id, case_id=evidence.case.id))|h}'>View Evidence</a></p>
+        % else:
+            <p><a href='${urls.build("evidence.view_caseless", dict(evidence_id=evidence.id))|h}'>View Evidence</a></p>
+        % endif
+    % endif
+</div>

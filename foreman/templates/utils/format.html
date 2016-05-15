@@ -104,6 +104,17 @@
             <th>Date Evidence Added</th>
             <td>${evidence.date|h}</td>
         </tr>
+        <tr>
+            <th>Status</th>
+            <td>
+                % if evidence.status == "Archived" or evidence.status == "Destroyed":
+                    <span class="archived">${evidence.status|h}</span>
+                % else:
+                    ${evidence.status|h}
+                % endif
+
+            </td>
+        </tr>
          <tr>
             <th>Evidence Type</th>
             <td>${evidence.type|h}</td>
@@ -125,12 +136,12 @@
             <td>${evidence.location|h}</td>
         </tr>
          <tr>
-            <th>Current status</th>
+            <th>Chain of Custody Status</th>
             <td>
-                % if evidence.current_status.check_in == True:
+                % if evidence.chain_of_custody_status.check_in == True:
                 In storage
                 % else:
-                Checked out by ${evidence.current_status.user.fullname|h}
+                Checked out by ${evidence.chain_of_custody_status.user.fullname|h}
                 % endif
             </td>
         </tr>

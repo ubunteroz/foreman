@@ -54,6 +54,17 @@
                 }
             }
 
+             function slide_retention(select_box_selector){
+                var select_box = $(select_box_selector);
+                if ($(select_box_selector + " option:selected").val() == "True"){
+                    $(select_box).parents('.form_background').find(select_box_selector + "_month_select").slideDown("slow");
+                    $(select_box).parents('.form_background').find(select_box_selector + "_remove_exist").slideUp("slow");
+                } else {
+                    $(select_box).parents('.form_background').find(select_box_selector + "_month_select").slideUp("slow");
+                    $(select_box).parents('.form_background').find(select_box_selector + "_remove_exist").slideDown("slow");
+                }
+            }
+
             $("#case_names").change(function() {
                 slide_file_upload('#case_names');
             });
@@ -61,8 +72,14 @@
             $("#task_names").change(function () {
                 slide_file_upload('#task_names');
             });
+
+             $("#evi_ret").change(function () {
+                slide_retention('#evi_ret');
+            });
+
             slide_file_upload('#case_names');
             slide_file_upload('#task_names');
+            slide_retention('#evi_ret');
         });
 
         function populate_icon(icon){
@@ -85,7 +102,7 @@
         <ul>
             <li><a href="#tabs-1">Options</a></li>
             <li><a href="#tabs-2">Task Types & Categories</a></li>
-            <li><a href="#tabs-3">Evidence Types</a></li>
+            <li><a href="#tabs-3">Evidence Options</a></li>
             <li><a href="#tabs-4">Case Types & Classifications</a></li>
             <li><a href="#tabs-5">Notes Export Formatting</a></li>
             <li><a href="#tabs-6">Validate Users
@@ -254,6 +271,26 @@
         </div>
 
         <div id="tabs-3" class="forensics_work_contents">
+
+            <h2>Evidence Retention</h2>
+
+            <div class="form_background">
+
+             <p>If you have a defined evidence retention period, Foreman can automatically send you an email to destroy evidence when that
+             retention period comes up. Just select yes for reminders, and add the number of months to wait before the reminder is triggered. The user who added
+             the evidence, as well as the current administrator(s) will get the email (in case that user is no longer an active Foreman user) X number of months after
+             the date that the evidence was set to 'archived'. Emails will only be sent once, unless the number of months to trigger is changed below. </p>
+                <p>Note that currently archived evidence that has been archived longer than X months will have emails triggered when evidence retention is selected.</p>
+
+            <form method="post" action="${urls.build('general.admin', dict(form='evidence_retention', active_tab=2))|h}">
+                ${forms.formSelectBox("Evidence Retention Reminders", "evi_ret", "evi_ret", "form_label", "input_long", evi_retention_options, please_select=True, first=True, value=options.evidence_retention)}
+                ${forms.formTextField("Evidence Retention Period (months)", "evi_ret_months", "evi_ret_months", "form_label", "input_long", p_id="evi_ret_month_select", value=options.evidence_retention_period)}
+                ${forms.formCheckBoxes("Remove existing reminders", "remove_evi_ret", "remove_evi_ret", "remove_evi_ret", "form_label", "radio_input_short", p_id="evi_ret_remove_exist")}
+
+
+                <p style="clear:both; text-align:center"><input type="submit" value="Update Reminders" /></p>
+            </form>
+            </div>
 
             <h2>Current Evidence Types</h2>
 

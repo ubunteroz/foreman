@@ -33,6 +33,8 @@ class ForemanOptions(Base, Model):
     auth_view_tasks = Column(Boolean)
     auth_view_evidence = Column(Boolean)
     manager_inherit = Column(Boolean)
+    evidence_retention_period = Column(Integer)
+    evidence_retention = Column(Boolean)
 
     CASE_NAME_OPTIONS = ['NumericIncrement', 'DateNumericIncrement', 'FromList']
     TASK_NAME_OPTIONS = ['NumericIncrement', 'FromList', 'TaskTypeNumericIncrement']
@@ -59,6 +61,8 @@ class ForemanOptions(Base, Model):
         self.auth_view_evidence = auth_view_evidence
         self.auth_view_tasks = auth_view_tasks
         self.manager_inherit = manager_inherit
+        self.evidence_retention = False
+        self.evidence_retention_period = 0
 
         TaskCategory.populate_default()
         TaskType.populate_default()
@@ -120,6 +124,11 @@ class ForemanOptions(Base, Model):
     def get_date_created():
         options = session.query(ForemanOptions).first()
         return options.date_created
+
+    @staticmethod
+    def get_evidence_retention_period():
+        options = session.query(ForemanOptions).first()
+        return options.evidence_retention, options.evidence_retention_period
 
     @staticmethod
     def run_out_of_names():

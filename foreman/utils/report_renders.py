@@ -225,18 +225,18 @@ def create_rtf(case, histories):
         section.append(p)
     else:
         section.append(p)
-        t = Table(2700,2700,2700,2700,2700)
-        headers = ["Reference", "Date Added", "Type", "User", "Current Status"]
+        t = Table(2250,2250,2250,2250,2250,2250)
+        headers = ["Reference", "Date Added", "Type", "User", "Chain of Custody", "Current Status"]
         row = []
         for h in headers:
             row.append(Cell(h))
         t.append(*row)
         row = []
         for evidence in case.evidence:
-            current_status = "In storage" if evidence.current_status.check_in is True else "Checked out by {}".format(
-                evidence.current_status.user.fullname)
+            current_status = "In storage [checked in]" if evidence.chain_of_custody_status.check_in is True else "Checked out by {}".format(
+                evidence.chain_of_custody_status.user.fullname)
             entries = [rtf_encode(evidence.reference), evidence.date, rtf_encode(evidence.type), evidence.user.fullname,
-                       current_status]
+                       current_status, evidence.current_status]
             for e in entries:
                 row.append(Cell(e))
             t.append(*row)
@@ -365,9 +365,12 @@ def create_rtf(case, histories):
         p.append('Location Seized From: \t\t{}'.format(evidence.location))
         section.append(p)
         p = Paragraph(ss.ParagraphStyles.Normal)
-        p.append('Current Status: \t\t\t{}'.format(
-            "In storage" if evidence.current_status.check_in is True else "Checked out by {}".format(
-                evidence.current_status.user.fullname)))
+        p.append('Chain of Custody: \t\t{}'.format(
+            "In storage [checked in]" if evidence.chain_of_custody_status.check_in is True else "Checked out by {}".format(
+                evidence.chain_of_custody_status.user.fullname)))
+        section.append(p)
+        p = Paragraph(ss.ParagraphStyles.Normal)
+        p.append('Current Status: \t\t\t{}'.format(evidence.status))
         section.append(p)
         p = Paragraph(ss.ParagraphStyles.Normal)
         p.append('Comments: \t\t\t{}'.format(evidence.comment))

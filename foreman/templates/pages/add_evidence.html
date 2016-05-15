@@ -25,6 +25,7 @@
     % endif
 
         ${forms.formTextField("Reference", "reference", "reference", "form_label", "input_long", first=True)}
+        ${forms.formSelectBox("Status", "status", "status", "form_label", "input_long", evidence_status_options, please_select=True)}
         ${forms.formTextField("Bag Number", "bag_num", "bag_num", "form_label", "input_long", required=False)}
         ${forms.formSelectBox("Evidence Type", "type", "type", "form_label", "input_long", evidence_type_options, please_select=True)}
         ${forms.formTextField("Originator", "originator", "originator", "form_label", "input_long")}

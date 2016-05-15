@@ -11,6 +11,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import backref, relation
 from qrcode import *
 from werkzeug.exceptions import Forbidden
+from monthdelta import MonthDelta
 # local imports
 from models import Base, Model, HistoryModel
 from generalModel import ForemanOptions, TaskCategory, TaskType, CasePriority, CaseType
@@ -36,7 +37,7 @@ class CaseAuthorisation(Base, Model):
 
     STATUS = {'AUTH': {'description': 'Authorised'},
               'NOAUTH': {'description': 'Rejected'},
-              'PENDING': {'description': 'Pending'}, }
+              'PENDING': {'description': 'Pending'},}
 
     case = relation('Case', backref=backref('authorisations', order_by=desc(date_time)))
     authoriser = relation('User', backref=backref('cases_authorised'))
@@ -533,8 +534,8 @@ class Case(Base, Model):
 
     def _active_before_start(self, user, day_tracker):
         if date(day_tracker.year, day_tracker.month, day_tracker.day) < date(self.creation_date.year,
-                                                                                 self.creation_date.month,
-                                                                                 self.creation_date.day):
+                                                                             self.creation_date.month,
+                                                                             self.creation_date.day):
             return False
         return True
 
@@ -633,14 +634,14 @@ class ChainOfCustody(Base, Model):
             change_log.append({'date': entry.date,
                                'date_time': entry.date_recorded,
                                'object': ("Evidence", entry.evidence.reference, entry.evidence.id,
-                                          entry.evidence.case.id),
+                                          entry.evidence.case.id if entry.evidence.case else "N/A"),
                                'change_log': "Evidence checked in{}".format(cr)})
         for entry in q_checkout.all():
             cr = ". Custody receipt uploaded" if entry.custody_receipt is not None else ""
             change_log.append({'date': entry.date,
                                'date_time': entry.date_recorded,
                                'object': ("Evidence", entry.evidence.reference, entry.evidence.id,
-                                          entry.evidence.case.id),
+                                          entry.evidence.case.id if entry.evidence.case else "N/A"),
                                'change_log': "Evidence checked out{}".format(cr)})
         return change_log
 
@@ -667,6 +668,64 @@ class ChainOfCustody(Base, Model):
                                           entry.evidence.case.id),
                                'change_log': "Evidence checked out{}".format(cr)})
         return change_log
+
+
+class EvidenceStatus(Base, HistoryModel):
+    __tablename__ = 'evidence_statuses'
+
+    INACTIVE = 'Inactive'
+    ACTIVE = 'Active'
+    ARCHIVED = 'Archived'
+    DESTROYED = 'Destroyed'
+
+    statuses = [INACTIVE, ACTIVE, ARCHIVED, DESTROYED]
+
+    id = Column(Integer, primary_key=True)
+    date_time = Column(DateTime)
+    status = Column(Unicode)
+    note = Column(Unicode)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    evidence_id = Column(Integer, ForeignKey('evidence.id'))
+
+    user = relation('User', backref=backref('evidence_status_changes'))
+    evidence = relation('Evidence', backref=backref('statuses'))
+
+    history_backref = "statuses"
+    comparable_fields = {'Status': 'status'}
+    history_name = ("Evidence", "evidence_name", "evidence_id", "case_id")
+
+    def __init__(self, evidence_id, status, user, note=None):
+        self.status = status
+        self.date_time = datetime.now()
+        self.evidence_id = evidence_id
+        self.user = user
+        self.note = note
+
+    @property
+    def previous(self):
+        q = session.query(EvidenceStatus)
+        q = q.filter_by(evidence_id=self.evidence_id).filter(EvidenceStatus.id < self.id).order_by(
+            desc(EvidenceStatus.id))
+        q1 = q.count()
+        if q1 == 0:
+            return False
+        else:
+            return q.first()
+
+    @property
+    def date(self):
+        return ForemanOptions.get_date(self.date_time)
+
+    @property
+    def evidence_name(self):
+        return self.evidence.reference
+
+    @property
+    def case_id(self):
+        if self.evidence.case:
+            return self.evidence.case.id
+        else:
+            return None
 
 
 class EvidenceHistory(HistoryModel, Base):
@@ -761,13 +820,17 @@ class Evidence(Base, Model):
     originator = Column(Unicode)
     evidence_bag_number = Column(Unicode)
     location = Column(Unicode)
+    current_status = Column(Unicode)
     date_added = Column(DateTime)
+    retention_start_date = Column(DateTime)
+    retention_date = Column(DateTime)
+    retention_reminder_sent = Column(Boolean)
 
     case = relation('Case', backref=backref('evidence', order_by=asc(reference)))
     user = relation('User', backref=backref('evidence_added', order_by=asc(reference)))
 
     def __init__(self, case, reference, evidence_type, comment, originator, location, user_added,
-                 evidence_bag_number=None, qr=True):
+                 evidence_bag_number=None, qr=True, status=EvidenceStatus.INACTIVE):
         self.case = case
         self.reference = reference
         self.type = evidence_type
@@ -777,6 +840,9 @@ class Evidence(Base, Model):
         self.location = location
         self.date_added = datetime.now()
         self.user = user_added
+        self.retention_reminder_sent = False
+
+        self.set_status(status, self.user)
 
         if qr:
             self.qr_code = True
@@ -793,6 +859,33 @@ class Evidence(Base, Model):
             return "Case: None Assigned | Ref: {} | Date Added: {} | Added by: {}".format(self.reference,
                                                                                           self.date_added,
                                                                                           self.user.fullname)
+
+    def set_status(self, new_status, user, note=None):
+        if new_status == EvidenceStatus.ARCHIVED:
+            self.retention_start_date = datetime.now()
+            self.set_retention_date()
+        elif self.current_status == EvidenceStatus.ARCHIVED and self.current_status != new_status:
+            self.retention_start_date = None
+            self.retention_date = None
+            self.retention_reminder_sent = False
+
+        self.statuses.append(EvidenceStatus(self.id, new_status, user, note))
+        self.current_status = new_status
+        session.flush()
+
+    def set_retention_date(self):
+        options = ForemanOptions.get_options()
+        if options.evidence_retention:
+            self.retention_date = self.retention_start_date + MonthDelta(options.evidence_retention_period)
+        else:
+            self.retention_date = None
+
+    def reminder_due(self):
+        # if date set and date has passed, return true
+        today = datetime.now()
+        if self.retention_date is not None and self.retention_date <= today and self.retention_reminder_sent is False:
+            return True
+        return False
 
     def check_in(self, custodian, user, date, comment, attachment=None, label=None):
         chain = ChainOfCustody(self, user, custodian, date, True, comment)
@@ -829,7 +922,12 @@ class Evidence(Base, Model):
         session.flush()
 
     @property
-    def current_status(self):
+    def status(self):
+        return session.query(EvidenceStatus).filter_by(evidence_id=self.id).order_by(
+            desc(EvidenceStatus.id)).first().status
+
+    @property
+    def chain_of_custody_status(self):
         q = session.query(ChainOfCustody).filter_by(evidence_id=self.id).order_by(desc(ChainOfCustody.id)).first()
         return q
 
@@ -840,6 +938,10 @@ class Evidence(Base, Model):
     @property
     def date(self):
         return ForemanOptions.get_date(self.date_added)
+
+    @property
+    def archive_date(self):
+        return ForemanOptions.get_date(self.retention_start_date)
 
     @staticmethod
     def get_all_evidence(user, case_perm_checker):
@@ -1588,8 +1690,8 @@ class Task(Base, Model):
 
     def _active_before_start(self, user, day_tracker):
         if date(day_tracker.year, day_tracker.month, day_tracker.day) < date(self.creation_date.year,
-                                                                                 self.creation_date.month,
-                                                                                 self.creation_date.day):
+                                                                             self.creation_date.month,
+                                                                             self.creation_date.day):
             return False
         return True
 

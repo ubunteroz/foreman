@@ -48,8 +48,7 @@ def example(args):
 
 
 def run_tests(args):
-    """ Initialise database, set up example test system and run tests
-    """
+    """ Initialise database, set up example test system and run tests """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=sa_exc.SAWarning)
         from foreman.utils.utils import init_database, drop_database, populate_test_database, setup
@@ -73,7 +72,20 @@ def run_tests(args):
         import foreman.tests
         foreman.tests.run_tests(args.config_file, unit, functional, urls)
 
-    
+
+def scheduler(args):
+    """ run scheduled tasks e.g. the evidence retention period checker """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=sa_exc.SAWarning)
+
+        import foreman.utils.utils
+        foreman.utils.utils.setup(args.config_file)
+
+        from foreman.utils.scheduled_tasks import scheduled
+        for entry in scheduled:
+            getattr(foreman.utils.scheduled_tasks, entry)()
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
@@ -93,6 +105,10 @@ if __name__ == '__main__':
     setup_ex_parser = subparsers.add_parser('setup_example', help='Initialise and populate database with sample data')
     setup_ex_parser.add_argument('config_file')
     setup_ex_parser.set_defaults(func=example)
+
+    scheduled_tasks = subparsers.add_parser('scheduled_tasks', help='Run this in a CRON job / task scheduler')
+    scheduled_tasks.add_argument('config_file')
+    scheduled_tasks.set_defaults(func=scheduler)
 
     test_parser = subparsers.add_parser('run_tests', help='Run functional & unit tests',
                                         description='If all the optional test arguments are False, they will all be run.')

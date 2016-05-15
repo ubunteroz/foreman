@@ -173,6 +173,7 @@ class ChainOfCustodyForm(Schema):
 
 class EditEvidenceForm(Schema):
     reference = v.UnicodeString(not_empty=True)
+    status = GetEvidenceStatus(not_empty=True)
     bag_num = v.UnicodeString(not_empty=True)
     type = GetEvidenceType(not_empty=True)
     originator = v.UnicodeString(not_empty=True)
@@ -218,6 +219,7 @@ class RemoveCategoryForm(Schema):
 
 class AddEvidenceForm(Schema):
     reference = v.UnicodeString(not_empty=True)
+    status = GetEvidenceStatus(not_empty=True)
     bag_num = v.UnicodeString()
     type = GetEvidenceType(not_empty=True)
     originator = v.UnicodeString(not_empty=True)
@@ -414,3 +416,9 @@ class CloseCaseForm(Schema):
 
 class ChangeCaseStatusForm(Schema):
     change = v.UnicodeString(not_empty=True)
+
+
+class EvidenceRetentionForm(Schema):
+    evi_ret = v.StringBool(not_empty=True)
+    evi_ret_months = PositiveNumberAboveZero(not_empty=True)
+    remove_evi_ret = v.Bool()

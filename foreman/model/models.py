@@ -86,7 +86,8 @@ class HistoryModel(Model):
                                               getattr(entry, entry.history_name[3]) if len(entry.history_name) > 3 else None),
                                    'change_log': entry.history_name[0] + " created"})
             elif previous_entry_list is False:
-                pass # used for case on 1st case creation: status is set to created and case is set to created,
+                pass # used for case on 1st case/task/evidence creation:
+                # status is set to created and case is set to created,
                 # therefore duplicating the entry from two different sources, e.g. CaseStatus.previous = False
                 # if the 1st one
             else:

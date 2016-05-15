@@ -158,13 +158,13 @@
 
 </%def>
 
-<%def name="formCheckBoxes(label, opt, name, id, labelclass, inputclass, checked=False, first=False)" filter="trim">
+<%def name="formCheckBoxes(label, opt, name, id, labelclass, inputclass, checked=False, first=False, p_id='')" filter="trim">
     % if first != True:
-    <p style="clear:both; position:relative">
+    <p id="${p_id|h}" style="clear:both; position:relative">
     % else:
-    <p>
+    <p id="${p_id|h}">
     % endif
-		<label for="${name|h}" class="${labelclass|h}">${label}</label></p>
+		<label for="${name|h}" class="${labelclass|h}">${label}</label>
         % if checked:
             <input class="${inputclass|h}" type="checkbox" id="${opt|h}" name="${name|h}" value="${opt|h}" checked />
         % else:

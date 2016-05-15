@@ -22,6 +22,7 @@
                 <th>Date Added</th>
                 <th>Type</th>
                 <th>User</th>
+                <th>Chain of Custody</th>
                 <th>Current Status</th>
             </tr>
             % for evidence in case.evidence:
@@ -31,12 +32,13 @@
                     <td>${evidence.type|h}</td>
                     <td><a href='${urls.build("user.view", dict(user_id=evidence.user.id))|h}'>${evidence.user.fullname|h}</a></td>
                     <td>
-                        % if evidence.current_status.check_in == True:
-                        In storage
+                        % if evidence.chain_of_custody_status.check_in == True:
+                        In storage [Checked in]
                         % else:
-                        Checked out by ${evidence.current_status.user.fullname|h}
+                        Checked out by ${evidence.chain_of_custody_status.user.fullname|h}
                         % endif
                     </td>
+                    <td>${evidence.status}</td>
                 </tr>
             % endfor
             </table>

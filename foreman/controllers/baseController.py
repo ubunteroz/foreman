@@ -10,7 +10,8 @@ from formencode.variabledecode import variable_decode
 # local imports
 from ..utils.utils import session, ROOT_DIR, multidict_to_dict
 from ..model import User, CaseStatus, Case, Task, TaskStatus, Evidence, has_permissions, ForemanOptions, UserCaseRoles
-from ..model import TaskUpload, EvidencePhotoUpload, Team, Department, CaseHistory, UserTaskRoles, TaskHistory
+from ..model import TaskUpload, EvidencePhotoUpload, Team, Department, CaseHistory, UserTaskRoles, TaskHistory, \
+    EvidenceHistory, EvidenceStatus
 
 lookup = TemplateLookup(directories=[path.join(ROOT_DIR, 'templates')], output_encoding='utf-8')
 
@@ -360,5 +361,13 @@ class BaseController():
         history = []
         history += TaskHistory.get_changes(task)
         history += TaskStatus.get_changes(task)
+        history.sort(key=lambda d: d['date_time'])
+        return history
+
+    @staticmethod
+    def _get_evidence_history_changes(evidence):
+        history = []
+        history += EvidenceHistory.get_changes(evidence)
+        history += EvidenceStatus.get_changes(evidence)
         history.sort(key=lambda d: d['date_time'])
         return history

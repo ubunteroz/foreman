@@ -1,5 +1,5 @@
 # foreman imports
-from foreman.model import User, ForemanOptions, UserRoles, Case, UserCaseRoles, CaseType, CaseClassification, CaseStatus
+from foreman.model import User, ForemanOptions, UserRoles, Case, UserCaseRoles, CaseType, EvidenceStatus, CaseStatus
 from foreman.model import TaskType, Task, TaskStatus, UserTaskRoles, EvidenceType, Evidence, EvidencePhotoUpload
 from utils import session, config, ROOT_DIR
 from random import randint
@@ -213,6 +213,9 @@ def create_evidence(case, inv, rand_user, num):
         upload = EvidencePhotoUpload(inv.id, e.id, "evidence_example (1).jpg", "A comment", "Image")
         session.add(upload)
         session.commit()
+
+        if case.status == CaseStatus.ARCHIVED:
+            e.set_status(EvidenceStatus.ARCHIVED, inv)
 
 def disassociate_evidence(inv):
     evidence = Evidence.get(4)

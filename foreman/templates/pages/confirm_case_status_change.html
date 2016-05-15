@@ -20,6 +20,12 @@
     % if change == False:
     <h1>Confirm case ${case.case_name|h} status change to ${verb[0]|h}</h1>
 
+    % if special_note is not None:
+        <div class="special_note">
+            <p>${special_note}</p>
+        </div>
+    % endif
+
     <form method="post" action="?confirm=true&status=${status|h}">
         ${forms.formTextArea("Reason for status change", "change", "change", "form_label", "addeditcase", first=True)}
         <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>

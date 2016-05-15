@@ -8,7 +8,7 @@ from werkzeug import Response, redirect
 
 # local imports
 from baseController import BaseController, jsonify
-from ..model.caseModel import Task, User, ForemanOptions, Case, Evidence, CaseStatus
+from ..model.caseModel import Task, User, ForemanOptions, Case, Evidence, CaseStatus, EvidenceStatus
 from ..model.generalModel import TaskType, TaskCategory, EvidenceType, CaseClassification, CaseType, CasePriority
 from ..model.userModel import UserRoles, Department, Team, User
 from ..forms.forms import LoginForm, OptionsForm, AddEvidenceTypeForm, RegisterForm, AddClassificationForm
@@ -16,9 +16,10 @@ from ..forms.forms import AddCaseTypeForm, RemoveCaseTypeForm, RemoveClassificat
 from ..forms.forms import MoveTaskTypeForm, AddTaskTypeForm, RemoveTaskTypeForm, AddTaskCategoryForm, RemoveCategoryForm
 from ..forms.forms import AddTeamForm, RenameTeamForm, RemoveTeamForm, AddDepartmentForm, RenameDepartmentForm
 from ..forms.forms import RemoveDepartmentForm, DeactivateUser, ReactivateUser, ManagersInheritForm
-from ..forms.forms import AddPriorityForm, RemovePriorityForm, AuthOptionsForm
+from ..forms.forms import AddPriorityForm, RemovePriorityForm, AuthOptionsForm, EvidenceRetentionForm
 from ..utils.utils import multidict_to_dict, session, ROOT_DIR, config
 from ..utils.mail import email
+from ..utils.scheduled_tasks import retention_notifier
 
 
 class GeneralController(BaseController):
@@ -162,6 +163,21 @@ Foreman
                 ForemanOptions.get_next_case_name(test=True)
             if check_tasks:
                 ForemanOptions.get_next_task_name(None, test=True)
+        elif 'form' in form_type and form_type['form'] == "evidence_retention" and self.validate_form(
+                EvidenceRetentionForm()):
+            options = ForemanOptions.get_options()
+            options.evidence_retention = self.form_result['evi_ret']
+            options.evidence_retention_period = self.form_result['evi_ret_months']
+            if self.form_result['remove_evi_ret'] is True and options.evidence_retention is False:
+                # no retention set and ticked remove existing retention reminders set
+                for evi in Evidence.get_filter_by(current_status=EvidenceStatus.ARCHIVED):
+                    evi.retention_date = None
+                    evi.retention_reminder_sent = False
+            elif options.evidence_retention is True:
+                for evi in Evidence.get_filter_by(current_status=EvidenceStatus.ARCHIVED):
+                    evi.set_retention_date()
+                    if evi.reminder_due():
+                        retention_notifier([evi])
 
         elif 'form' in form_type and form_type['form'] == "add_evidence_types" and self.validate_form(
                 AddEvidenceTypeForm()):
@@ -339,6 +355,7 @@ Foreman
         case_name_options = [(cn, cn) for cn in ForemanOptions.CASE_NAME_OPTIONS]
         task_name_options = [(tn, tn) for tn in ForemanOptions.TASK_NAME_OPTIONS]
         authoriser_options = [("yes", "Yes"), ("no", "No")]
+        evi_retention_options = [("True", "Yes"), ("False", "No")]
         manager_inherit_options = [("True", "True"), ("False", "False")]
         department_options = [(dep.id, dep.department) for dep in Department.get_all()]
         del_department_options = [(dep.id, dep.department) for dep in Department.get_all() if len(dep.teams) == 0]
@@ -356,7 +373,8 @@ Foreman
                                     all_priorities=all_priorities, priorities=priorities, team_options=team_options,
                                     authoriser_options=authoriser_options, department_options=department_options,
                                     del_department_options=del_department_options, del_team_options=del_team_options,
-                                    manager_inherit_options=manager_inherit_options)
+                                    manager_inherit_options=manager_inherit_options,
+                                    evi_retention_options=evi_retention_options)
 
     def report(self):
         start_date = ForemanOptions.get_date_created()
@@ -428,3 +446,4 @@ Foreman
                                                                                                        category,
                                                                                                        start_date)])
         return tasks_assigned_inv
+

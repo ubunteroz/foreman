@@ -86,10 +86,10 @@ class ExportController(BaseController):
 
         evidence_histories = []
         for evidence in case.evidence:
-            e_hist = EvidenceHistory.get_changes(evidence)
+            s_hist = self._get_evidence_history_changes(evidence)
             c_hist = ChainOfCustody.get_changes(evidence)
             p_hist = EvidencePhotoUpload.get_changes(evidence)
-            evidence_hist = e_hist + c_hist + p_hist
+            evidence_hist = s_hist + c_hist + p_hist
             evidence_hist.sort(key=lambda d: d['date_time'])
             evidence_histories.append(evidence_hist)
 

@@ -139,6 +139,7 @@ class Application(object):
         map.add(Rule('/cases/<case_id>/evidence/add/', endpoint='evidence.add'))
         map.add(Rule('/evidence/add/', endpoint='evidence.add_no_case'))
         map.add(Rule('/evidence/<evidence_id>/edit/', endpoint='evidence.edit'))
+        map.add(Rule('/evidence/<evidence_id>/destroy/', endpoint='evidence.destroy'))
         map.add(Rule('/cases/<case_id>/evidence/<evidence_id>/remove/', endpoint='evidence.disassociate'))
         map.add(Rule('/evidence/<evidence_id>/custody/check-out/', endpoint='evidence.custody_out'))
         map.add(Rule('/evidence/<evidence_id>/custody/check-in/', endpoint='evidence.custody_in'))
