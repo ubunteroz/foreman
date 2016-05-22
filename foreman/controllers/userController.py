@@ -233,7 +233,7 @@ class UserController(BaseController):
                 new_role.add_change(self.current_user)
 
             email([new_user.email], "You had been added as a user to Foreman",
-                  """
+                  u"""
 Hello {},
 
 The administrator for Foreman has added an account for you:

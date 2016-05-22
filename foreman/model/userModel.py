@@ -267,9 +267,9 @@ class User(Base, Model):
     @property
     def fullname(self):
         if self.middle is not None:
-            return "{} {} {}".format(self.forename, self.middle, self.surname).title()
+            return u"{} {} {}".format(self.forename, self.middle, self.surname).title()
         else:
-            return "{} {}".format(self.forename, self.surname).title()
+            return u"{} {}".format(self.forename, self.surname).title()
 
     @staticmethod
     def is_valid_id(user_id):
