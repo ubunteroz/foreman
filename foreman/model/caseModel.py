@@ -944,16 +944,23 @@ class Evidence(Base, Model):
         return ForemanOptions.get_date(self.retention_start_date)
 
     @staticmethod
-    def get_all_evidence(user, case_perm_checker):
+    def get_all_evidence(user, case_perm_checker, caseless=False):
         q = session.query(Evidence)
         output = []
         for evi in q:
             try:
                 case_perm_checker(user, evi, "view")
-                output.append(evi)
+                if caseless and evi.case is None:
+                    pass
+                else:
+                    output.append(evi)
             except Forbidden:
                 pass
         return output
+
+    @staticmethod
+    def get_caseless():
+        return session.query(Evidence).filter_by(case_id=None).all()
 
 
 class TaskStatus(Base, HistoryModel):

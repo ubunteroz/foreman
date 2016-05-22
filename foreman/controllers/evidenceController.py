@@ -200,14 +200,19 @@ class EvidenceController(BaseController):
         self.breadcrumbs.append({'title': 'Evidence', 'path': self.urls.build('evidence.view_all')})
 
         sort_by = multidict_to_dict(self.request.args).get('sort_by', 'date')
-        evidence = Evidence.get_all_evidence(self.current_user, self.check_permissions)
         if sort_by == "date":
+            evidence = Evidence.get_all_evidence(self.current_user, self.check_permissions)
             evidence = sorted(evidence, key=lambda evidence: evidence.date_added, reverse=True)
         if sort_by == "date_old":
+            evidence = Evidence.get_all_evidence(self.current_user, self.check_permissions)
             evidence = sorted(evidence, key=lambda evidence: evidence.date_added)
         elif sort_by == "case":
+            evidence = Evidence.get_all_evidence(self.current_user, self.check_permissions, True)
+            caseless = Evidence.get_caseless()
             evidence = sorted(evidence, key=lambda evidence: evidence.case_id, reverse=True)
+            evidence += caseless
         elif sort_by == "user":
+            evidence = Evidence.get_all_evidence(self.current_user, self.check_permissions)
             evidence = sorted(evidence, key=lambda evidence: evidence.user_id)
 
         return self.return_response('pages', 'view_evidences.html', evidence=evidence, sort_by=sort_by)
