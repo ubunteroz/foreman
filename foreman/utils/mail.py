@@ -45,7 +45,11 @@ def print_email(to_addrs, subject, msg, from_addr, cc=None, bcc=None):
 
 def email(to_addrs, subject, msg, from_addr, cc=None, bcc=None):
     send_live_email = config.getboolean('email', 'send_email')
+
+    modified_subject = "[Foreman] " + subject
+    # ensures all emails from Foreman start the same, so users can filter them in their email client
+
     if send_live_email:
-        send_email(to_addrs, subject, MIMEText(msg.encode('utf-8'), _charset='utf-8'), from_addr, cc, bcc)
+        send_email(to_addrs, modified_subject, MIMEText(msg.encode('utf-8'), _charset='utf-8'), from_addr, cc, bcc)
     else:
-        print_email(to_addrs, subject, msg, from_addr, cc, bcc)
+        print_email(to_addrs, modified_subject, msg, from_addr, cc, bcc)

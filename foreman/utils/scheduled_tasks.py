@@ -13,7 +13,7 @@ def retention_notifier(evidence_list=None):
     for evidence in evidence_list:
         if evidence.reminder_due():
             to = [evidence.user.email] + [a.email for a in admins]
-            title = "[Foreman] Evidence {} has reached its retention period".format(evidence.reference)
+            title = "Evidence {} has reached its retention period".format(evidence.reference)
             body = """
             Hello,
 

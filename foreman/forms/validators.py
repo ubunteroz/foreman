@@ -634,6 +634,9 @@ class ManagerCheck(v.FormValidator):
 
     def check_pass(self, user, manager):
         # check that the manager inputted for the user is not a direct report of the user, or the user themselves
+        if manager is None:
+            return True
+
         if user.id == manager.id:
             return False
         elif manager in user._manager_loop_checker():
