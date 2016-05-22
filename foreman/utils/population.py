@@ -1,6 +1,6 @@
 # foreman imports
 from foreman.model import User, ForemanOptions, UserRoles, Case, UserCaseRoles, CaseType, CaseClassification, CaseStatus
-from foreman.model import TaskType, Task, TaskStatus, UserTaskRoles, EvidenceType, Evidence, TaskUpload
+from foreman.model import TaskType, Task, TaskStatus, UserTaskRoles, EvidenceType, Evidence, TaskUpload, EvidenceStatus
 from foreman.model import EvidencePhotoUpload, Department, Team
 from utils import session, config, ROOT_DIR
 from random import randint
@@ -418,7 +418,7 @@ def create_test_cases(case_managers, requestors, investigators, authorisers):
                     'Ann Ackerman','Rodrigo Vanscyoc','Garrett Trudel','Stephenie Hurla','Travis Yokum',
                     'Clara Borkholder','Olin Kyles', 'Heriberto Slye','Ashley Tweed','Shanell Sikora',
                     'Karissa Pompei','Gema Shears']
-    print "Adding 50 cases:"
+    print "Adding 50 random cases:"
     for i in xrange(0, 50):
         case_manager = case_managers[randint(0, len(case_managers) - 1)]
         requestor = requestors[randint(0, len(requestors) - 1)]
@@ -479,15 +479,18 @@ def create_test_cases(case_managers, requestors, investigators, authorisers):
             if randint(0,1) == 0:
                 new_case.authorise(auth, "I don't think this meets our requirements.", "NOAUTH")
 
+        evidences = []
         if new_case.authorised.case_authorised != "NOAUTH":
             if rand >=2:
                 new_case.set_status(CaseStatus.OPEN, new_case.principle_case_manager)
                 inv = create_test_tasks(new_case, investigators, rand_user)
-                create_evidence(new_case, inv, rand_user)
+                evidences = create_evidence(new_case, inv, rand_user)
             if rand >= 5:
                 new_case.set_status(CaseStatus.CLOSED, new_case.principle_case_manager)
             if rand >= 6:
                 new_case.set_status(CaseStatus.ARCHIVED, new_case.principle_case_manager)
+                for evi in evidences:
+                    evi.set_status(EvidenceStatus.ARCHIVED, new_case.principle_case_manager)
         print "Case added to Foreman."
 
     session.commit()
@@ -607,6 +610,7 @@ def create_test_tasks(case, investigators, rand_user):
 
 def create_evidence(case, inv, rand_user):
     numEvidence = randint(0,2)
+    evidences = []
     ref = 1
     for i in range(0, numEvidence):
         bagno = str(randint(100, 999))
@@ -641,6 +645,10 @@ def create_evidence(case, inv, rand_user):
             upload = EvidencePhotoUpload(inv.id, e.id, "evidence_example ({}).jpg".format(rand1), "A comment", "Image " + str(x))
             session.add(upload)
             session.commit()
+        evidences.append(e)
+    return evidences
+
+
 
 
 

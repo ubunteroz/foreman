@@ -158,3 +158,12 @@ class EvidenceTestCase(URLTestCase):
         self._check_url('/evidence/4/remove/', 19)  # login as a case manager
         self._check_url('/evidence/4/remove/', 7, 403)  # login as an investigator
         self._check_url('/evidence/4/remove/', 35, 403)  # login as a requester
+
+    def test_destroy_evidence(self):
+        self._check_url('/evidence/7/destroy/', None, 401)  # not logged in
+        self._check_url('/evidence/7/destroy/', 1)  # login as admin
+        self._check_url('/evidence/7/destroy/', 19, 403)  # login as a case manager
+        self._check_url('/evidence/7/destroy/', 24)  # login as a case manager for this case
+        self._check_url('/evidence/7/destroy/', 8)  # login as an investigator for this case
+        self._check_url('/evidence/7/destroy/', 9, 403)  # login as an investigator
+        self._check_url('/evidence/7/destroy/', 35, 403)  # login as a requester

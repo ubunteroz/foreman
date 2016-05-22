@@ -216,6 +216,8 @@ def create_evidence(case, inv, rand_user, num):
 
         if case.status == CaseStatus.ARCHIVED:
             e.set_status(EvidenceStatus.ARCHIVED, inv)
+            session.flush()
+        session.commit()
 
 def disassociate_evidence(inv):
     evidence = Evidence.get(4)
