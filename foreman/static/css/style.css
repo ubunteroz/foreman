@@ -283,7 +283,7 @@ a.boxes{
     border: solid black 1px;
 }
 
-div.evidence{
+div.evidence, div.evidence_private{
     border: solid black 1px;
     padding: 2px;
     margin: 5px;
@@ -293,13 +293,9 @@ div.evidence{
 }
 
 div.evidence_private{
-    border: solid black 3px;
-    padding: 2px;
-    margin: 5px;
-    float:left;
-    width: 200px;
-    height: 71px;
-    background-color: #d3d3d3;
+    background: url('Keychain.png');
+    background-repeat: no-repeat;
+    background-position: 100% 5%;
 }
 
 div.task_uploads{
