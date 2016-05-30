@@ -1,5 +1,6 @@
 # library imports
 from os import path, listdir
+from datetime import datetime
 from werkzeug import Response
 from werkzeug.utils import redirect
 # local imports
@@ -129,11 +130,12 @@ class TaskController(BaseController):
                 if self.validate_form(EditTaskForm()):
                     if task.task_name != self.form_result['task_name'] or task.task_type != self.form_result[
                         'task_type'] or task.background != self.form_result['background'] or task.location != \
-                            self.form_result['location']:
+                            self.form_result['location'] or self.form_result['deadline'] != task.deadline:
                         task.task_name = self.form_result['task_name']
                         task.task_type = self.form_result['task_type']
                         task.location = self.form_result['location']
                         task.background = self.form_result['background']
+                        task.deadline = datetime.combine(self.form_result['deadline'], datetime.min.time()) if self.form_result['deadline'] != "" else None
                         task.add_change(self.current_user)
             elif 'form' in form_type and form_type['form'] == "edit_users":
                 active_tab = 1

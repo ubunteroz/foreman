@@ -200,6 +200,27 @@
             <th>Task Status</th>
             <td>${task.status|h}</td>
         </tr>
+        % if task.deadline:
+        <tr>
+            <th>Deadline</th>
+            <td>${task.date_deadline|h}
+
+            <% from datetime import datetime %>
+            <% now = datetime.now() %>
+            <% days = (task.deadline - now).days %>
+
+                % if days == 0:
+                    (Today}
+                % elif days == 1:
+                    (1 day)
+                % elif days < 0:
+                    <span class="highlight">(${days} days)</span>
+                % else:
+                    (${days} days)
+                % endif
+            </td>
+        </tr>
+        % endif
         <tr>
             <th>Task Type</th>
             <td>${task.task_type|h}</td>
@@ -379,6 +400,27 @@
             <th>Case Priority</th>
             <td><span class="priority" style="background-color:${case.case_priority_colour|h}">&nbsp;</span>${case.case_priority|h}</td>
         </tr>
+        % if case.deadline:
+        <tr>
+            <th>Deadline</th>
+            <td>${case.date_deadline|h}
+
+            <% from datetime import datetime %>
+            <% now = datetime.now() %>
+            <% days = (case.deadline - now).days %>
+
+                % if days == 0:
+                    (Today}
+                % elif days == 1:
+                    (1 day)
+                 % elif days < 0:
+                    <span class="highlight">(${days} days)</span>
+                % else:
+                    (${days} days)
+                % endif
+            </td>
+        </tr>
+        % endif
         <tr>
             <th>Case Classification</th>
             <td>${case.classification|h}</td>

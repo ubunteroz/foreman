@@ -73,6 +73,11 @@
                 % else:
                 ${forms.formSelectBox("Task Type", "task_type", "task_type", "form_label", "input_long", task_type_options, please_select=True)}
                 % endif
+                % if task.deadline:
+                    ${forms.formTextField("Deadline", "deadline", "deadline", "form_label", "input_long", required=False, value=task.deadline.strftime("%d/%m/%y"))}
+                % else:
+                    ${forms.formTextField("Deadline", "deadline", "deadline", "form_label", "input_long", required=False, default="DD/MM/YYYY")}
+                % endif
                 <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
             </form>
 

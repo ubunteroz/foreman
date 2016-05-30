@@ -24,6 +24,7 @@
         % if not is_requester:
             ${forms.formTextField("Task Name", "task_name", "task_name", "form_label", "input_long", first=True)}
             ${forms.formTextField("Task Files Location", "location", "location", "form_label", "input_long", value=case.location)}
+            ${forms.formTextField("Deadline", "deadline", "deadline", "form_label", "input_long", required=False, default="dd/mm/yyyy")}
         % endif
         ${forms.formTextArea("Task Description", "background", "background", "form_label", "addeditcase")}
         ${forms.formSelectBox("Task Type", "task_type", "task_type", "form_label", "input_long", task_type_options, please_select=True)}

@@ -1,5 +1,6 @@
 # library imports
 from werkzeug import Response, redirect
+from datetime import datetime
 # local imports
 from baseController import BaseController
 from taskController import TaskController
@@ -138,6 +139,7 @@ class CaseController(BaseController):
                                 self.form_result['classification'].classification,
                                 self.form_result['case_type'].case_type,
                                 self.form_result['justification'], self.form_result['priority'],
+                                self.form_result['deadline'],
                                 authorisor=self.form_result['authoriser'])
                 session.add(new_case)
                 session.flush()
@@ -211,7 +213,8 @@ class CaseController(BaseController):
                                                 case=case, errors=self.form_error, is_requester=is_requester)
             elif self.validate_form(AddTaskForm()):
                 new_task = Task(case, self.form_result['task_type'], self.form_result['task_name'],
-                                self.current_user, self.form_result['background'], self.form_result['location'])
+                                self.current_user, self.form_result['background'], self.form_result['location'],
+                                deadline=self.form_result['deadline'] if self.form_result != "" else None)
                 session.add(new_task)
                 session.flush()
                 new_task.add_change(self.current_user)
@@ -331,9 +334,16 @@ class CaseController(BaseController):
                     case.classification = self.form_result['classification'].classification
                     case.case_type = self.form_result['case_type'].case_type
                     case.justification = self.form_result['justification']
+                    if self.form_result['deadline'] != "":
+                        case.deadline = datetime.combine(self.form_result['deadline'], datetime.min.time())
                     case.case_priority = self.form_result['priority'].case_priority
                     case.case_priority_colour = self.form_result['priority'].colour
                     case.add_change(self.current_user)
+
+                    if case.deadline is not None:
+                        for task in case.tasks:
+                            if task.deadline is None or task.deadline > case.deadline:
+                                task.deadline = datetime.combine(case.deadline, datetime.min.time())
 
                     if self.current_user.id == case.requester.id and case.authorised.case_authorised == "NOAUTH":
                         case.authorise(self.form_result['authoriser'], "Case has been Edited", "PENDING")

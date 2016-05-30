@@ -1,7 +1,7 @@
 # library imports
 from formencode import Schema, Invalid, validators as v
 from formencode.foreach import ForEach
-from formencode.compound import All
+from formencode.compound import All, Pipe
 from formencode.variabledecode import NestedVariables
 #local imports
 from validators import *
@@ -20,6 +20,7 @@ class AddCaseForm(Schema):
     justification = v.UnicodeString(not_empty=True)
     priority = GetPriority(not_empty=True)
     authoriser = GetAuthoriser(not_empty=True)
+    deadline = Pipe(v.DateConverter(month_style='dd/mm/yyyy'), v.DateValidator(today_or_after=True))
 
 
 class RequesterAddCaseForm(Schema):
@@ -31,6 +32,7 @@ class RequesterAddCaseForm(Schema):
     justification = v.UnicodeString(not_empty=True)
     priority = GetPriority(not_empty=True)
     authoriser = GetAuthoriser(not_empty=True)
+    deadline = Pipe(v.DateConverter(month_style='dd/mm/yyyy'), v.DateValidator(today_or_after=True))
 
 
 class AuthoriseCaseForm(Schema):
@@ -73,6 +75,7 @@ class AddTaskForm(Schema):
     secondary_investigator = GetInvestigator()
     primary_qa = GetQA()
     secondary_qa = GetQA()
+    deadline = Pipe(v.DateConverter(month_style='dd/mm/yyyy'), v.DateValidator(today_or_after=True))
 
 
 class RequesterAddTaskForm(Schema):
@@ -250,6 +253,7 @@ class EditTaskForm(Schema):
     task_type = GetTaskTypes(not_empty=True)
     background = v.UnicodeString(not_empty=True)
     location = v.UnicodeString()
+    deadline = Pipe(v.DateConverter(month_style='dd/mm/yyyy'), v.DateValidator(today_or_after=True))
 
 
 class EditCaseForm(Schema):
@@ -263,6 +267,7 @@ class EditCaseForm(Schema):
     case_type = GetCaseType(not_empty=True)
     priority = GetPriority(not_empty=True)
     authoriser = GetAuthoriser(not_empty=True)
+    deadline = Pipe(v.DateConverter(month_style='dd/mm/yyyy'), v.DateValidator(today_or_after=True))
 
 
 class AddCaseLinkForm(Schema):

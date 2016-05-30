@@ -29,6 +29,7 @@
         ${forms.formTextField("Reference", "reference", "reference", "form_label", "input_long", required=False)}
         ${forms.formSelectBox("Classification", "classification", "classification", "form_label", "input_long", classifications, please_select=True)}
         ${forms.formSelectBox("Priority", "priority", "priority", "form_label", "input_long", priorities, please_select=True)}
+        ${forms.formTextField("Deadline", "deadline", "deadline", "form_label", "input_long", required=False, default="dd/mm/yyyy")}
         ${forms.formSelectBox("Case Type", "case_type", "case_type", "form_label", "input_long", case_types, please_select=True)}
         ${forms.formCheckBoxes("Private", "private", "private", "private", "form_label", "radio_input_short")}
 

@@ -246,12 +246,13 @@ class CaseHistory(HistoryModel, Base):
     justification = Column(Unicode)
     case_priority = Column(Unicode)
     case_priority_colour = Column(Unicode)
+    deadline = Column(DateTime)
 
     case = relation('Case', backref=backref('history', order_by=asc(date_time)))
     user = relation('User', backref=backref('case_history_changes'))
 
     comparable_fields = {'Case Name': 'case_name', 'Reference': 'reference', 'Background': 'background',
-                         "Case Files Location": 'location', 'Classification': 'classification',
+                         "Case Files Location": 'location', 'Classification': 'classification', 'Deadline': 'deadline',
                          'Case Type:': 'case_type', 'Justification': 'justification', "Case Priority": 'case_priority'}
     history_name = ("Case", "case_name", "case_id")
 
@@ -269,6 +270,7 @@ class CaseHistory(HistoryModel, Base):
         self.justification = case.justification
         self.case_priority = case.case_priority
         self.case_priority_colour = case.case_priority_colour
+        self.deadline = case.deadline
 
     @property
     def previous(self):
@@ -307,9 +309,10 @@ class Case(Base, Model):
     case_type = Column(Unicode)
     case_priority = Column(Unicode)
     case_priority_colour = Column(Unicode)
+    deadline = Column(DateTime)
 
     def __init__(self, case_name, user, background=None, reference=None, private=False, location=None,
-                 classification=None, case_type=None, justification=None, priority=None, created=None,
+                 classification=None, case_type=None, justification=None, priority=None, deadline=None, created=None,
                  authorisor=None):
         self.case_name = case_name
         self.reference = reference
@@ -337,6 +340,9 @@ class Case(Base, Model):
         if authorisor is not None:
             self.authorise(authorisor, "", "PENDING")
 
+        if deadline is not None:
+            self.deadline = datetime.combine(deadline, datetime.min.time())
+
     def authorise(self, authoriser, reason, authorisation):
         auth = CaseAuthorisation(authoriser, self, authorisation, reason)
         session.add(auth)
@@ -350,6 +356,13 @@ class Case(Base, Model):
     @property
     def date_created(self):
         return ForemanOptions.get_date(self.creation_date)
+
+    @property
+    def date_deadline(self):
+        if self.deadline is not None:
+            return ForemanOptions.get_date(self.deadline)
+        else:
+            return None
 
     @property
     def date_range(self):
@@ -1277,12 +1290,14 @@ class TaskHistory(Base, HistoryModel):
     task_name = Column(Unicode)
     location = Column(Unicode)
     background = Column(Unicode)
+    deadline = Column(DateTime)
 
     task = relation('Task', backref=backref('history', order_by=asc(date_time)))
     user = relation('User', backref=backref('task_history_changes', order_by=asc(id)))
     task_type = relation('TaskType', backref=backref('task_history', order_by=desc(task_type_id)))
 
-    comparable_fields = {'Task Name': 'task_name', 'Background': 'background', "Task Files Location": 'location'}
+    comparable_fields = {'Task Name': 'task_name', 'Background': 'background', "Task Files Location": 'location',
+                         "Deadline": "deadline"}
     history_name = ("Task", "task_name", "task_id", "case_id")
 
     def __init__(self, task, user):
@@ -1292,6 +1307,7 @@ class TaskHistory(Base, HistoryModel):
         self.background = task.background
         self.location = task.location
         self.date_time = datetime.now()
+        self.deadline = task.deadline
         self.user = user
         self.case_id = task.case.id
 
@@ -1331,11 +1347,12 @@ class Task(Base, Model):
     currentStatus = Column(Unicode)
     location = Column(Unicode)
     creation_date = Column(DateTime)
+    deadline = Column(DateTime)
 
     case = relation('Case', backref=backref('tasks', order_by=desc(id)))
     task_type = relation('TaskType', backref=backref('tasks', order_by=desc(task_type_id)))
 
-    def __init__(self, case, task_type, task_name, user, background=None, location=None, date=None):
+    def __init__(self, case, task_type, task_name, user, background=None, location=None, date=None, deadline=None):
         self.task_name = task_name
         self.case = case
         self.task_type = task_type
@@ -1352,9 +1369,21 @@ class Task(Base, Model):
         else:
             self.creation_date = date
 
+        if deadline:
+            self.deadline = datetime.combine(deadline, datetime.min.time())
+        elif case.deadline is not None:
+            self.deadline = datetime.combine(case.deadline, datetime.min.time())
+
     @property
     def date_created(self):
         return ForemanOptions.get_date(self.creation_date)
+
+    @property
+    def date_deadline(self):
+        if self.deadline is not None:
+            return ForemanOptions.get_date(self.deadline)
+        else:
+            return None
 
     @property
     def date_range(self):

@@ -96,6 +96,27 @@
             <th>Case Priority</th>
             <td><span class="priority" style="background-color:${task.case.case_priority_colour|h}">&nbsp;</span>${task.case.case_priority|h}</td>
         </tr>
+        % if task.case.deadline:
+        <tr>
+            <th>Deadline</th>
+            <td>${task.case.date_deadline|h}
+
+            <% from datetime import datetime %>
+            <% now = datetime.now() %>
+            <% days = (task.case.deadline - now).days %>
+
+                % if days == 0:
+                    (Today}
+                % elif days == 1:
+                    (1 day)
+                 % elif days < 0:
+                    <span class="highlight">(${days} days)</span>
+                % else:
+                    (${days} days)
+                % endif
+            </td>
+        </tr>
+        % endif
         <tr>
             <th>Principle Case Manager</th>
              % if task.case.principle_case_manager != None:
