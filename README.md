@@ -10,6 +10,8 @@ Introducing Foreman, a new open source forensic case management system. Foreman 
 
 Please head over to the [Wiki](https://bitbucket.org/lowmanio/foreman/wiki) to get installation and setup instructions.
 
+For more detailed user guides and Foreman usage, head over to the [blog][http://blog.foreman-forensics.org/].
+
 ### Who do I talk to? ###
 
 * sarah@lowmanio.co.uk

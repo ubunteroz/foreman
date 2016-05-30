@@ -551,7 +551,7 @@
             <td>${case.date_created|h}</td>
             % if case.principle_case_manager is None and case.secondary_case_manager is None:
             <td colspan="2">
-                % if check_perms(case, 'edit'):
+                % if check_perms(case, 'edit') and case.authorised.case_authorised != "NOAUTH":
                  <a href='${urls.build("case.edit", dict(case_id=case.id, active_tab=2))|h}'>Assign yourself to case</a>
                 % else:
                 None assigned
@@ -574,7 +574,7 @@
             </td>
             % endif
             <td colspan="5">
-                % if check_perms(case, 'edit'):
+                % if check_perms(case, 'add-task'):
                 <a href='${urls.build("case.add_task", dict(case_id=case.id))|h}'>Add Tasks</a>
                 % else:
                 No Tasks added.

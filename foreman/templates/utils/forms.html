@@ -96,9 +96,9 @@
         <option value="null">Please select</option>
         % endif
         % for val, option in options:
-            % if str(value) == str(option):
+            % if unicode(value) == unicode(option):
                 <option value="${val|h}" selected>${option|h}</option>
-            % elif str(value) == str(val):
+            % elif unicode(value) == unicode(val):
                 <option value="${val|h}" selected>${option|h}</option>
             % else:
                 <option value="${val|h}">${option|h}</option>

@@ -14,7 +14,7 @@
 
     <p>
         % if check_perms(case, 'authorise') and (case.authorised is None or case.authorised.case_authorised == "PENDING"):
-            <a href='${urls.build("case.authorise", dict(case_id=case.id))|h}'>Authorise this case</a>
+            <a href='${urls.build("case.authorise", dict(case_id=case.id))|h}'>Authorise/reject this case</a>
         % endif
         % if check_perms(case, 'edit'):
             % if current_user.id == case.requester.id and (case.authorised is not None and case.authorised.case_authorised == "NOAUTH"):

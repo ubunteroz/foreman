@@ -13,7 +13,7 @@ from ..model import User, CaseStatus, Case, Task, TaskStatus, Evidence, has_perm
 from ..model import TaskUpload, EvidencePhotoUpload, Team, Department, CaseHistory, UserTaskRoles, TaskHistory, \
     EvidenceHistory, EvidenceStatus
 
-lookup = TemplateLookup(directories=[path.join(ROOT_DIR, 'templates')], output_encoding='utf-8')
+lookup = TemplateLookup(directories=[path.join(ROOT_DIR, 'templates')], output_encoding='utf-8', input_encoding='utf-8')
 
 
 def jsonify(func):

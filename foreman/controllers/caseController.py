@@ -137,7 +137,8 @@ class CaseController(BaseController):
                                 self.form_result['reference'], self.form_result['private'], None,
                                 self.form_result['classification'].classification,
                                 self.form_result['case_type'].case_type,
-                                self.form_result['justification'], self.form_result['priority'])
+                                self.form_result['justification'], self.form_result['priority'],
+                                authorisor=self.form_result['authoriser'])
                 session.add(new_case)
                 session.flush()
                 new_case.add_change(self.current_user)
@@ -337,7 +338,7 @@ class CaseController(BaseController):
                     if self.current_user.id == case.requester.id and case.authorised.case_authorised == "NOAUTH":
                         case.authorise(self.form_result['authoriser'], "Case has been Edited", "PENDING")
                         case.set_status(CaseStatus.PENDING, self.current_user)
-                        self._send_authorise_email(case)
+                        self._send_authorise_email(case, edit=True)
                     return self._return_edit_response(case, 0)
                 else:
                     return self._return_edit_response(case, 0, self.form_error)
@@ -449,21 +450,28 @@ class CaseController(BaseController):
                 session.flush()
                 new_role.add_change(self.current_user)
 
-    def _send_authorise_email(self, new_case):
+    def _send_authorise_email(self, new_case, edit=False):
         # automatic email from requester to authoriser to authorise
         authoriser = new_case.authoriser
         requester = new_case.requester
+
+        if edit is False:
+            verb = "created a new"
+        else:
+            verb = "edited a"
+
         email([authoriser.email], "Please authorise case {}".format(new_case.case_name), """
 Hello {},
 
-{} has created a new case on Foreman and has requested your authorisation. Details:
+{} has {} case on Foreman and has requested your authorisation. Details:
 Case name: {}
 Case Reference: {}
 Link to authorise or reject: {}{}
 
 Thanks,
 Foreman
-{}""".format(authoriser.forename, requester.fullname, new_case.case_name, new_case.reference,
+{}""".format(authoriser.forename, requester.fullname, verb, new_case.case_name,
+             new_case.reference,
              config.get('admin', 'website_domain'),
              self.urls.build('case.authorise', dict(case_id=new_case.id)),
              config.get('admin', 'website_domain')), config.get('email', 'from_address'), cc=[requester.email])

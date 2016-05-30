@@ -4,6 +4,7 @@
 <%namespace file="/utils/format.html" name="format" />
 
 <%def name="javascripts()" filter="trim">
+
     <link rel="StyleSheet" href="${urls.build('css', dict(file='jquery-ui-1.10.4.custom.css'))|h}" type="text/css" />
     <script src="${urls.build('javascript', dict(file='jquery-1.10.2.js'))|h}"></script>
     <script src="${urls.build('javascript', dict(file='jquery-ui-1.10.4.custom.min.js'))|h}"></script>
@@ -480,7 +481,7 @@
             <p>Chose whether managers of managers can see their direct reports, i.e. the head of department can see their team lead's direct report's timesheets & metrics.
                 By default, only the users direct line manager can see timesheets and reports - not managers higher up the chain.</p>
             <form method="post" action="${urls.build('general.admin', dict(form='managers', active_tab=7))|h}">
-                ${forms.formSelectBox("Managers inherit direct reports", "manager_inherit", "manager_inherit", "form_label", "input_long", manager_inherit_options, value=str(options.manager_inherit), first=True)}
+                ${forms.formSelectBox("Managers inherit direct reports", "manager_inherit", "manager_inherit", "form_label", "input_long", manager_inherit_options, value=unicode(options.manager_inherit), first=True)}
                 <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
             </form>
 
@@ -490,8 +491,8 @@
             <h2>Authorisation Options</h2>
 
             <form method="post" action="${urls.build('general.admin', dict(form='authoriser_options', active_tab=7))|h}">
-                ${forms.formSelectBox("Authorisers can view case tasks", "see_tasks", "see_tasks", "form_label", "input_long", authoriser_options, value=str(options.auth_view_tasks), first=True)}
-                ${forms.formSelectBox("Authorisers can view case evidence", "see_evidence", "see_evidence", "form_label", "input_long", authoriser_options, value=str(options.auth_view_evidence))}
+                ${forms.formSelectBox("Authorisers can view case tasks", "see_tasks", "see_tasks", "form_label", "input_long", authoriser_options, value=unicode(options.auth_view_tasks), first=True)}
+                ${forms.formSelectBox("Authorisers can view case evidence", "see_evidence", "see_evidence", "form_label", "input_long", authoriser_options, value=unicode(options.auth_view_evidence))}
                 <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
             </form>
             </div>

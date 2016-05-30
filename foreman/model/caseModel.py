@@ -309,7 +309,8 @@ class Case(Base, Model):
     case_priority_colour = Column(Unicode)
 
     def __init__(self, case_name, user, background=None, reference=None, private=False, location=None,
-                 classification=None, case_type=None, justification=None, priority=None, created=None):
+                 classification=None, case_type=None, justification=None, priority=None, created=None,
+                 authorisor=None):
         self.case_name = case_name
         self.reference = reference
         self.set_status(CaseStatus.PENDING, user)
@@ -332,6 +333,9 @@ class Case(Base, Model):
             self.creation_date = datetime.now()
         else:
             self.creation_date = created
+
+        if authorisor is not None:
+            self.authorise(authorisor, "", "PENDING")
 
     def authorise(self, authoriser, reason, authorisation):
         auth = CaseAuthorisation(authoriser, self, authorisation, reason)
