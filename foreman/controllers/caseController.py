@@ -334,7 +334,7 @@ class CaseController(BaseController):
                     case.classification = self.form_result['classification'].classification
                     case.case_type = self.form_result['case_type'].case_type
                     case.justification = self.form_result['justification']
-                    if self.form_result['deadline'] != "":
+                    if self.form_result['deadline'] is not None:
                         case.deadline = datetime.combine(self.form_result['deadline'], datetime.min.time())
                     case.case_priority = self.form_result['priority'].case_priority
                     case.case_priority_colour = self.form_result['priority'].colour
