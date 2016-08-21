@@ -127,8 +127,7 @@ class CaseController(BaseController):
                        user.department == self.current_user.department]  # only user authorisers in same department
         classifications = [(cl.id, cl.classification) for cl in CaseClassification.get_all() if cl != "Undefined"]
         case_types = [(ct.id, ct.case_type) for ct in CaseType.get_all() if ct.case_type != "Undefined"]
-        priorities = [(priority.case_priority, priority.case_priority) for priority in CasePriority.get_all()]
-
+        priorities = [(priority.id, priority.case_priority) for priority in CasePriority.get_all()]
         args = multidict_to_dict(self.request.args)
         if 'type' in args and args['type'] == "requester" and is_requester:
             if self.validate_form(RequesterAddCaseForm()):
@@ -153,7 +152,7 @@ class CaseController(BaseController):
             else:
                 return self.return_response('pages', 'add_case.html', case_loc=case_loc, is_requester=is_requester,
                                             managers=managers, errors=self.form_error, classifications=classifications,
-                                            case_types=case_types, priorities=priorities)
+                                            case_types=case_types, priorities=priorities, authorisers=authorisers)
         elif self.validate_form(AddCaseForm()):
             new_case = Case(self.form_result['case_name'], self.current_user, self.form_result['background'],
                             self.form_result['reference'], self.form_result['private'], self.form_result['location'],
@@ -293,7 +292,7 @@ class CaseController(BaseController):
         secondary_man = case.secondary_case_manager.fullname if case.secondary_case_manager else "Please Select"
         classifications = [(cl.id, cl.classification) for cl in CaseClassification.get_all() if cl != "Undefined"]
         case_types = [(ct.id, ct.case_type) for ct in CaseType.get_all() if ct.case_type != "Undefined"]
-        priorities = [(priority.case_priority, priority.case_priority) for priority in CasePriority.get_all()]
+        priorities = [(priority.id, priority.case_priority) for priority in CasePriority.get_all()]
         authorisers = [(user.id, user.fullname) for user in UserRoles.get_authorisers() if
                        user.department == self.current_user.department]
         return self.return_response('pages', 'edit_case.html', case=case, active_tab=active_tab,

@@ -143,6 +143,23 @@ class ValidTime(v.UnicodeString):
             raise Invalid(self.message('invalid', state), value, state)
 
 
+class TestDateFormat(v.UnicodeString):
+    messages = {
+        'invalid': 'The date formatter is invalid.',
+    }
+    allow_null = False
+
+    def _to_python(self, value, state):
+        try:
+            now = datetime.datetime.now()
+            date = now.strftime(value)
+            if date == value:
+                raise Invalid(self.message('invalid', state), value, state)
+            return value
+        except ValueError:
+            raise Invalid(self.message('invalid', state), value, state)
+
+
 class QADecision(v.UnicodeString):
     messages = {
         'null': 'Please select an option.',
@@ -304,7 +321,7 @@ class GetInvestigator(GetUser):
 
 
 class GetQA(GetUser):
-    null_value = True
+    null_value = None # originally True, not sure why these are set to true
 
     def getObject(self, user_id):
         if user_id.isdigit():
@@ -337,7 +354,8 @@ class GetCaseManager(GetUser):
 
 class GetAuthoriser(GetUser):
     null_value = True
-
+    allow_null = False
+    
     def getObject(self, user_id):
         if user_id.isdigit():
             user = User.get(int(user_id))
@@ -377,7 +395,9 @@ class GetCaseClassification(GetObject):
     allow_null = False
 
     def getObject(self, classification):
-        return CaseClassification.get(classification)
+        if classification.isdigit():
+            return CaseClassification.get(classification)
+        return None
 
 
 class GetPriority(GetObject):
@@ -390,9 +410,8 @@ class GetPriority(GetObject):
     allow_null = False
 
     def getObject(self, priority):
-        for cp in CasePriority.get_all():
-            if priority == cp.case_priority:
-                return cp
+        if priority.isdigit():
+            return CasePriority.get(priority)
         else:
             return None
 
@@ -637,21 +656,25 @@ class ManagerCheck(v.FormValidator):
         if manager is None:
             return True
 
-        if user.id == manager.id:
+        try:
+            if user.id == manager.id:
+                return False
+            elif manager in user._manager_loop_checker():
+                return False
+            else:
+                return True
+        except AttributeError:
             return False
-        elif manager in user._manager_loop_checker():
-            return False
-        else:
-            return True
 
 
-class Upload(v.FieldStorageUploadConverter):
+class Upload(v.FancyValidator):
     """ Class to upload things """
     folder = ''  # upload destination
     type = ''   # type of file e.g. css or image
     accept_iterator = True
 
     def _to_python(self, value, state):
+
         if not value:
             if self.not_empty is True:
                 raise Invalid(self.message('empty', state), value, state)
@@ -663,7 +686,7 @@ class Upload(v.FieldStorageUploadConverter):
         value.seek(0)
         uploaded_file = value
         if self.type is None or self.type in uploaded_file.content_type or self.type in \
-                uploaded_file.filename.split(path.sep)[-1].split('.', 1)[1]:
+                uploaded_file.filename.split(path.sep)[-1].split('.', 1)[1] or self.type in value.mimetype:
             new = path.join(self.folder, self.file_name(uploaded_file))
             uploaded_file.save(new)
         else:
@@ -675,7 +698,7 @@ class Upload(v.FieldStorageUploadConverter):
         return file.filename.split(path.sep)[-1]
 
 
-class UploadWithoutStorage(v.FieldStorageUploadConverter):
+class UploadWithoutStorage(v.FancyValidator):
     """ Class to upload things """
 
     accept_iterator = True
@@ -690,6 +713,11 @@ class UploadWithoutStorage(v.FieldStorageUploadConverter):
         # FormEncode annoyingly checks whether the value is iterable by trying to iterate over it, which consumes
         # the first line of the file. Rewind it again.
         value.seek(0)
+        if self.type is not None:
+            if self.type in value.mimetype or self.type in value.content_type:
+                return value
+            else:
+                raise Invalid(self.message('invalid', state), value, state)
         return value
 
 

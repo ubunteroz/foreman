@@ -15,7 +15,7 @@ class AddCaseForm(Schema):
     location = v.UnicodeString()
     primary_case_manager = GetCaseManager(not_empty=True)
     secondary_case_manager = GetCaseManager(not_empty=True)
-    classification = GetCaseClassification(not_emtpy=True)
+    classification = GetCaseClassification(not_empty=True)
     case_type = GetCaseType(not_empty=True)
     justification = v.UnicodeString(not_empty=True)
     priority = GetPriority(not_empty=True)
@@ -27,7 +27,7 @@ class RequesterAddCaseForm(Schema):
     reference = v.UnicodeString()
     private = v.Bool()
     background = v.UnicodeString(not_empty=True)
-    classification = GetCaseClassification(not_emtpy=True)
+    classification = GetCaseClassification(not_empty=True)
     case_type = GetCaseType(not_empty=True)
     justification = v.UnicodeString(not_empty=True)
     priority = GetPriority(not_empty=True)
@@ -59,7 +59,7 @@ class RemoveCaseTypeForm(Schema):
 
 
 class AddClassificationForm(Schema):
-    new_classification = v.UnicodeString(not_emtpy=True)
+    new_classification = v.UnicodeString(not_empty=True)
 
 
 class AddCaseTypeForm(Schema):
@@ -145,16 +145,16 @@ class ReactivateUser(Schema):
 
 class AssignInvestigatorForm(Schema):
     role = IsPrincipleInvestigator()
-    investigator = GetUser()
+    investigator = GetInvestigator()
 
 
 class AssignQAForm(Schema):
-    investigator = GetUser(allow_null=False)
-    investigator2 = GetUser(allow_null=True)
+    investigator = GetQA(allow_null=False, not_empty=True)
+    investigator2 = GetQA(allow_null=True)
 
 
 class AssignQAFormSingle(Schema):
-    investigator = GetUser(allow_null=False)
+    investigator = GetQA(allow_null=False, not_empty=True)
 
 
 class AskForQAForm(Schema):
@@ -177,7 +177,7 @@ class ChainOfCustodyForm(Schema):
 class EditEvidenceForm(Schema):
     reference = v.UnicodeString(not_empty=True)
     status = GetEvidenceStatus(not_empty=True)
-    bag_num = v.UnicodeString(not_empty=True)
+    bag_num = v.UnicodeString()
     type = GetEvidenceType(not_empty=True)
     originator = v.UnicodeString(not_empty=True)
     comments = v.UnicodeString(not_empty=True)
@@ -263,7 +263,7 @@ class EditCaseForm(Schema):
     background = v.UnicodeString(not_empty=True)
     location = v.UnicodeString()
     justification = v.UnicodeString(not_empty=True)
-    classification = GetCaseClassification(not_emtpy=True)
+    classification = GetCaseClassification(not_empty=True)
     case_type = GetCaseType(not_empty=True)
     priority = GetPriority(not_empty=True)
     authoriser = GetAuthoriser(not_empty=True)
@@ -303,7 +303,7 @@ class EditUserForm(Schema):
     team = GetTeam(not_empty=True)
     photo = UploadProfilePhoto()
     manager = GetUser()
-    user = GetUser()
+    user = GetUser(not_empty=True)
 
     chained_validators = [
         ManagerCheck('user', 'manager')
@@ -343,7 +343,7 @@ class OptionsForm(Schema):
     company = v.UnicodeString(not_empty=True)
     department = v.UnicodeString(not_empty=True)
     folder = v.UnicodeString(not_empty=True)
-    datedisplay = v.UnicodeString(not_empty=True)
+    datedisplay = TestDateFormat(not_empty=True)
     case_names = GetForemanCaseNameOptions(not_empty=True)
     task_names = GetForemanTaskNameOptions(not_empty=True)
     upload_case_names = UploadNames()
@@ -389,17 +389,17 @@ class RemoveDepartmentForm(Schema):
 
 
 class TimeSheetCell(Schema):
-    value = v.Number(max=24)
+    value = v.Number(max=24, min=0)
     datetime = TimeSheetDateTime()
 
 
 class CaseHours(Schema):
-    case = GetCase()
+    case = GetCase(not_empty=True)
     timesheet = ForEach(TimeSheetCell())
 
 
 class TaskHours(Schema):
-    task = GetTask()
+    task = GetTask(not_empty=True)
     timesheet = ForEach(TimeSheetCell())
 
 

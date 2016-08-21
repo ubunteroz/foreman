@@ -184,6 +184,13 @@ class User(Base, Model):
     def activate(self):
         self.active = True
 
+    def users_roles(self):
+        output = []
+        q = session.query(UserRoles).filter_by(user=self, removed=False)
+        for role in q:
+            output.append(role.role)
+        return output
+
     def get_hours_worked(self, date):
         # cases
         r1 = session.query(func.sum(CaseTimeSheets.hours)).filter(CaseTimeSheets.user_id == self.id,
