@@ -86,23 +86,40 @@ class CaseController(BaseController):
             args = multidict_to_dict(self.request.args)
             change = False
             special_note = None
+            email_alert_flag = False
+            options = ForemanOptions.get_options()
+
             if "status" in args and args["status"] in CaseStatus.all_statuses:
                 status = args["status"]
                 if status == CaseStatus.OPEN:
                     verb = ['open', 'opened']
+                    if options.email_alert_req_case_opened and case.requester is not None:
+                        email_alert_flag = True
                 elif status == CaseStatus.CLOSED:
                     verb = ['close', 'closed']
+                    if options.email_alert_req_case_closed and case.requester is not None:
+                        email_alert_flag = True
                 else:
                     verb = ['archive', 'archived']
+                    if options.email_alert_req_case_archived and case.requester is not None:
+                        email_alert_flag = True
                     special_note = """Please note that by archiving the case, you are also automatically archiving any
-                    associated evidence. You will <b>not</b> be able to make any further changes to the case or the evidence,
-                    apart from changing evidence statuses to <i>destroyed</i>."""
+                    associated evidence & tasks. You will <b>not</b> be able to make any further changes to the case, tasks
+                     or the evidence, apart from changing evidence statuses to <i>destroyed</i>."""
                 if 'confirm' in args and args['confirm'] == "true":
                     if self.validate_form(ChangeCaseStatusForm()):
                         reason = self.form_result['change']
                         case.set_status(status, self.current_user)
                         case.get_status().reason = reason
                         change = True
+
+                        if email_alert_flag:
+                            url = config.get('admin', 'website_domain') + self.urls.build('case.view',
+                                                                                          dict(case_id=case.id))
+                            self.send_email_alert([case.requester], "Case status has changed",
+                                                  """Your case {} is now {}.
+
+The case can be viewed here: {}""".format(case.case_name, verb[1], url))
 
                         if status == CaseStatus.ARCHIVED:
                             for evidence in case.evidence:
@@ -111,7 +128,8 @@ class CaseController(BaseController):
 
                         special_note = None
                 return self.return_response('pages', 'confirm_case_status_change.html', case=case, change=change,
-                                            status=status, verb=verb, errors=self.form_error, special_note=special_note)
+                                            status=status, verb=verb, errors=self.form_error, special_note=special_note,
+                                            email_alert_flag=email_alert_flag)
             else:
                 return self.return_404(reason="The case or status change you are trying to make does not exist.")
         else:
@@ -129,6 +147,12 @@ class CaseController(BaseController):
         case_types = [(ct.id, ct.case_type) for ct in CaseType.get_all() if ct.case_type != "Undefined"]
         priorities = [(priority.id, priority.case_priority) for priority in CasePriority.get_all()]
         args = multidict_to_dict(self.request.args)
+        email_alert_flag = False
+
+        options = ForemanOptions.get_options()
+        if options.email_alert_all_caseman_new_case:
+            email_alert_flag = True
+
         if 'type' in args and args['type'] == "requester" and is_requester:
             if self.validate_form(RequesterAddCaseForm()):
                 case_name = ForemanOptions.get_next_case_name()
@@ -147,17 +171,29 @@ class CaseController(BaseController):
                 self._create_new_user_role(UserCaseRoles.REQUESTER, new_case, self.current_user)
                 self._create_new_user_role(UserCaseRoles.AUTHORISER, new_case, self.form_result['authoriser'])
                 self._send_authorise_email(new_case)
+                url = config.get('admin', 'website_domain') + self.urls.build('case.view', dict(case_id=new_case.id))
+                self.send_email_alert(UserRoles.get_managers(), "A new case has been created",
+                                      """A new case has been created and is pending authorisation.
+
+Case details:
+Case requester: {}
+Case type: {}
+Case priority: {}
+
+The case can be viewed here: {}""".format(new_case.requester.fullname, new_case.case_type, new_case.case_priority, url))
 
                 return self.return_response('pages', 'case_added.html', case=new_case)
             else:
                 return self.return_response('pages', 'add_case.html', case_loc=case_loc, is_requester=is_requester,
                                             managers=managers, errors=self.form_error, classifications=classifications,
-                                            case_types=case_types, priorities=priorities, authorisers=authorisers)
+                                            case_types=case_types, priorities=priorities, authorisers=authorisers,
+                                            email_alert_flag=email_alert_flag)
         elif self.validate_form(AddCaseForm()):
             new_case = Case(self.form_result['case_name'], self.current_user, self.form_result['background'],
                             self.form_result['reference'], self.form_result['private'], self.form_result['location'],
                             self.form_result['classification'].classification, self.form_result['case_type'].case_type,
-                            self.form_result['justification'], self.form_result['priority'])
+                            self.form_result['justification'], self.form_result['priority'],
+                            authorisor=self.form_result['authoriser'])
             session.add(new_case)
             session.flush()
             new_case.add_change(self.current_user)
@@ -182,7 +218,7 @@ class CaseController(BaseController):
             return self.return_response('pages', 'add_case.html', case_loc=case_loc, is_requester=is_requester,
                                         managers=managers, errors=self.form_error, classifications=classifications,
                                         case_types=case_types, next_case_name=next_case_name, priorities=priorities,
-                                        authorisers=authorisers)
+                                        authorisers=authorisers, email_alert_flag=email_alert_flag)
 
     def add_task(self, case_id):
         case = self._validate_case(case_id)
@@ -271,6 +307,10 @@ class CaseController(BaseController):
             return self.return_404(reason="The case or status change you are trying to make is incorrect.")
 
     def _return_edit_response(self, case, active_tab, errors=None):
+        email_alert_flag = False
+        options = ForemanOptions.get_options()
+        if options.email_alert_req_case_caseman_assigned and case.requester is not None:
+            email_alert_flag = True
         managers = [(user.id, user.fullname) for user in UserRoles.get_managers()]
         reassign_cases = []
         for r_case in Case.get_cases('Workable', self.current_user, case_perm_checker=self.check_permissions):
@@ -302,7 +342,8 @@ class CaseController(BaseController):
                                     reassign_tasks=reassign_tasks, reassign_cases=reassign_cases,
                                     case_history=case_history, case_manager_history=case_manager_history,
                                     tasks_history=tasks_history, errors=errors, classifications=classifications,
-                                    case_types=case_types, priorities=priorities, authorisers=authorisers)
+                                    case_types=case_types, priorities=priorities, authorisers=authorisers,
+                                    email_alert_flag=email_alert_flag)
 
     def edit(self, case_id):
         case = self._validate_case(case_id)
@@ -344,7 +385,10 @@ class CaseController(BaseController):
                             if task.deadline is None or task.deadline > case.deadline:
                                 task.deadline = datetime.combine(case.deadline, datetime.min.time())
 
-                    if self.current_user.id == case.requester.id and case.authorised.case_authorised == "NOAUTH":
+                    if (case.requester is not None and self.current_user.id == case.requester.id \
+                            and case.authorised.case_authorised == "NOAUTH") or (case.requester is None and \
+                            self.current_user.id == case.principle_case_manager.id and \
+                            case.authorised.case_authorised == "NOAUTH"):
                         case.authorise(self.form_result['authoriser'], "Case has been Edited", "PENDING")
                         case.set_status(CaseStatus.PENDING, self.current_user)
                         self._send_authorise_email(case, edit=True)
@@ -371,12 +415,25 @@ class CaseController(BaseController):
                     return self._return_edit_response(case, 1, self.form_error)
             elif 'form' in form_type and form_type['form'] == "edit_case_managers":
                 if self.validate_form(EditCaseManagersForm()):
+                    options = ForemanOptions.get_options()
+                    url = config.get('admin', 'website_domain') + self.urls.build('case.view', dict(case_id=case.id))
+
                     if case.principle_case_manager != self.form_result['primary_case_manager']:
                         self._create_new_user_role(UserCaseRoles.PRINCIPLE_CASE_MANAGER, case,
                                                    self.form_result['primary_case_manager'])
+                        if options.email_alert_req_case_caseman_assigned and case.requester is not None and self.form_result['primary_case_manager'] is not None:
+                            self.send_email_alert([case.requester], "Case has been picked up by a case manager",
+                                                  """{} been assigned to case {} as the primary case manager.
+
+The case can be viewed here: {}""".format(self.form_result['primary_case_manager'].fullname, case.case_name, url))
                     if case.secondary_case_manager != self.form_result['secondary_case_manager']:
                         self._create_new_user_role(UserCaseRoles.SECONDARY_CASE_MANAGER, case,
                                                    self.form_result['secondary_case_manager'])
+                        if options.email_alert_req_case_caseman_assigned and case.requester is not None and self.form_result['secondary_case_manager'] is not None:
+                            self.send_email_alert([case.requester], "Case has been picked up by a case manager",
+                                              """{} been assigned to case {} as the secondary case manager.
+
+The case can be viewed here: {}""".format(self.form_result['secondary_case_manager'].fullname, case.case_name, url))
                     return self._return_edit_response(case, 2)
                 else:
                     return self._return_edit_response(case, 2, self.form_error)
@@ -400,6 +457,11 @@ class CaseController(BaseController):
         case = self._validate_case(case_id)
         auth_choices = [("Authorised", "Authorised"), ("Rejected", "Rejected")]
         complete = False
+        email_alert_flag = False
+        options = ForemanOptions.get_options()
+        if options.email_alert_all_caseman_case_auth:
+            email_alert_flag = True
+
         if case is not None:
             case_history = self._get_case_history_changes(case)
             self.check_permissions(self.current_user, case, 'authorise')
@@ -414,19 +476,43 @@ class CaseController(BaseController):
                 auth = self.form_result['auth']
                 if auth is True:
                     authorisation = "AUTH"
+                    if options.email_alert_all_caseman_case_auth:
+                        url = config.get('admin', 'website_domain') + self.urls.build('case.view',
+                                                                                      dict(case_id=case.id))
+                        if case.requester is None:
+                            requester = case.principle_case_manager
+                        else:
+                            requester = case.requester
+                        self.send_email_alert(UserRoles.get_managers(), "A case has been authorised",
+                                              """A new case has been created and authorised.
+
+Case details:
+Case name: {}
+Case requester: {}
+Case type: {}
+Case priority: {}
+
+The case can be viewed here: {}""".format(case.case_name, requester.fullname, case.case_type, case.case_priority,
+                                          url))
                 else:
                     authorisation = "NOAUTH"
                 case.authorise(self.current_user, reason, authorisation)
                 complete = True
                 self._send_authorised_email(case)
             return self.return_response('pages', 'authorise_case.html', case=case, case_history=case_history,
-                                        complete=complete, auth_choices=auth_choices)
+                                        complete=complete, auth_choices=auth_choices,
+                                        email_alert_flag=email_alert_flag)
         else:
             return self.return_404(reason="You have tried to authorise an invalid case.")
 
     def close(self, case_id):
         case = self._validate_case(case_id)
         if case is not None:
+            email_alert_flag = False
+            options = ForemanOptions.get_options()
+            if options.email_alert_req_case_closed and case.requester is not None:
+                email_alert_flag = True
+
             self.check_permissions(self.current_user, case, 'close')
 
             self.breadcrumbs.append({'title': case.case_name,
@@ -441,28 +527,47 @@ class CaseController(BaseController):
                     reason = self.form_result['closure']
                     case.close_case(reason, self.current_user)
                     closed = True
+                    if email_alert_flag and case.requester is not None:
+                        url = config.get('admin', 'website_domain') + self.urls.build('case.view',
+                                                                                      dict(case_id=case.id))
+                        self.send_email_alert([case.requester], "Case status has changed", """Your case {} is now closed.
+
+The case can be viewed here: {}""".format(case.case_name, url))
 
             return self.return_response('pages', 'confirm_close_case.html', case=case, closed=closed,
-                                        errors=self.form_error)
+                                        errors=self.form_error, email_alert_flag=email_alert_flag)
         else:
             return self.return_404(reason="You have tried to close an invalid case.")
 
     def _create_new_user_role(self, role, case, form_result):
-        try:
-            user_role = UserCaseRoles.get_filter_by(role=role, case=case)[0]
-            user_role.add_change(self.current_user, form_result)
-            session.flush()
-        except IndexError:
-            if form_result is not True:
+        user_role = UserCaseRoles.get_filter_by(role=role, case=case).first()
+        if form_result is None:
+            if user_role is None:
+                # no change, empty role stays empty
+                pass
+            else:
+                # person being removed
+                user_role.add_change(self.current_user, True)
+                session.flush()
+        else:
+            if user_role is None:
+                # empty role getting a person added
                 new_role = UserCaseRoles(form_result, case, role)
                 session.add(new_role)
                 session.flush()
                 new_role.add_change(self.current_user)
+            else:
+                # person being replaced
+                user_role.add_change(self.current_user, form_result)
+                session.flush()
 
     def _send_authorise_email(self, new_case, edit=False):
         # automatic email from requester to authoriser to authorise
         authoriser = new_case.authoriser
-        requester = new_case.requester
+        if new_case.requester is None:
+            requester = self.current_user # situation where case manager created their own case
+        else:
+            requester = new_case.requester
 
         if edit is False:
             verb = "created a new"
@@ -488,11 +593,14 @@ Foreman
     def _send_authorised_email(self, case):
         # automatic email from authoriser to requester that it has been rejected/authorised
         authoriser = case.authoriser
-        requester = case.requester
+        if case.requester is not None:
+            requester = case.requester
+        else:
+            requester = case.principle_case_manager # on situation where case manager created their own case
+
         ccs = [authoriser.email]
         if case.authorised.case_authorised == "AUTH":
             decision = "authorised"
-            ccs += [user.email for user in UserRoles.get_managers()]
         else:
             decision = "rejected"
 

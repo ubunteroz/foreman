@@ -15,9 +15,14 @@
     <h1>Add Case Details</h1>
 
      % if not is_requester:
-     <form method="post" action="${urls.build('case.add', dict())|h}">
+        <form method="post" action="${urls.build('case.add', dict())|h}">
      % else:
-     <form method="post" action="${urls.build('case.add', dict(type='requester'))|h}">
+        <form method="post" action="${urls.build('case.add', dict(type='requester'))|h}">
+        % if email_alert_flag:
+            <p>Note: Case managers will get an automatic alert that this case has been created as well as the authoriser you have chosen to authorise/reject this case.</p>
+        % else:
+            <p>Note: The authoriser you have chosen will get an automatic email to authorise/reject this case.</p>
+        % endif
      % endif
         % if not is_requester:
             ${forms.formTextField("Case Name", "case_name", "case_name", "form_label", "input_long", first=True, value=next_case_name)}
@@ -37,9 +42,9 @@
 
      % if not is_requester:
      <h1>Add Case Managers</h1>
-
-        ${forms.formSelectBox("Principle Case Manager", "primary_case_manager", "primary_case_manager", "form_label", "input_long", managers, first=True, please_select=True)}
-        ${forms.formSelectBox("Secondary Case Manager", "secondary_case_manager", "secondary_case_manager", "form_label", "input_long", managers, please_select=True)}
+        <p>You will automatically be added as the primary case manager.</p>
+        <input type="hidden" name="primary_case_manager" id="primary_case_manager" value="${current_user.id|h}" />
+        ${forms.formSelectBox("Secondary Case Manager", "secondary_case_manager", "secondary_case_manager", "form_label", "input_long", managers, please_select=True, required=False, first=True)}
      % endif
 
         <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>

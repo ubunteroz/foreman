@@ -8,7 +8,8 @@ from mako.lookup import TemplateLookup
 from formencode import Invalid
 from formencode.variabledecode import variable_decode
 # local imports
-from ..utils.utils import session, ROOT_DIR, multidict_to_dict
+from ..utils.utils import session, ROOT_DIR, multidict_to_dict, config
+from ..utils.mail import email
 from ..model import User, CaseStatus, Case, Task, TaskStatus, Evidence, has_permissions, ForemanOptions, UserCaseRoles
 from ..model import TaskUpload, EvidencePhotoUpload, Team, Department, CaseHistory, UserTaskRoles, TaskHistory, \
     EvidenceHistory, EvidenceStatus
@@ -124,7 +125,7 @@ class BaseController():
                      'text': """Foreman has run out of names from your uploaded task names list.
                      Please ask your administrator to add more.
                      More details can be found in the admin control panel."""
-                    }
+                     }
                 )
             if overload[1]:
                 base_vars['error_message_website_wide'].append(
@@ -132,7 +133,7 @@ class BaseController():
                      'text': """Foreman has run out of names from your uploaded case names list.
                      Please ask your administrator to add more.
                      More details can be found in the admin control panel."""
-                    }
+                     }
                 )
 
             if User.get_amount() == 1:
@@ -140,7 +141,7 @@ class BaseController():
                     {'title': "Add more users",
                      'text': "You are currently the only user of Foreman.<a href='" +
                              self.urls.build('user.add') + "'>Add more users here.</a>"
-                    }
+                     }
                 )
 
             if self.current_user.id == 1 and User.check_password(self.current_user.username, "changeme"):
@@ -148,7 +149,7 @@ class BaseController():
                     {'title': "Change your default password",
                      'text': """You are currently using the default admin password which is published publicly.
                      You are advised to change this immediately. """
-                    }
+                     }
                 )
 
             num_invalid = User.get_number_unvalidated()
@@ -160,7 +161,7 @@ class BaseController():
                              "<a href='{}'>Validate them here</a>".format(num_invalid, plural,
                                                                           self.urls.build("general.admin",
                                                                                           dict(active_tab=5)))
-                    }
+                     }
                 )
 
         base_vars['invRoles'] = TaskStatus.invRoles
@@ -187,6 +188,15 @@ class BaseController():
                                                                              self.current_user, [CaseStatus.REJECTED])
             base_vars['requester_pending_cases'] = Case.get_cases_requested(self.current_user, self.check_permissions,
                                                                             self.current_user, [CaseStatus.PENDING])
+        if self.current_user and self.current_user.is_case_manager():
+            base_vars['caseman_rejected_cases'] = Case.get_cases_requested_case_manager(self.current_user,
+                                                                                        self.check_permissions,
+                                                                                        self.current_user,
+                                                                                        [CaseStatus.REJECTED])
+            base_vars['caseman_pending_cases'] = Case.get_cases_requested_case_manager(self.current_user,
+                                                                                       self.check_permissions,
+                                                                                       self.current_user,
+                                                                                       [CaseStatus.PENDING])
         if self.current_user and self.current_user.is_authoriser():
             base_vars['authoriser_to_authorise'] = Case.get_cases_authorised(self.current_user, self.check_permissions,
                                                                              self.current_user, [CaseStatus.PENDING])
@@ -198,6 +208,18 @@ class BaseController():
 
         return base_vars
 
+    @staticmethod
+    def send_email_alert(to_users, title, message):
+        email_addr = [user.email for user in to_users if user is not None]
+        subject = "auto notification: {}".format(title)
+        email(email_addr, subject, """
+Hello,
+
+{}
+
+Thanks,
+Foreman
+{}""".format(message, config.get('admin', 'website_domain')), config.get('email', 'from_address'))
 
     @staticmethod
     def _validate_task(case_id, task_id):
@@ -246,7 +268,6 @@ class BaseController():
                 return None
         else:
             return None
-
 
     @staticmethod
     def _validate_case(case_id):

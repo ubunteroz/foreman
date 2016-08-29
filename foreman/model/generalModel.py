@@ -35,6 +35,19 @@ class ForemanOptions(Base, Model):
     manager_inherit = Column(Boolean)
     evidence_retention_period = Column(Integer)
     evidence_retention = Column(Boolean)
+    email_alert_all_inv_task_queued = Column(Boolean)
+    email_alert_inv_assigned_task = Column(Boolean)
+    email_alert_qa_assigned_task = Column(Boolean)
+    email_alert_caseman_inv_self_assigned = Column(Boolean)
+    email_alert_caseman_qa_self_assigned = Column(Boolean)
+    email_alert_req_task_completed = Column(Boolean)
+    email_alert_case_man_task_completed = Column(Boolean)
+    email_alert_all_caseman_new_case = Column(Boolean)
+    email_alert_all_caseman_case_auth = Column(Boolean)
+    email_alert_req_case_caseman_assigned = Column(Boolean)
+    email_alert_req_case_opened = Column(Boolean)
+    email_alert_req_case_closed = Column(Boolean)
+    email_alert_req_case_archived = Column(Boolean)
 
     CASE_NAME_OPTIONS = ['NumericIncrement', 'DateNumericIncrement', 'FromList']
     TASK_NAME_OPTIONS = ['NumericIncrement', 'FromList', 'TaskTypeNumericIncrement']
@@ -62,7 +75,7 @@ class ForemanOptions(Base, Model):
         self.auth_view_tasks = auth_view_tasks
         self.manager_inherit = manager_inherit
         self.evidence_retention = False
-        self.evidence_retention_period = 0
+        self.evidence_retention_period = None
 
         TaskCategory.populate_default()
         TaskType.populate_default()
@@ -70,6 +83,21 @@ class ForemanOptions(Base, Model):
         CaseClassification.populate_default()
         CaseType.populate_default()
         CasePriority.populate_default()
+
+        self.email_alert_all_inv_task_queued = False
+        self.email_alert_inv_assigned_task = False
+        self.email_alert_qa_assigned_task = False
+        self.email_alert_caseman_inv_self_assigned = False
+        self.email_alert_caseman_qa_self_assigned = False
+        self.email_alert_req_task_completed = False
+        self.email_alert_case_man_task_completed = False
+        self.email_alert_all_caseman_new_case = False
+        self.email_alert_all_caseman_case_auth = False
+        self.email_alert_req_case_caseman_assigned = False
+        self.email_alert_req_case_opened = False
+        self.email_alert_req_case_closed = False
+        self.email_alert_req_case_archived = False
+
         session.commit()
 
     @staticmethod

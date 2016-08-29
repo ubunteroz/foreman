@@ -24,7 +24,7 @@
     % endif
         <% from datetime import datetime %>
         <% text = "Check-In" if checkin is True else "Check-Out" %>
-        ${forms.formTextField("Date of " + text, "date", "date", "form_label", "input_long", first=True, default=datetime.now().strftime("%d %B %Y"))}
+        ${forms.formTextField("Date of " + text, "date", "date", "form_label", "input_long", first=True, default=datetime.now().strftime("%d/%m/%Y"))}
         ${forms.formTextField("Time of " + text, "time", "time", "form_label", "input_long", default=datetime.now().strftime("%H:%M"))}
         ${forms.formTextField("Person/Location evidence is going to", "user", "user", "form_label", "input_long")}
         ${forms.formTextArea("Comments", "comments", "comments", "form_label", "addeditcase")}

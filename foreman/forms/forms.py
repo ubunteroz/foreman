@@ -3,7 +3,7 @@ from formencode import Schema, Invalid, validators as v
 from formencode.foreach import ForEach
 from formencode.compound import All, Pipe
 from formencode.variabledecode import NestedVariables
-#local imports
+# local imports
 from validators import *
 
 
@@ -14,7 +14,7 @@ class AddCaseForm(Schema):
     background = v.UnicodeString(not_empty=True)
     location = v.UnicodeString()
     primary_case_manager = GetCaseManager(not_empty=True)
-    secondary_case_manager = GetCaseManager(not_empty=True)
+    secondary_case_manager = GetCaseManager()
     classification = GetCaseClassification(not_empty=True)
     case_type = GetCaseType(not_empty=True)
     justification = v.UnicodeString(not_empty=True)
@@ -149,6 +149,11 @@ class AssignInvestigatorForm(Schema):
 
 
 class AssignQAForm(Schema):
+    role = IsPrincipleQA()
+    qa = GetQA()
+
+
+class AssignQADuringForensicsForm(Schema):
     investigator = GetQA(allow_null=False, not_empty=True)
     investigator2 = GetQA(allow_null=True)
 
@@ -349,6 +354,11 @@ class OptionsForm(Schema):
     upload_case_names = UploadNames()
     upload_task_names = UploadNames()
 
+    chained_validators = [
+        NotEmptyUpload('case_names', 'upload_case_names'),
+        NotEmptyUpload('task_names', 'upload_task_names')
+    ]
+
 
 class UploadTaskFile(Schema):
     file_title = v.UnicodeString(not_empty=True)
@@ -425,5 +435,25 @@ class ChangeCaseStatusForm(Schema):
 
 class EvidenceRetentionForm(Schema):
     evi_ret = v.StringBool(not_empty=True)
-    evi_ret_months = PositiveNumberAboveZero(not_empty=True)
+    evi_ret_months = PositiveNumberAboveZero()
     remove_evi_ret = v.Bool()
+
+    chained_validators = [RequiredFieldEvidence('evi_ret', 'evi_ret_months')]
+
+
+class TaskEmailAlerts(Schema):
+   email_alert_ai_tq = v.Bool()
+   email_alert_i_at = v.Bool()
+   email_alert_qa_at = v.Bool()
+   email_alert_cm_ia = v.Bool()
+   email_alert_cm_qa = v.Bool()
+   email_alert_r_tc = v.Bool()
+   email_alert_c_tc = v.Bool()
+
+class CaseEmailAlerts(Schema):
+    email_alert_allcm_nc = v.Bool()
+    email_alert_allcm_au = v.Bool()
+    email_alert_r_cm = v.Bool()
+    email_alert_r_o = v.Bool()
+    email_alert_r_c = v.Bool()
+    email_alert_r_a = v.Bool()

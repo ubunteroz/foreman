@@ -107,11 +107,28 @@
             <a href="#"><img class="show-hide-sidepanel-down-button" src="${urls.build("images", dict(file='siteimages/down-arrow.png'))|h}" /></a>
             <h1>Case Management</h1>
             <div class="show-hide-sidepanel">
-                <p><a href='${urls.build("case.add", dict(active_tab=3))|h}'>Add new case</a></p>
+
                 <p><a href='${urls.build("case.view_all", dict(view="Unassigned"))|h}'>View cases with no case manager</a> (${created_cases_no_manager|h})</p>
                 <p><a href='${urls.build("case.view_all", dict(view="Created"))|h}'>View created cases</a> (${created_cases|h})</p>
                 <p><a href='${urls.build("case.view_all", dict(view="Open"))|h}'>View open cases</a> (${open_cases|h})</p>
                 <p><a href='${urls.build("case.view_all", dict(view="My"))|h}'>View my cases</a> (${my_cases|h})</p>
+                <p><a href='${urls.build("case.add", dict(active_tab=3))|h}'>Add new case</a></p>
+
+                <h2>Cases Awaiting Authorisation</h2>
+                % for case in caseman_pending_cases:
+                    <p><a href='${urls.build("case.view", dict(case_id=case.id))|h}'>${case.case_name|h}</a></p>
+                % endfor
+                % if len(caseman_pending_cases) == 0:
+                    <p>None.</p>
+                % endif
+
+                <h2>Cases Rejected</h2>
+                % for case in caseman_rejected_cases:
+                    <p><a href='${urls.build("case.view", dict(case_id=case.id))|h}'>${case.case_name|h}</a> </p>
+                % endfor
+                % if len(caseman_rejected_cases) == 0:
+                    <p>None.</p>
+                % endif
             </div>
 
         </div>

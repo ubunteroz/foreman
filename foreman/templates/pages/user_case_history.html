@@ -13,7 +13,7 @@
 </div>
 <div id="mainbar">
 
-    % if current_user == user and current_user.is_requester():
+    % if current_user == user and current_user.is_requester() and not current_user.is_admin():
     <h1>Cases Requested</h1>
     % else:
     <h1>Case History for ${user.fullname|h}</h1>

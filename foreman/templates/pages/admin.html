@@ -102,9 +102,9 @@
     <div id="tabs">
         <ul>
             <li><a href="#tabs-1">Options</a></li>
-            <li><a href="#tabs-2">Task Types & Categories</a></li>
+            <li><a href="#tabs-2">Task Options</a></li>
             <li><a href="#tabs-3">Evidence Options</a></li>
-            <li><a href="#tabs-4">Case Types & Classifications</a></li>
+            <li><a href="#tabs-4">Case Options</a></li>
             <li><a href="#tabs-5">Notes Export Formatting</a></li>
             <li><a href="#tabs-6">Validate Users
                 % if unvalidated_users:
@@ -134,7 +134,6 @@
 
             <div class="form_background">
                 <h2>Information About Your Team & Foreman Options</h2>
-
                 <form method="post" enctype='multipart/form-data' action="${urls.build('general.admin', dict(form='options', active_tab=0))|h}">
                     ${forms.formTextField("Company Name", "company", "company", "form_label", "input_long", value=options.company, first=True)}
                     ${forms.formTextField("Department Name", "department", "department", "form_label", "input_long", value=options.department)}
@@ -215,6 +214,25 @@
         </div>
 
         <div id="tabs-2" class="forensics_work_contents">
+            <h1>Task Email Alerts</h1>
+            <div class="form_background">
+            <h2>Email alerts</h2>
+
+            <form method="post" action="${urls.build('general.admin', dict(form='email_task', active_tab=1))|h}">
+                <p>Email alert:</p>
+                ${forms.formCheckBoxes_labelright("All Investigators when a new task is queued", "email_alert_ai_tq", "email_alert_ai_tq", "email_alert_ai_tq", "form_label_right", "radio_input_long", checked=options.email_alert_all_inv_task_queued)}
+                ${forms.formCheckBoxes_labelright("Investigators when they are assigned a task", "email_alert_i_at", "email_alert_i_at", "email_alert_i_at", "form_label_right", "radio_input_long", checked=options.email_alert_inv_assigned_task)}
+                ${forms.formCheckBoxes_labelright("QAs when they are assigned a task to QA", "email_alert_qa_at", "email_alert_qa_at", "email_alert_qa_at", "form_label_right", "radio_input_long", checked=options.email_alert_qa_assigned_task)}
+                ${forms.formCheckBoxes_labelright("Case Manager when an investigator assigns themselves a task for their case", "email_alert_cm_ia", "email_alert_cm_ia", "email_alert_cm_ia", "form_label_right", "radio_input_long", checked=options.email_alert_caseman_inv_self_assigned)}
+                ${forms.formCheckBoxes_labelright("Case Manager when an QA assigns themselves a task for their case", "email_alert_cm_qa", "email_alert_cm_qa", "email_alert_cm_qa", "form_label_right", "radio_input_long", checked=options.email_alert_caseman_qa_self_assigned)}
+                ${forms.formCheckBoxes_labelright("Case Manager when a task is completed for their case", "email_alert_c_tc", "email_alert_c_tc", "email_alert_c_tc", "form_label_right", "radio_input_long", checked=options.email_alert_case_man_task_completed)}
+                ${forms.formCheckBoxes_labelright("Requester when a task is completed for their case", "email_alert_r_tc", "email_alert_r_tc", "email_alert_r_tc", "form_label_right", "radio_input_long", checked=options.email_alert_req_task_completed)}
+
+                <p style="clear:both; text-align:center"><input type="submit" value="Update alerts" /></p>
+            </form>
+            </div>
+
+            <h1>Task Types</h1>
 
             <div class="form_background">
             <h2>Move Task Type To Different Category</h2>
@@ -326,8 +344,24 @@
 
         <div id="tabs-4" class="forensics_work_contents">
 
-            <h1>Case Types</h1>
+            <h1>Case Email Alerts</h1>
+            <div class="form_background">
+            <h2>Email alerts</h2>
 
+            <form method="post" action="${urls.build('general.admin', dict(form='email_case', active_tab=3))|h}">
+                <p>Email alert:</p>
+                ${forms.formCheckBoxes_labelright("All case managers when a new case is created and pending authorisation", "email_alert_allcm_nc", "email_alert_allcm_nc", "email_alert_allcm_nc", "form_label_right", "radio_input_long", checked=options.email_alert_all_caseman_new_case)}
+                ${forms.formCheckBoxes_labelright("All case managers when a new case is authorised", "email_alert_allcm_au", "email_alert_allcm_au", "email_alert_allcm_au", "form_label_right", "radio_input_long", checked=options.email_alert_all_caseman_case_auth)}
+                ${forms.formCheckBoxes_labelright("Requester when their case has been assigned a case manager", "email_alert_r_cm", "email_alert_r_cm", "email_alert_r_cm", "form_label_right", "radio_input_long", checked=options.email_alert_req_case_caseman_assigned)}
+                ${forms.formCheckBoxes_labelright("Requester when their case is opened", "email_alert_r_o", "email_alert_r_o", "email_alert_r_o", "form_label_right", "radio_input_long", checked=options.email_alert_req_case_opened)}
+                ${forms.formCheckBoxes_labelright("Requester when their case is closed", "email_alert_r_c", "email_alert_r_c", "email_alert_r_c", "form_label_right", "radio_input_long", checked=options.email_alert_req_case_closed)}
+                ${forms.formCheckBoxes_labelright("Requester when their case is archived", "email_alert_r_a", "email_alert_r_a", "email_alert_r_a", "form_label_right", "radio_input_long", checked=options.email_alert_req_case_archived)}
+
+                <p style="clear:both; text-align:center"><input type="submit" value="Update alerts" /></p>
+            </form>
+            </div>
+
+            <h1>Case Types</h1>
             <div class="form_background">
             <h2>Remove Case Type</h2>
              <form method="post" action="${urls.build('general.admin', dict(form='remove_case_type', active_tab=3))|h}">

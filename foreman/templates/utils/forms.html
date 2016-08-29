@@ -174,6 +174,22 @@
     </p>
 </%def>
 
+<%def name="formCheckBoxes_labelright(label, opt, name, id, labelclass, inputclass, checked=False, first=False, p_id='')" filter="trim">
+    % if first != True:
+    <p id="${p_id|h}" style="clear:both; position:relative">
+    % else:
+    <p id="${p_id|h}">
+    % endif
+        % if checked:
+            <input class="${inputclass|h}" type="checkbox" id="${opt|h}" name="${name|h}" value="${opt|h}" checked />
+        % else:
+            <input class="${inputclass|h}" type="checkbox" id="${opt|h}" name="${name|h}" value="${opt|h}" />
+        % endif
+    <label for="${name|h}" class="${labelclass|h}">${label}</label>
+    ${getError(name)|h}
+    </p>
+</%def>
+
 <%def name="pickImageField(label, name, id, labelclass, inputclass, icon_list, func, img_class, first=False)" filter="trim">
     % if first != True:
     <p style="clear:both; position:relative">

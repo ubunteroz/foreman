@@ -673,6 +673,11 @@ input.timesheet{
     width: 10px;
 }
 
+.radio_input_long{
+    width: 250px;
+    left: 100px;
+}
+
 textarea{
     border: solid black 1px;
     float: left;
@@ -722,6 +727,14 @@ div.radio input{
 
 label.form_label{
     width: 250px;
+	float: left;
+	text-align: right;
+	margin-right: 15px;
+	display: block;
+	position: relative;
+}
+
+label.form_label_right{
 	float: left;
 	text-align: right;
 	margin-right: 15px;

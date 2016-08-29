@@ -510,7 +510,7 @@
             <td>
                 % if check_perms(task, "view"):
                 <a href='${urls.build("task.view", dict(task_id=task.id, case_id=task.case.id))|h}'>${task.task_name|h}</a>
-                else:
+                % else:
                 ${task.task_name|h}
                 % endif
             </td>

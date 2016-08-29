@@ -5,8 +5,8 @@ import string
 
 # local imports
 from baseController import BaseController, lookup, jsonify
-from ..model import Task, Case, TaskNotes, UserRoles, UserMessage, TaskUpload
-from ..forms.forms import QACheckerForm, AddTaskNotesForm, AssignQAForm, AssignQAFormSingle, AskForQAForm
+from ..model import Task, Case, TaskNotes, UserRoles, UserMessage, TaskUpload, ForemanOptions
+from ..forms.forms import QACheckerForm, AddTaskNotesForm, AssignQADuringForensicsForm, AssignQAFormSingle, AskForQAForm
 from ..forms.forms import UploadTaskFile
 from ..utils.utils import session, multidict_to_dict, config, upload_file
 from ..utils.mail import email
@@ -37,18 +37,26 @@ class ForensicsController(BaseController):
             success_qa = False
             success_upload = False
             active_tab = int(form_type['active_tab']) if 'active_tab' in form_type else 0
+            email_alert_flag = False
+
+            options = ForemanOptions.get_options()
+            url = config.get('admin', 'website_domain') + self.urls.build('task.view', dict(task_id=task.id,
+                                                                                            case_id=task.case.id))
+
+            if options.email_alert_case_man_task_completed:
+                email_alert_flag = True
 
             if 'add_notes' in form_type and form_type['add_notes'] == "true" and self.validate_form(AddTaskNotesForm()):
                 task.add_note(self.form_result['notes'], self.current_user)
                 session.flush()
                 success = True
             elif 'assign_QA' in form_type and form_type['assign_QA'] == "true" and form_type['assign_num'] == "2" \
-                    and self.validate_form(AssignQAForm()):
-                task.assign_QA(self.form_result['investigator'], self.form_result['investigator2'], self.current_user)
+                    and self.validate_form(AssignQADuringForensicsForm()):
+                task.investigator_assign_qa(self.form_result['investigator'], self.form_result['investigator2'], self.current_user)
                 success_qa = True
             elif 'assign_QA' in form_type and form_type['assign_QA'] == "true" and form_type['assign_num'] == "1" \
                     and self.validate_form(AssignQAFormSingle()):
-                task.assign_QA(self.form_result['investigator'], None, self.current_user, single=True)
+                task.investigator_assign_qa(self.form_result['investigator'], None, self.current_user, single=True)
                 success_qa = True
             elif 'request_qa' in form_type and form_type['request_qa'] == "true" and self.validate_form(AskForQAForm()):
                 task.request_QA(self.current_user)
@@ -85,7 +93,11 @@ class ForensicsController(BaseController):
                     start = True
                 elif form_type["status"] == "deliver":
                     task.deliver_task(self.current_user)
+                    if options.email_alert_case_man_task_completed:
+                        self.send_email_alert(task.case.case_managers, "A task in your case has been completed",
+                                              """Task {} in case {} has been completed.
 
+The task can be viewed here: {}""".format(task.task_name, task.case.case_name, url))
             if len(task.QAs) == 2:
                 qa_partners = [("both", "Message both")] + [(qa.id, qa.fullname) for qa in task.QAs]
             elif len(task.QAs) == 1:
@@ -99,7 +111,7 @@ class ForensicsController(BaseController):
             return self.return_response('pages', 'update_forensics.html', task=task, success=success, start=start,
                                        qa_partner_list=qa_partner_list, success_qa=success_qa, qa_partners=qa_partners,
                                        case_note_dates=case_note_dates, success_upload=success_upload,
-                                       active_tab=active_tab, errors=self.form_error)
+                                       active_tab=active_tab, errors=self.form_error, email_alert_flag=email_alert_flag)
         else:
             return self.return_404()
 

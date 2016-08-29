@@ -354,6 +354,10 @@ class Case(Base, Model):
             self.set_status(CaseStatus.REJECTED, authoriser)
 
     @property
+    def is_authorised(self):
+        return self.authorisations[0].case_authorised == "AUTH"
+
+    @property
     def date_created(self):
         return ForemanOptions.get_date(self.creation_date)
 
@@ -493,6 +497,14 @@ class Case(Base, Model):
         q = session.query(Case)
         q = q.join(UserCaseRoles).filter(UserCaseRoles.user_id == requester.id). \
             filter(UserCaseRoles.role == UserCaseRoles.REQUESTER)
+        q = q.filter(Case.currentStatus.in_(statuses))
+        return Case._check_perms(current_user, q, case_perm_checker)
+
+    @staticmethod
+    def get_cases_requested_case_manager(case_manager, case_perm_checker, current_user, statuses):
+        q = session.query(Case)
+        q = q.join(UserCaseRoles).filter(UserCaseRoles.user_id == case_manager.id). \
+            filter(UserCaseRoles.role == UserCaseRoles.PRINCIPLE_CASE_MANAGER)
         q = q.filter(Case.currentStatus.in_(statuses))
         return Case._check_perms(current_user, q, case_perm_checker)
 
@@ -993,7 +1005,7 @@ class TaskStatus(Base, HistoryModel):
     CLOSED = 'Closed'
 
     openStatuses = [CREATED, QUEUED, ALLOCATED, PROGRESS, QA, DELIVERY]
-    notStarted = [QUEUED]
+    beAssigned = [ALLOCATED, PROGRESS, QA]
     preInvestigation = [QUEUED, ALLOCATED]
     notesAllowed = [ALLOCATED, PROGRESS, QA, DELIVERY, COMPLETE]
     qaComplete = [DELIVERY, COMPLETE, CLOSED]
@@ -1443,7 +1455,24 @@ class Task(Base, Model):
             u.add_change(manager)
         session.flush()
 
-    def assign_QA(self, principle_qa, secondary_qa, assignee, single=False):
+    def assign_qa(self, qa, principle=True, manager=None):
+        if principle:
+            role_type = UserTaskRoles.PRINCIPLE_QA
+        else:
+            role_type = UserTaskRoles.SECONDARY_QA
+
+        UserTaskRoles.delete_if_already_exists(self.id, qa.id, role_type)
+
+        u = UserTaskRoles(qa, self, role_type)
+        session.add(u)
+        session.flush()
+        if manager is None:
+            u.add_change(qa)
+        else:
+            u.add_change(manager)
+        session.flush()
+
+    def investigator_assign_qa(self, principle_qa, secondary_qa, assignee, single=False):
         self.set_status(self.get_status().status, assignee)
         currentStatus = self.get_status()
 
@@ -1727,6 +1756,12 @@ class Task(Base, Model):
                                                                    or_(UserTaskRoles.role == UserTaskRoles.PRINCIPLE_QA,
                                                                        UserTaskRoles.role == UserTaskRoles.SECONDARY_QA)))
         return query.all()
+
+    @property
+    def workers(self):
+        invs = self.investigators
+        qas = self.QAs
+        return [person for person in invs] + [person for person in qas]
 
     def _active_before_start(self, user, day_tracker):
         if date(day_tracker.year, day_tracker.month, day_tracker.day) < date(self.creation_date.year,

@@ -115,6 +115,9 @@
             % endif
 
             <h2>Edit Investigators & QA Partners</h2>
+            % if email_alert_flag:
+                <p>Note: Changes to investigators and QAs will be automatically emailed to them.</p>
+            % endif
             <form method="post" action="${urls.build('task.edit', dict(task_id=task.id, case_id=task.case.id, form='edit_users'))|h}">
                 ${forms.formSelectBox("Principle Investigator", "primary_investigator", "primary_investigator", "form_label", "input_long", investigators, first=True, please_select=True, value=principle_inv, required=False)}
                 ${forms.formSelectBox("Secondary Investigator", "secondary_investigator", "secondary_investigator", "form_label", "input_long", investigators, please_select=True, value=secondary_inv, required=False)}

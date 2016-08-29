@@ -18,6 +18,9 @@
 <div id="mainbar">
     % if closed == False:
     <h1>Confirm closure of Case ${case.case_name|h}</h1>
+        % if email_alert_flag:
+            <p>Note: The requester will be automatically emailed that their case has been closed.</p>
+        % endif
 
     <form method="post" action="${urls.build('case.close', dict(case_id=case.id, confirm='true'))|h}">
         ${forms.formTextArea("Reason for closure", "closure", "closure", "form_label", "addeditcase", first=True)}

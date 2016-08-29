@@ -23,7 +23,7 @@
 <div id="mainbar">
     <h1>Edit Case ${case.case_name|h}</h1>
     <p><a href="${urls.build('case.view', dict(case_id=case.id))|h}">Back to Case</a>
-     % if not(current_user.id == case.requester.id):
+     % if case.requester is None or current_user.id != case.requester.id:
         | <a href="${urls.build('case.add_task', dict(case_id=case.id))|h}">Add Tasks</a>
      % endif
     </p>
@@ -31,11 +31,13 @@
     <div id="tabs">
         <ul>
         <li><a href="#tabs-1">Edit Case Details</a></li>
-        % if not(current_user.id == case.requester.id):
+        % if case.requester is None or current_user.id != case.requester.id:
             <li><a href="#tabs-2">Link With Other Cases</a></li>
-            <li><a href="#tabs-3">Edit Case Managers</a></li>
-            % if len(case.tasks) != 0:
-            <li><a href="#tabs-4">Edit & Reassign Tasks</a></li>
+            % if case.is_authorised:
+                <li><a href="#tabs-3">Edit Case Managers</a></li>
+                % if len(case.tasks) != 0:
+                    <li><a href="#tabs-4">Edit & Reassign Tasks</a></li>
+                % endif
             % endif
         % endif
         </ul>
@@ -76,9 +78,12 @@
 
             <form method="post" action="${urls.build('case.edit', dict(case_id=case.id, form='edit_case'))|h}">
                 ${forms.formTextField("Case Name", "case_name", "case_name", "form_label", "input_long", first=True, value=case.case_name)}
-                % if current_user.id == case.requester.id and case.authorised.case_authorised == "NOAUTH":
+                % if case.requester is not None and current_user.id == case.requester.id and case.authorised.case_authorised == "NOAUTH":
                     ${forms.formSelectBox("Authoriser", "authoriser", "authoriser", "form_label", "input_long", authorisers, value=case.authoriser.id)}
                     ${forms.formTextField("Case Files Location", "location", "location", "form_label", "input_long", value=case.location, required=False, hidden=True)}
+                % elif case.requester is None and current_user.id == case.principle_case_manager.id and case.authorised.case_authorised == "NOAUTH":
+                    ${forms.formSelectBox("Authoriser", "authoriser", "authoriser", "form_label", "input_long", authorisers, value=case.authoriser.id)}
+                    ${forms.formTextField("Case Files Location", "location", "location", "form_label", "input_long", value=case.location, required=False)}
                 % else:
                     ${forms.formSelectBox("Authoriser", "authoriser", "authoriser", "form_label", "input_long", authorisers, value=case.authoriser.id, hidden=True)}
                     ${forms.formTextField("Case Files Location", "location", "location", "form_label", "input_long", value=case.location, required=False)}
@@ -100,7 +105,7 @@
 
         </div>
 
-        % if not(current_user.id == case.requester.id):
+        % if case.requester is None or current_user.id != case.requester.id:
         <div id="tabs-2" class="forensics_work_contents">
 
             <h2>Linked Cases</h2>
@@ -204,6 +209,7 @@
             </form>
          </div>
 
+        % if case.is_authorised:
         <div id="tabs-3" class="forensics_work_contents">
 
             % if case_manager_history:
@@ -238,6 +244,9 @@
             % endif
 
             <h2>Edit Case Managers</h2>
+            % if email_alert_flag:
+                <p>Note: The requester will be automatically emailed when a case manager is assigned to their case.</p>
+            % endif
             <form method="post" action="${urls.build('case.edit', dict(case_id=case.id, form='edit_case_managers'))|h}">
                 ${forms.formSelectBox("Principle Case Manager", "primary_case_manager", "primary_case_manager", "form_label", "input_long", managers, first=True, please_select=True, value=principle_man, required=False)}
                 ${forms.formSelectBox("Secondary Case Manager", "secondary_case_manager", "secondary_case_manager", "form_label", "input_long", managers, please_select=True, value=secondary_man, required=False)}
@@ -246,24 +255,25 @@
             </form>
          </div>
 
-        % if len(case.tasks) != 0:
-        <div id="tabs-4" class="forensics_work_contents">
+            % if len(case.tasks) != 0:
+            <div id="tabs-4" class="forensics_work_contents">
 
-            <h2>Current Tasks</h2>
+                <h2>Current Tasks</h2>
 
-            <p>Click on the task name to edit the task.</p>
+                <p>Click on the task name to edit the task.</p>
 
-            ${format.task_table(case.tasks, edit=True)}
+                ${format.task_table(case.tasks, edit=True)}
 
-            <h2>Remove Task and Assign to Another Case</h2>
+                <h2>Remove Task and Assign to Another Case</h2>
 
-            <form method="post" action="${urls.build('case.edit', dict(case_id=case.id, form='reassign_tasks'))|h}">
-                ${forms.formSelectBox("Task", "task_reassign", "task_reassign", "form_label", "input_long", reassign_tasks, first=True, please_select=True)}
-                ${forms.formSelectBox("Reassign to Case", "case_reassign", "case_reassign", "form_label", "input_long", reassign_cases, please_select=True)}
-                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
-            </form>
+                <form method="post" action="${urls.build('case.edit', dict(case_id=case.id, form='reassign_tasks'))|h}">
+                    ${forms.formSelectBox("Task", "task_reassign", "task_reassign", "form_label", "input_long", reassign_tasks, first=True, please_select=True)}
+                    ${forms.formSelectBox("Reassign to Case", "case_reassign", "case_reassign", "form_label", "input_long", reassign_cases, please_select=True)}
+                    <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+                </form>
 
-         </div>
+             </div>
+            % endif
         % endif
     % endif
     </div>

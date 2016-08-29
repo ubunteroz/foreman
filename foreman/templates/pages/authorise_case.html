@@ -47,6 +47,9 @@
     <h2>Authorise Case</h2>
 
     % if complete is False:
+        % if email_alert_flag:
+            <p>Note: If this case is authorised, the case managers will receive an automatic email alert so they can start working on the case. </p>
+        % endif
      <form method="post" action="${urls.build('case.authorise', dict(case_id=case.id))|h}">
          ${forms.formSelectBox("Authorised", "auth", "auth", "form_label", "input_long", auth_choices, please_select=True, first=True)}
          ${forms.formTextArea("Justification", "reason", "reason", "form_label", "addeditcase_short")}

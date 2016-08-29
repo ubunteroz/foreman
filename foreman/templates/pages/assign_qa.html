@@ -17,14 +17,14 @@
     % if success == False:
     <h1>Please confirm</h1>
     <div class="confirmassigninv">
-        <p>Please confirm that you are assigning yourself as ${investigator.title()|h} Investigator for ${task.task_name|h}</p>
+        <p>Please confirm that you are assigning yourself as ${qa.title()|h} QA for ${task.task_name|h}</p>
         % if email_alert_flag:
             <p>Note: The case manager will be automatically emailed.</p>
         % endif
-        <p><a href="?assign=${investigator}&confirm=true">Confirm</a> | <a href="#" onclick="goBack()">Cancel</a></p>
+        <p><a href="?assign=${qa}&confirm=true">Confirm</a> | <a href="#" onclick="goBack()">Cancel</a></p>
     </div>
     % else:
-    <h1>You have been added as ${investigator.title()|h} Investigator for ${task.task_name|h}</h1>
-    <p><a href='${urls.build("task.view", dict(case_id=task.case.id, task_id=task.id))|h}'>View Task</a> | <a href='${urls.build("forensics.work", dict(task_id=task.id, case_id=task.case.id))|h}'>Work on Task</a></p>
+    <h1>You have been added as ${qa.title()|h} QA for ${task.task_name|h}</h1>
+    <p><a href='${urls.build("task.view", dict(case_id=task.case.id, task_id=task.id))|h}'>View Task</a></p>
     % endif
 </div>

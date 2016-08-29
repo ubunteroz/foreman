@@ -5,25 +5,13 @@ import datetime
 from formencode import validators as v, Invalid
 from formencode.compound import CompoundValidator
 # local imports
-from ..model import User, UserTaskRoles, UserRoles, TaskStatus, Task, CaseStatus, Case, ForemanOptions, TaskType
+from ..model import User, UserTaskRoles, UserRoles, Task, Case, ForemanOptions, TaskType
 from ..model import CaseType, CaseClassification, TaskCategory, CasePriority, Department, Team, EvidenceType
 from ..model import EvidenceStatus
 from ..utils.utils import ROOT_DIR
 
 
-class RemoveEmpties(v.FancyValidator):
-    """ Removes empty items from a list """
-    key = None
-
-    def _to_python(self, value, state):
-        if self.key is None:
-            return [item for item in value if item]
-        else:
-            # If item is a dictionary, check the required dictionary key.
-            return [item for item in value if item[self.key]]
-
-
-class Match(v.FancyValidator):
+class Match(v.FormValidator):
     """ Checks the new passwords match """
     __unpackargs__ = ('pass1_field', 'pass2_field')
     validate_partial_form = False
@@ -43,17 +31,21 @@ class Match(v.FancyValidator):
             return False
 
 
-class NotEmptyCaseUpload(v.FancyValidator):
+class NotEmptyUpload(v.FormValidator):
     """ Checks that there has been a file uploaded if the option was selected to upload a file """
-    validate_partial_form = False
+    __unpackargs__ = ('names', 'uploads')
+    validate_partial_form = True
 
-    def validate_python(self, vals, state):
-        if not self.check_upload(vals['case_names'], vals['upload_case_names']):
+    def validate_partial(self, vals, state):
+        if not self.check_upload(vals.get(self.names), vals.get(self.uploads)):
             errors = {
-                'case_names': 'Please upload a file or choose a different option',
-                'upload_case_names': 'Please upload a file or choose a different option',
+                self.names: 'Please upload a file or choose a different option',
+                self.uploads: 'Please upload a file or choose a different option',
             }
             raise Invalid('', vals, state, error_dict=errors)
+
+    def validate_python(self, vals, state):
+        self.validate_partial(vals, state)
 
     def check_upload(self, option, upload):
         if option == "FromList" and not upload:
@@ -62,20 +54,22 @@ class NotEmptyCaseUpload(v.FancyValidator):
             return True
 
 
-class NotEmptyTaskUpload(v.FancyValidator):
-    """ Checks that there has been a file uploaded if the option was selected to upload a file """
-    validate_partial_form = False
+class RequiredFieldEvidence(v.FormValidator):
+    __unpackargs__ = ('field', 'required_field')
+    validate_partial_form = True
 
-    def validate_python(self, vals, state):
-        if not self.check_upload(vals['task_names'], vals['upload_task_names']):
+    def validate_partial(self, vals, state):
+        if not self.check_required(vals.get(self.field), vals.get(self.required_field)):
             errors = {
-                'task_names': 'Please upload a file or choose a different option',
-                'upload_task_names': 'Please upload a file or choose a different option',
+                self.required_field: 'Please enter a value',
             }
             raise Invalid('', vals, state, error_dict=errors)
 
-    def check_upload(self, option, upload):
-        if option == "FromList" and not upload:
+    def validate_python(self, vals, state):
+        self.validate_partial(vals, state)
+
+    def check_required(self, field, field_req):
+        if field == "True" and not field_req:
             return False
         else:
             return True
@@ -89,6 +83,9 @@ class PositiveNumberAboveZero(v.Number):
     }
 
     def _to_python(self, value, state):
+        if value == "":
+            return value
+
         try:
             value = int(value)
         except ValueError:
@@ -116,14 +113,15 @@ class TimeSheetDateTime(v.UnicodeString):
 
 
 class ValidDate(v.UnicodeString):
+    now = datetime.datetime.now()
     messages = {
-        'invalid': 'The date was not entered in the correct format DD MMMM YYYY',
+        'invalid': 'The date was not entered in the correct format DD/MM/YYYY, e.g. {}'.format(now.strftime("%d/%m/%Y")),
     }
     allow_null = False
 
     def _to_python(self, value, state):
         try:
-            date = datetime.datetime.strptime(value, "%d %B %Y")
+            date = datetime.datetime.strptime(value, "%d/%m/%Y")
             return datetime.date(date.year, date.month, date.day)
         except ValueError:
             raise Invalid(self.message('invalid', state), value, state)
@@ -186,6 +184,22 @@ class IsPrincipleInvestigator(v.UnicodeString):
         if value == UserTaskRoles.PRINCIPLE_INVESTIGATOR:
             return True
         elif value == UserTaskRoles.SECONDARY_INVESTIGATOR:
+            return False
+        else:
+            raise Invalid(self.message('invalid', state), value, state)
+
+
+class IsPrincipleQA(v.UnicodeString):
+    messages = {
+        'null': 'Please select an option.',
+        'invalid': 'This item does not exist.',
+    }
+    allow_null = False
+
+    def _to_python(self, value, state):
+        if value == UserTaskRoles.PRINCIPLE_QA:
+            return True
+        elif value == UserTaskRoles.SECONDARY_QA:
             return False
         else:
             raise Invalid(self.message('invalid', state), value, state)
@@ -305,15 +319,16 @@ class GetUser(GetObject):
 
 
 class GetInvestigator(GetUser):
-    null_value = True
+    null_value = None
 
     def getObject(self, user_id):
         if user_id.isdigit():
             user = User.get(int(user_id))
             if user is not None:
-                for role in user.roles:
-                    if role.role == UserRoles.INV:
-                        return user
+                if user.roles is not None:
+                    for role in user.roles:
+                        if role.role == UserRoles.INV:
+                            return user
                 return None
             return None
         else:
@@ -321,15 +336,16 @@ class GetInvestigator(GetUser):
 
 
 class GetQA(GetUser):
-    null_value = None # originally True, not sure why these are set to true
+    null_value = None
 
     def getObject(self, user_id):
         if user_id.isdigit():
             user = User.get(int(user_id))
             if user is not None:
-                for role in user.roles:
-                    if role.role == UserRoles.QA:
-                        return user
+                if user.roles is not None:
+                    for role in user.roles:
+                        if role.role == UserRoles.QA:
+                            return user
                 return None
             return None
         else:
@@ -337,15 +353,16 @@ class GetQA(GetUser):
 
 
 class GetCaseManager(GetUser):
-    null_value = True
+    null_value = None
 
     def getObject(self, user_id):
         if user_id.isdigit():
             user = User.get(int(user_id))
             if user is not None:
-                for role in user.roles:
-                    if role.role == UserRoles.CASE_MAN:
-                        return user
+                if user.roles is not None:
+                    for role in user.roles:
+                        if role.role == UserRoles.CASE_MAN:
+                            return user
                 return None
             return None
         else:
@@ -353,34 +370,18 @@ class GetCaseManager(GetUser):
 
 
 class GetAuthoriser(GetUser):
-    null_value = True
     allow_null = False
     
     def getObject(self, user_id):
         if user_id.isdigit():
             user = User.get(int(user_id))
             if user is not None:
-                for role in user.roles:
-                    if role.role == UserRoles.AUTH:
-                        return user
+                if user.roles is not None:
+                    for role in user.roles:
+                        if role.role == UserRoles.AUTH:
+                            return user
                 return None
             return None
-        else:
-            return None
-
-
-class GetTaskStatus(GetObject):
-    messages = {
-        'invalid': 'Status is invalid.',
-        'null': 'Please select an option.'
-    }
-
-    allow_new = False
-    allow_null = False
-
-    def getObject(self, status_text):
-        if status_text in TaskStatus.all_statuses:
-            return status_text
         else:
             return None
 
@@ -396,7 +397,7 @@ class GetCaseClassification(GetObject):
 
     def getObject(self, classification):
         if classification.isdigit():
-            return CaseClassification.get(classification)
+            return CaseClassification.get(int(classification))
         return None
 
 
@@ -411,7 +412,7 @@ class GetPriority(GetObject):
 
     def getObject(self, priority):
         if priority.isdigit():
-            return CasePriority.get(priority)
+            return CasePriority.get(int(priority))
         else:
             return None
 
@@ -426,21 +427,8 @@ class GetCaseType(GetObject):
     allow_null = False
 
     def getObject(self, case_type):
-        return CaseType.get(case_type)
-
-
-class GetCaseStatus(GetObject):
-    messages = {
-        'invalid': 'Status is invalid.',
-        'null': 'Please select an option.'
-    }
-
-    allow_new = False
-    allow_null = False
-
-    def getObject(self, status_text):
-        if status_text in CaseStatus.all_statuses:
-            return status_text
+        if case_type.isdigit():
+            return CaseType.get(int(case_type))
         else:
             return None
 
@@ -486,9 +474,9 @@ class GetDepartment(GetObject):
     allow_null = False
 
     def getObject(self, department):
-        try:
+        if department.isdigit():
             return Department.get(int(department))
-        except ValueError:
+        else:
             return None
 
 
@@ -502,9 +490,9 @@ class GetTeam(GetObject):
     allow_null = False
 
     def getObject(self, team):
-        try:
+        if team.isdigit():
             return Team.get(int(team))
-        except ValueError:
+        else:
             return None
 
 
@@ -518,9 +506,9 @@ class GetTaskTypes(GetObject):
     allow_null = False
 
     def getObject(self, task_type):
-        try:
+        if task_type.isdigit():
             return TaskType.get(int(task_type))
-        except ValueError:
+        else:
             return None
 
 
@@ -534,9 +522,9 @@ class GetTaskCategory(GetObject):
     allow_null = False
 
     def getObject(self, category):
-        try:
+        if category.isdigit():
             return TaskCategory.get(int(category))
-        except ValueError:
+        else:
             return None
 
 
@@ -550,9 +538,9 @@ class GetEvidenceType(GetObject):
     allow_null = False
 
     def getObject(self, evidence_type):
-        try:
+        if evidence_type.isdigit():
             return EvidenceType.get(int(evidence_type))
-        except ValueError:
+        else:
             return None
 
 
@@ -561,7 +549,6 @@ class GetEvidenceStatus(v.UnicodeString):
         'null': 'Please select an option.',
         'invalid': 'Please select a valid status.',
     }
-    allow_null = False
 
     def _to_python(self, value, state):
         if value in EvidenceStatus.statuses:
@@ -575,7 +562,6 @@ class GetBooleanYesNo(v.UnicodeString):
         'null': 'Please select an option.',
         'invalid': 'Please select Yes or No.',
     }
-    allow_null = False
 
     def _to_python(self, value, state):
         if value == "yes":
@@ -591,7 +577,6 @@ class GetBooleanAuthReject(v.UnicodeString):
         'null': 'Please select an option.',
         'invalid': 'Please select Authorised or Rejected.',
     }
-    allow_null = False
 
     def _to_python(self, value, state):
         if value == "Authorised":
@@ -607,7 +592,6 @@ class CheckHex(v.UnicodeString):
         'null': 'Please select a colour.',
         'invalid': 'Please select a valid colour',
         }
-    allow_null = False
 
     def _to_python(self, value, state):
         try:
@@ -634,7 +618,7 @@ class PasswordCheck(v.FormValidator):
             raise Invalid('', vals, state, error_dict=errors)
 
     def check_pass(self, username, password):
-        if len(User.get_filter_by(username=username.lower()).all()) == 0:
+        if User.get_filter_by(username=username.lower()).first() is None:
             return False
         else:
             return User.check_password(username.lower(), password)
@@ -656,15 +640,12 @@ class ManagerCheck(v.FormValidator):
         if manager is None:
             return True
 
-        try:
-            if user.id == manager.id:
-                return False
-            elif manager in user._manager_loop_checker():
-                return False
-            else:
-                return True
-        except AttributeError:
+        if user.id == manager.id:
             return False
+        elif manager in user._manager_loop_checker():
+            return False
+        else:
+            return True
 
 
 class Upload(v.FancyValidator):
@@ -683,7 +664,11 @@ class Upload(v.FancyValidator):
 
         # FormEncode annoyingly checks whether the value is iterable by trying to iterate over it, which consumes
         # the first line of the file. Rewind it again.
-        value.seek(0)
+        try:
+            value.seek(0)
+        except AttributeError:
+            raise Invalid(self.message('empty', state), value, state)
+
         uploaded_file = value
         if self.type is None or self.type in uploaded_file.content_type or self.type in \
                 uploaded_file.filename.split(path.sep)[-1].split('.', 1)[1] or self.type in value.mimetype:
@@ -699,7 +684,7 @@ class Upload(v.FancyValidator):
 
 
 class UploadWithoutStorage(v.FancyValidator):
-    """ Class to upload things """
+    """ Class to upload things  - override this class """
 
     accept_iterator = True
 
@@ -712,7 +697,11 @@ class UploadWithoutStorage(v.FancyValidator):
 
         # FormEncode annoyingly checks whether the value is iterable by trying to iterate over it, which consumes
         # the first line of the file. Rewind it again.
-        value.seek(0)
+        try:
+            value.seek(0)
+        except AttributeError:
+            raise Invalid(self.message('empty', state), value, state)
+
         if self.type is not None:
             if self.type in value.mimetype or self.type in value.content_type:
                 return value

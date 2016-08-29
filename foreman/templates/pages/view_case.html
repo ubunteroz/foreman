@@ -17,20 +17,22 @@
             <a href='${urls.build("case.authorise", dict(case_id=case.id))|h}'>Authorise/reject this case</a>
         % endif
         % if check_perms(case, 'edit'):
-            % if current_user.id == case.requester.id and (case.authorised is not None and case.authorised.case_authorised == "NOAUTH"):
+            % if case.requester and current_user.id == case.requester.id and (case.authorised is not None and case.authorised.case_authorised == "NOAUTH"):
+            <a href='${urls.build("case.edit", dict(case_id=case.id))|h}'>Edit the case to retry for authorisation</a>
+            % elif case.requester is None and current_user.id == case.principle_case_manager.id and (case.authorised is not None and case.authorised.case_authorised == "NOAUTH"):
             <a href='${urls.build("case.edit", dict(case_id=case.id))|h}'>Edit the case to retry for authorisation</a>
             % else:
             <a href='${urls.build("case.edit", dict(case_id=case.id))|h}'>Edit</a>
             % endif
         % endif
         % if check_perms(case, 'edit'):
-            % if case.status == case_statuses['created'] and current_user.id != case.requester.id:
+            % if case.status == case_statuses['created'] and (case.requester is None or current_user.id != case.requester.id):
                 | <a href='${urls.build("case.change_status", dict(case_id=case.id, status=case_statuses["open"]))|h}'>Open this Case for Investigation</a>
             % elif case.status == case_statuses['open']:
                 | <a href='${urls.build("case.close", dict(case_id=case.id))|h}'>Close this Case</a>
             % elif case.status == case_statuses['closed']:
                 | <a href='${urls.build("case.change_status", dict(case_id=case.id, status=case_statuses["open"]))|h}'>Reopen this Case</a>
-                % if current_user.id != case.requester.id:
+                % if case.requester is None or current_user.id != case.requester.id:
                 | <a href='${urls.build("case.change_status", dict(case_id=case.id, status=case_statuses["archived"]))|h}'>Archive this Case</a>
                 % endif
             % endif

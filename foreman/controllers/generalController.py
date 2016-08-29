@@ -11,7 +11,8 @@ from baseController import BaseController, jsonify
 from ..model.caseModel import Task, User, ForemanOptions, Case, Evidence, CaseStatus, EvidenceStatus
 from ..model.generalModel import TaskType, TaskCategory, EvidenceType, CaseClassification, CaseType, CasePriority
 from ..model.userModel import UserRoles, Department, Team, User
-from ..forms.forms import LoginForm, OptionsForm, AddEvidenceTypeForm, RegisterForm, AddClassificationForm
+from ..forms.forms import LoginForm, OptionsForm, AddEvidenceTypeForm, RegisterForm, AddClassificationForm, \
+    TaskEmailAlerts, CaseEmailAlerts
 from ..forms.forms import AddCaseTypeForm, RemoveCaseTypeForm, RemoveClassificationForm, RemoveEvidenceTypeForm
 from ..forms.forms import MoveTaskTypeForm, AddTaskTypeForm, RemoveTaskTypeForm, AddTaskCategoryForm, RemoveCategoryForm
 from ..forms.forms import AddTeamForm, RenameTeamForm, RemoveTeamForm, AddDepartmentForm, RenameDepartmentForm
@@ -178,7 +179,23 @@ Foreman
                     evi.set_retention_date()
                     if evi.reminder_due():
                         retention_notifier([evi])
-
+        elif 'form' in form_type and form_type['form'] == "email_task" and self.validate_form(TaskEmailAlerts()):
+            options = ForemanOptions.get_options()
+            options.email_alert_all_inv_task_queued = self.form_result['email_alert_ai_tq']
+            options.email_alert_inv_assigned_task = self.form_result['email_alert_i_at']
+            options.email_alert_qa_assigned_task = self.form_result['email_alert_qa_at']
+            options.email_alert_caseman_inv_self_assigned = self.form_result['email_alert_cm_ia']
+            options.email_alert_caseman_qa_self_assigned = self.form_result['email_alert_cm_qa']
+            options.email_alert_req_task_completed = self.form_result['email_alert_r_tc']
+            options.email_alert_case_man_task_completed = self.form_result['email_alert_c_tc']
+        elif 'form' in form_type and form_type['form'] == "email_case" and self.validate_form(CaseEmailAlerts()):
+            options = ForemanOptions.get_options()
+            options.email_alert_all_caseman_new_case = self.form_result['email_alert_allcm_nc']
+            options.email_alert_all_caseman_case_auth = self.form_result['email_alert_allcm_au']
+            options.email_alert_req_case_caseman_assigned = self.form_result['email_alert_r_cm']
+            options.email_alert_req_case_opened = self.form_result['email_alert_r_o']
+            options.email_alert_req_case_closed = self.form_result['email_alert_r_c']
+            options.email_alert_req_case_archived = self.form_result['email_alert_r_a']
         elif 'form' in form_type and form_type['form'] == "add_evidence_types" and self.validate_form(
                 AddEvidenceTypeForm()):
             new_evidence_type = EvidenceType(self.form_result['evi_type_new'], self.form_result['icon_input'])
@@ -233,7 +250,7 @@ Foreman
                 email([user.email], "Welcome to Foreman!", """
 Hello {},
 
-The administrator has now validated your account and you can now log into the system. Enjoy!
+The administrator has now validated your account and you can now log into the system.
 
 Thanks,
 Foreman

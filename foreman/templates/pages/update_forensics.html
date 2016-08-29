@@ -202,6 +202,9 @@
              <div class="confirmclosurebox">
                  <h2>Set Status to Delivered</h2>
                  <p>Task ${task.task_name|h} has been QA passed and is ready for delivery.</p>
+                 % if email_alert_flag:
+                    <p>Note: Completing this task will send an automatic email alert to the case manager.</p>
+                 % endif
                  <p><a href="?status=deliver">Click here to set the status to delivered</a>.</p>
              </div>
         </div>

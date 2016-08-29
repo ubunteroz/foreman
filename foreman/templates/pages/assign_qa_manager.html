@@ -18,19 +18,19 @@
     % if success == True:
     <div class="success">
         <h1>Success!</h1>
-        <p>You have successfully added ${investigator.fullname|h} as ${role.title()|h} Investigator for ${task.task_name|h}</p>
+        <p>You have successfully added ${qa.fullname|h} as ${role.title()|h} QA for ${task.task_name|h}</p>
         <p><a href='${urls.build("task.view", dict(case_id=task.case.id, task_id=task.id))|h}'>View Task</a> </p>
     </div>
 
     % else:
-        <h1>Assign an Investigator to the Task</h1>
+        <h1>Assign an QA to the Task</h1>
         % if email_alert_flag:
-            <p>Note: The investigator will be automatically emailed.</p>
+            <p>Note: The QA will be automatically emailed.</p>
         % endif
-        <form method="post" action="${urls.build('task.assign_work_manager', dict(task_id=task.id, case_id=task.case.id))|h}">
+        <form method="post" action="${urls.build('task.assign_qa_manager', dict(task_id=task.id, case_id=task.case.id))|h}">
             ${forms.formSelectBox("Role", "role", "role", "form_label", "addeditcase", roles, first=True)}
-            ${forms.formSelectBox("Investigator", "investigator", "investigator", "form_label", "addeditcase", investigators)}
-            <p style="clear:both;"><input type="submit" value="Assign Investigator" /></p>
+            ${forms.formSelectBox("QA", "qa", "qa", "form_label", "addeditcase", qas)}
+            <p style="clear:both;"><input type="submit" value="Assign QA" /></p>
         </form>
     % endif
 </div>

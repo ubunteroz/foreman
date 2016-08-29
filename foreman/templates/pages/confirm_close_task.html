@@ -19,6 +19,9 @@
     % if closed == False:
     <h1>Confirm closure of Task ${task.task_name|h}</h1>
     <div class="confirmclosurebox">
+        % if email_alert_flag:
+            <p>Note: The requester will be sent an automatic email on task closure. </p>
+        % endif
         <p>Are you sure you want to close ${task.task_name|h}?</p>
         <p><a href="?confirm=true">Yes</a> | <a href="#" onclick="goBack()">No</a></p>
     </div>

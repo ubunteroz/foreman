@@ -20,6 +20,9 @@
     <h1>Confirm task ${task.task_name|h} status change to  ${status|h}</h1>
     <div class="confirmclosurebox">
         <p>Are you sure you want to set Task ${task.task_name|h} status to ${status|h}?</p>
+        % if email_alert_flag:
+            <p>Note: an automatic email alert will go out to all investigators notifying that this task is ready to be picked up.</p>
+        % endif
         <p><a href="?confirm=true&status=${status|h}">Yes</a> | <a href="#" onclick="goBack()">No</a></p>
     </div>
     % else:

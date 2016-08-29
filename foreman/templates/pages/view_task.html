@@ -35,23 +35,37 @@
 
     % if check_perms(task, 'work') and task.case.status == case_statuses['open']:
         % if task.status != task_statuses['queued'] and task.status != task_statuses['created'] and task.status != task_statuses['start'] and task.status != task_statuses['complete']:
-        | <a href='${urls.build("forensics.work", dict(task_id=task.id, case_id=task.case.id))|h}'>Work on task</a>
+            % if task.status == task_statuses['deliver']:
+            | <a href='${urls.build("forensics.work", dict(task_id=task.id, case_id=task.case.id))|h}'>Work on task / complete task</a>
+            % else:
+            | <a href='${urls.build("forensics.work", dict(task_id=task.id, case_id=task.case.id))|h}'>Work on task</a>
+            % endif
         % elif task.status == task_statuses['start']:
         | <a href='${urls.build("forensics.work", dict(task_id=task.id, case_id=task.case.id))|h}'>Begin work on task</a>
         % endif
     % endif
 
     % if check_perms(task, 'assign-self'):
-        % if task.principle_investigator is None and (task.secondary_investigator is None or task.secondary_investigator.id != current_user.id):
+        % if task.principle_investigator is None and current_user not in task.workers:
             | <a href='${urls.build("task.assign_work", dict(task_id=task.id, case_id=task.case.id, assign="primary"))|h}'>Assign myself as principle investigator</a>
         % endif
-        % if task.secondary_investigator is None and (task.principle_investigator is None or task.principle_investigator.id != current_user.id):
+        % if task.secondary_investigator is None and current_user not in task.workers:
             | <a href='${urls.build("task.assign_work", dict(task_id=task.id, case_id=task.case.id, assign="secondary"))|h}'>Assign myself as secondary investigator</a>
+        % endif
+        % if task.principle_QA is None and current_user not in task.workers:
+            | <a href='${urls.build("task.assign_qa", dict(task_id=task.id, case_id=task.case.id, assign="primary"))|h}'>Assign myself as principle QA</a>
+        % endif
+        % if task.secondary_QA is None and current_user not in task.workers:
+            | <a href='${urls.build("task.assign_qa", dict(task_id=task.id, case_id=task.case.id, assign="secondary"))|h}'>Assign myself as secondary QA</a>
         % endif
     % endif
 
     % if check_perms(task, 'assign-other') and (task.principle_investigator is None or task.secondary_investigator is None):
     | <a href='${urls.build("task.assign_work_manager", dict(task_id=task.id, case_id=task.case.id))|h}'>Assign an Investigator to task</a>
+    % endif
+
+    % if check_perms(task, 'assign-other') and (task.principle_QA is None or task.secondary_QA is None):
+    | <a href='${urls.build("task.assign_qa_manager", dict(task_id=task.id, case_id=task.case.id))|h}'>Assign a QA to task</a>
     % endif
 
     % if check_perms(task, 'qa') and task.status == task_statuses['qa']:
