@@ -65,6 +65,7 @@
             <h2>Edit Task Details</h2>
 
             <form method="post" action="${urls.build('task.edit', dict(task_id=task.id, case_id=task.case.id, form='edit_task'))|h}">
+                <input type="hidden" name="edit_obj" id="edit_obj" value="${task.id|h}" />
                 ${forms.formTextField("Task Name", "task_name", "task_name", "form_label", "input_long", value=task.task_name, first=True)}
                 ${forms.formTextField("Task Files Location", "location", "location", "form_label", "input_long", value=task.location)}
                 ${forms.formTextArea("Task Description", "background", "background", "form_label", "addeditcase", value=task.background)}

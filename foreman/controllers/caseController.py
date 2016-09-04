@@ -257,14 +257,16 @@ The case can be viewed here: {}""".format(new_case.requester.fullname, new_case.
 
                 if self.form_result['primary_investigator']:
                     self._create_new_user_role(UserTaskRoles.PRINCIPLE_INVESTIGATOR, new_task,
-                                               self.form_result['primary_investigator'])
+                                               self.form_result['primary_investigator'], role_obj="task")
                 if self.form_result['secondary_investigator']:
                     self._create_new_user_role(UserTaskRoles.SECONDARY_INVESTIGATOR, new_task,
-                                               self.form_result['secondary_investigator'])
+                                               self.form_result['secondary_investigator'], role_obj="task")
                 if self.form_result['primary_qa']:
-                    self._create_new_user_role(UserTaskRoles.PRINCIPLE_QA, new_task, self.form_result['primary_qa'])
+                    self._create_new_user_role(UserTaskRoles.PRINCIPLE_QA, new_task, self.form_result['primary_qa'],
+                                               role_obj="task")
                 if self.form_result['secondary_qa']:
-                    self._create_new_user_role(UserTaskRoles.SECONDARY_QA, new_task, self.form_result['secondary_qa'])
+                    self._create_new_user_role(UserTaskRoles.SECONDARY_QA, new_task, self.form_result['secondary_qa'],
+                                               role_obj="task")
 
                 session.commit()
                 return redirect(
@@ -538,28 +540,6 @@ The case can be viewed here: {}""".format(case.case_name, url))
                                         errors=self.form_error, email_alert_flag=email_alert_flag)
         else:
             return self.return_404(reason="You have tried to close an invalid case.")
-
-    def _create_new_user_role(self, role, case, form_result):
-        user_role = UserCaseRoles.get_filter_by(role=role, case=case).first()
-        if form_result is None:
-            if user_role is None:
-                # no change, empty role stays empty
-                pass
-            else:
-                # person being removed
-                user_role.add_change(self.current_user, True)
-                session.flush()
-        else:
-            if user_role is None:
-                # empty role getting a person added
-                new_role = UserCaseRoles(form_result, case, role)
-                session.add(new_role)
-                session.flush()
-                new_role.add_change(self.current_user)
-            else:
-                # person being replaced
-                user_role.add_change(self.current_user, form_result)
-                session.flush()
 
     def _send_authorise_email(self, new_case, edit=False):
         # automatic email from requester to authoriser to authorise

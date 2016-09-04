@@ -8,7 +8,7 @@ from validators import *
 
 
 class AddCaseForm(Schema):
-    case_name = v.UnicodeString(not_empty=True)
+    case_name = CheckUniqueCase(not_empty=True)
     reference = v.UnicodeString()
     private = v.Bool()
     background = v.UnicodeString(not_empty=True)
@@ -67,7 +67,7 @@ class AddCaseTypeForm(Schema):
 
 
 class AddTaskForm(Schema):
-    task_name = v.UnicodeString(not_empty=True)
+    task_name = CheckUniqueTask(not_empty=True)
     task_type = GetTaskTypes(not_empty=True)
     background = v.UnicodeString(not_empty=True)
     location = v.UnicodeString()
@@ -115,10 +115,10 @@ class RegisterForm(Schema):
     forename = v.UnicodeString(not_empty=True)
     surname = v.UnicodeString(not_empty=True)
     middlename = v.UnicodeString()
-    username = v.UnicodeString(not_empty=True)
+    username = CheckUniqueUsername(not_empty=True)
     password = v.UnicodeString(not_empty=True)
     password_2 = v.UnicodeString(not_empty=True)
-    email = v.UnicodeString(not_empty=True)
+    email = CheckUniqueEmail(not_empty=True)
     team = GetTeam(not_empty=True)
 
     chained_validators = [
@@ -187,6 +187,8 @@ class EditEvidenceForm(Schema):
     originator = v.UnicodeString(not_empty=True)
     comments = v.UnicodeString(not_empty=True)
     location = v.UnicodeString(not_empty=True)
+    edit_obj = v.Int(not_empty=True, min=0)
+    chained_validators = [CheckUniqueReferenceEdit('reference', 'edit_obj')]
 
 
 class EditEvidenceQRCodesForm(Schema):
@@ -226,7 +228,7 @@ class RemoveCategoryForm(Schema):
 
 
 class AddEvidenceForm(Schema):
-    reference = v.UnicodeString(not_empty=True)
+    reference = CheckUniqueReference(not_empty=True)
     status = GetEvidenceStatus(not_empty=True)
     bag_num = v.UnicodeString()
     type = GetEvidenceType(not_empty=True)
@@ -259,6 +261,8 @@ class EditTaskForm(Schema):
     background = v.UnicodeString(not_empty=True)
     location = v.UnicodeString()
     deadline = Pipe(v.DateConverter(month_style='dd/mm/yyyy'), v.DateValidator(today_or_after=True))
+    edit_obj = v.Int(not_empty=True, min=0)
+    chained_validators = [CheckUniqueTaskEdit('task_name', 'edit_obj')]
 
 
 class EditCaseForm(Schema):
@@ -273,7 +277,8 @@ class EditCaseForm(Schema):
     priority = GetPriority(not_empty=True)
     authoriser = GetAuthoriser(not_empty=True)
     deadline = Pipe(v.DateConverter(month_style='dd/mm/yyyy'), v.DateValidator(today_or_after=True))
-
+    edit_obj = v.Int(not_empty=True, min=0)
+    chained_validators = [CheckUniqueCaseEdit('case_name', 'edit_obj')]
 
 class AddCaseLinkForm(Schema):
     case_links_add = GetCase(not_empty=True)
@@ -309,18 +314,19 @@ class EditUserForm(Schema):
     photo = UploadProfilePhoto()
     manager = GetUser()
     user = GetUser(not_empty=True)
-
     chained_validators = [
-        ManagerCheck('user', 'manager')
-    ]
+        ManagerCheck('user', 'manager')]
+    pre_validators = [
+        CheckUniqueUsernameEdit('username', 'user'),
+        CheckUniqueEmailEdit('email', 'user')]
 
 
 class AddUserForm(Schema):
     forename = v.UnicodeString(not_empty=True)
     surname = v.UnicodeString(not_empty=True)
     middlename = v.UnicodeString()
-    username = v.UnicodeString(not_empty=True)
-    email = v.UnicodeString(not_empty=True)
+    username = CheckUniqueUsername(not_empty=True)
+    email = CheckUniqueEmail(not_empty=True)
     telephone = v.UnicodeString()
     alt_telephone = v.UnicodeString()
     fax = v.UnicodeString()
@@ -373,12 +379,13 @@ class AuthOptionsForm(Schema):
 
 class AddTeamForm(Schema):
     t_department_name = GetDepartment(not_empty=True)
-    new_team_name = v.UnicodeString(not_empty=True)
+    new_team_name = CheckUniqueTeam(not_empty=True)
 
 
 class RenameTeamForm(Schema):
     old_team_name = GetTeam(not_empty=True)
     rename_team = v.UnicodeString(not_empty=True)
+    pre_validators = [CheckUniqueTeamEdit('rename_team', 'old_team_name')]
 
 
 class RemoveTeamForm(Schema):
@@ -386,12 +393,13 @@ class RemoveTeamForm(Schema):
 
 
 class AddDepartmentForm(Schema):
-    department_name = v.UnicodeString(not_empty=True)
+    department_name = CheckUniqueDepartment(not_empty=True)
 
 
 class RenameDepartmentForm(Schema):
     old_department_name = GetDepartment(not_empty=True)
     new_dep_name = v.UnicodeString(not_empty=True)
+    pre_validators = [CheckUniqueDepartmentEdit('new_dep_name', 'old_department_name')]
 
 
 class RemoveDepartmentForm(Schema):

@@ -77,6 +77,8 @@
             <h2>Edit Case Details</h2>
 
             <form method="post" action="${urls.build('case.edit', dict(case_id=case.id, form='edit_case'))|h}">
+                <input type="hidden" name="edit_obj" id="edit_obj" value="${case.id|h}" />
+
                 ${forms.formTextField("Case Name", "case_name", "case_name", "form_label", "input_long", first=True, value=case.case_name)}
                 % if case.requester is not None and current_user.id == case.requester.id and case.authorised.case_authorised == "NOAUTH":
                     ${forms.formSelectBox("Authoriser", "authoriser", "authoriser", "form_label", "input_long", authorisers, value=case.authoriser.id)}

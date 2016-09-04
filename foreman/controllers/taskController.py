@@ -155,8 +155,8 @@ You can assign yourself to this task here: {}
                         task.task_type = self.form_result['task_type']
                         task.location = self.form_result['location']
                         task.background = self.form_result['background']
-                        task.deadline = datetime.combine(self.form_result['deadline'], datetime.min.time()) if \
-                            self.form_result['deadline'] != "" else None
+                        if self.form_result['deadline'] is not None:
+                            task.deadline = datetime.combine(self.form_result['deadline'], datetime.min.time())
                         task.add_change(self.current_user)
             elif 'form' in form_type and form_type['form'] == "edit_users":
                 active_tab = 1
@@ -168,7 +168,7 @@ You can assign yourself to this task here: {}
                 if self.validate_form(EditTaskUsersForm()):
                     if task.principle_investigator != self.form_result['primary_investigator']:
                         self._create_new_user_role(UserTaskRoles.PRINCIPLE_INVESTIGATOR, task,
-                                                   self.form_result['primary_investigator'])
+                                                   self.form_result['primary_investigator'], role_obj="task")
                         if options.email_alert_inv_assigned_task and self.form_result[
                             'primary_investigator'] is not None:
                             self.send_email_alert([self.form_result['primary_investigator']],
@@ -178,7 +178,7 @@ You can assign yourself to this task here: {}
 Please go to {} to begin work""".format(task.task_name, self.current_user.fullname, url))
                     if task.secondary_investigator != self.form_result['secondary_investigator']:
                         self._create_new_user_role(UserTaskRoles.SECONDARY_INVESTIGATOR, task,
-                                                   self.form_result['secondary_investigator'])
+                                                   self.form_result['secondary_investigator'], role_obj="task")
                         if options.email_alert_inv_assigned_task and self.form_result[
                             'secondary_investigator'] is not None:
                             self.send_email_alert([self.form_result['secondary_investigator']],
@@ -187,7 +187,8 @@ Please go to {} to begin work""".format(task.task_name, self.current_user.fullna
 
 Please go to {} to begin work""".format(task.task_name, self.current_user.fullname, url))
                     if task.principle_QA != self.form_result['primary_qa']:
-                        self._create_new_user_role(UserTaskRoles.PRINCIPLE_QA, task, self.form_result['primary_qa'])
+                        self._create_new_user_role(UserTaskRoles.PRINCIPLE_QA, task, self.form_result['primary_qa'],
+                                                   role_obj="task")
                         if options.email_alert_qa_assigned_task and self.form_result['primary_qa'] is not None:
                             self.send_email_alert([self.form_result['primary_qa']],
                                                   "You have been assigned to QA a task",
@@ -195,7 +196,8 @@ Please go to {} to begin work""".format(task.task_name, self.current_user.fullna
 
 Please go to {} to begin QA""".format(task.task_name, self.current_user.fullname, url))
                     if task.secondary_QA != self.form_result['secondary_qa']:
-                        self._create_new_user_role(UserTaskRoles.SECONDARY_QA, task, self.form_result['secondary_qa'])
+                        self._create_new_user_role(UserTaskRoles.SECONDARY_QA, task, self.form_result['secondary_qa'],
+                                                   role_obj="task")
                         if options.email_alert_qa_assigned_task and self.form_result['secondary_qa'] is not None:
                             self.send_email_alert([self.form_result['secondary_qa']],
                                                   "You have been assigned to QA a task",
@@ -517,24 +519,3 @@ Please go to {} to begin QA""".format(task.task_name, self.current_user.fullname
         results.sort(key=lambda d: d['date_time'])
         return results
 
-    def _create_new_user_role(self, role, task, form_result):
-        user_role = UserTaskRoles.get_filter_by(task=task, role=role).first()
-        if form_result is None:
-            if user_role is None:
-                # no change, empty role stays empty
-                pass
-            else:
-                # person being removed
-                user_role.add_change(self.current_user, True)
-                session.flush()
-        else:
-            if user_role is None:
-                # empty role getting a person added
-                new_role = UserTaskRoles(form_result, task, role)
-                session.add(new_role)
-                session.flush()
-                new_role.add_change(self.current_user)
-            else:
-                # person being replaced
-                user_role.add_change(self.current_user, form_result)
-                session.flush()

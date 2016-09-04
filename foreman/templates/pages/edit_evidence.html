@@ -73,6 +73,7 @@
 
             <h2>Edit Evidence Details</h2>
             <form method="post" action="${urls.build('evidence.edit', dict(evidence_id=evidence.id, form='edit_evidence'))|h}">
+                <input type="hidden" name="edit_obj" id="edit_obj" value="${evidence.id|h}" />
                 ${forms.formTextField("Reference", "reference", "reference", "form_label", "input_long", first=True, value=evidence.reference)}
                 ${forms.formSelectBox("Status", "status", "status", "form_label", "input_long", evidence_status_options, please_select=True, value=evidence.status)}
                 ${forms.formTextField("Bag Number", "bag_num", "bag_num", "form_label", "input_long", value=evidence.evidence_bag_number, required=False)}

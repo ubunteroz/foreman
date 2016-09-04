@@ -1,4 +1,6 @@
 # foreman imports
+import hashlib
+
 from foreman.model import User, ForemanOptions, UserRoles, Case, UserCaseRoles, CaseType, CaseClassification, CaseStatus
 from foreman.model import TaskType, Task, TaskStatus, UserTaskRoles, EvidenceType, Evidence, TaskUpload, EvidenceStatus
 from foreman.model import EvidencePhotoUpload, Department, Team
@@ -616,8 +618,9 @@ def create_evidence(case, inv, rand_user):
         bagno = str(randint(100, 999))
 
         now = datetime.now()
+        random = hashlib.md5(case.case_name + inv.fullname + rand_user).hexdigest()[0:10]
         evi = EvidenceType.get_evidence_types()[randint(0, len(EvidenceType.get_evidence_types()) - 1)]
-        e = Evidence(case, "SCH-20140228-HDD_00"+str(ref), evi,
+        e = Evidence(case, "SCH-" + random + "-HDD_00"+str(ref), evi,
                      "Hard drive from {}'s main machine".format(rand_user),
                      case.requester.fullname, "Main Evidence Cabinet",
                      case.principle_case_manager, "B000"+bagno, True)

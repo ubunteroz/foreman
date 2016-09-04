@@ -392,3 +392,31 @@ Foreman
         history += EvidenceStatus.get_changes(evidence)
         history.sort(key=lambda d: d['date_time'])
         return history
+
+    def _create_new_user_role(self, role, obj, form_result, role_obj="case"):
+        if role_obj == "case":
+            role_class = UserCaseRoles
+            user_role = role_class.get_filter_by(role=role, case=obj).first()
+        else:
+            role_class = UserTaskRoles
+            user_role = role_class.get_filter_by(role=role, task=obj).first()
+
+        if form_result is None:
+            if user_role is None:
+                # no change, empty role stays empty
+                pass
+            else:
+                # person being removed
+                user_role.add_change(self.current_user, True)
+                session.flush()
+        else:
+            if user_role is None:
+                # empty role getting a person added
+                new_role = role_class(form_result, obj, role)
+                session.add(new_role)
+                session.flush()
+                new_role.add_change(self.current_user)
+            else:
+                # person being replaced
+                user_role.add_change(self.current_user, form_result)
+                session.flush()

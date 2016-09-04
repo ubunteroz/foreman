@@ -10,7 +10,14 @@
     ${sidebars.user_menu()}
 </div>
 <div id="mainbar">
-    <h1>Users</h1>
+
+    % if check_perms("User", 'add'):
+    <h1>Add a new User</h1>
+
+    <p><a href='${urls.build("user.add", dict())|h}'>Add a user</a></p>
+    % endif
+
+    <h1>Current Users</h1>
 
 
     <table>
@@ -57,10 +64,4 @@
             % endif
         % endfor
     </table>
-
-    % if check_perms("User", 'add'):
-    <h1>Add a new User</h1>
-
-    <p><a href='${urls.build("user.add", dict())|h}'>Add a user</a></p>
-    % endif
 </div>

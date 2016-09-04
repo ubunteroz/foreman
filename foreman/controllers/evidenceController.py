@@ -129,7 +129,7 @@ class EvidenceController(BaseController):
                             len_qr_hist = True
                             break
             return self.return_response('pages', 'edit_evidence.html', evidence=evidence, active_tab=active_tab,
-                                        evidence_history=evidence_history,
+                                        evidence_history=evidence_history, errors=self.form_error,
                                         success=success, evidence_type_options=evidence_type_options,
                                         default_qr_code_text=default_qr_code_text, qr_evidence_history=len_qr_hist,
                                         evidence_status_options=evidence_status_options)

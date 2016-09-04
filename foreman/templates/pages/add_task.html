@@ -23,7 +23,7 @@
 
         % if not is_requester:
             ${forms.formTextField("Task Name", "task_name", "task_name", "form_label", "input_long", first=True)}
-            ${forms.formTextField("Task Files Location", "location", "location", "form_label", "input_long", value=case.location)}
+            ${forms.formTextField("Task Files Location", "location", "location", "form_label", "input_long", value=case.location, required=False)}
             ${forms.formTextField("Deadline", "deadline", "deadline", "form_label", "input_long", required=False, default="dd/mm/yyyy")}
         % endif
         ${forms.formTextArea("Task Description", "background", "background", "form_label", "addeditcase")}
@@ -33,10 +33,10 @@
         <div style="clear:both"></div>
         <h1>Add Investigators & QA Partners</h1>
 
-        ${forms.formSelectBox("Principle Investigator", "primary_investigator", "primary_investigator", "form_label", "input_long", investigators, first=True, please_select=True)}
-        ${forms.formSelectBox("Secondary Investigator", "secondary_investigator", "secondary_investigator", "form_label", "input_long", investigators, please_select=True)}
-        ${forms.formSelectBox("Principle QA Partner", "primary_qa", "primary_qa", "form_label", "input_long", qas, please_select=True)}
-        ${forms.formSelectBox("Secondary QA Partner", "secondary_qa", "secondary_qa", "form_label", "input_long", qas, please_select=True)}
+        ${forms.formSelectBox("Principle Investigator", "primary_investigator", "primary_investigator", "form_label", "input_long", investigators, first=True, please_select=True, required=False)}
+        ${forms.formSelectBox("Secondary Investigator", "secondary_investigator", "secondary_investigator", "form_label", "input_long", investigators, please_select=True, required=False)}
+        ${forms.formSelectBox("Principle QA Partner", "primary_qa", "primary_qa", "form_label", "input_long", qas, please_select=True, required=False)}
+        ${forms.formSelectBox("Secondary QA Partner", "secondary_qa", "secondary_qa", "form_label", "input_long", qas, please_select=True, required=False)}
     % endif
 
         <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>

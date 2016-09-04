@@ -5,10 +5,137 @@ import datetime
 from formencode import validators as v, Invalid
 from formencode.compound import CompoundValidator
 # local imports
+from foreman.model import Evidence
 from ..model import User, UserTaskRoles, UserRoles, Task, Case, ForemanOptions, TaskType
 from ..model import CaseType, CaseClassification, TaskCategory, CasePriority, Department, Team, EvidenceType
 from ..model import EvidenceStatus
 from ..utils.utils import ROOT_DIR
+
+
+class CheckUniqueEdit(v.FormValidator):
+    __unpackargs__ = ('name', 'edit_obj')
+    validate_partial_form = True
+    object_type = ""
+    object_class = None
+    attribute_to_compare = ''
+
+    def validate_partial(self, vals, state):
+        if not self.check_duplicate(vals.get(self.name), vals.get(self.edit_obj)):
+            errors = {
+                self.name: 'This {} already exists'.format(self.object_type),
+            }
+            raise Invalid('', vals, state, error_dict=errors)
+
+    def validate_python(self, vals, state):
+        self.validate_partial(vals, state)
+
+    def check_duplicate(self, value, obj_id):
+        comparer = {self.attribute_to_compare: value}
+        result = self.object_class.get_filter_by(**comparer).first()
+        if result is None:
+            return True
+        elif obj_id.isdigit() and result.id == int(obj_id):
+            return True
+        else:
+            return False
+
+
+class CheckUnique(v.UnicodeString):
+    messages = {'duplicate': 'This value already exists'}
+    object_class = None
+    attribute_to_compare = ''
+
+    def _to_python(self, value, state):
+        comparer = {self.attribute_to_compare: value}
+        obj = self.object_class.get_filter_by(**comparer).first()
+        if obj is None:
+            return value
+        else:
+            raise Invalid(self.message('duplicate', state), value, state)
+
+
+class CheckUniqueCaseEdit(CheckUniqueEdit):
+    object_type = "case"
+    object_class = Case
+    attribute_to_compare = 'case_name'
+
+
+class CheckUniqueCase(CheckUnique):
+    messages = {'duplicate': 'This case name already exists'}
+    object_class = Case
+    attribute_to_compare = 'case_name'
+
+
+class CheckUniqueTaskEdit(CheckUniqueEdit):
+    object_type = "task"
+    object_class = Task
+    attribute_to_compare = 'task_name'
+
+
+class CheckUniqueTask(CheckUnique):
+    messages = {'duplicate': 'This task name already exists'}
+    object_class = Task
+    attribute_to_compare = 'task_name'
+
+
+class CheckUniqueTeamEdit(CheckUniqueEdit):
+    object_type = "team"
+    object_class = Team
+    attribute_to_compare = 'team'
+
+
+class CheckUniqueTeam(CheckUnique):
+    messages = {'duplicate': 'This team name already exists'}
+    object_class = Team
+    attribute_to_compare = 'team'
+
+
+class CheckUniqueDepartmentEdit(CheckUniqueEdit):
+    object_type = "department"
+    object_class = Department
+    attribute_to_compare = 'department'
+
+
+class CheckUniqueDepartment(CheckUnique):
+    messages = {'duplicate': 'This department name already exists'}
+    object_class = Department
+    attribute_to_compare = 'department'
+
+
+class CheckUniqueUsernameEdit(CheckUniqueEdit):
+    object_type = "username"
+    object_class = User
+    attribute_to_compare = 'username'
+
+
+class CheckUniqueUsername(CheckUnique):
+    messages = {'duplicate': 'This username already exists'}
+    object_class = User
+    attribute_to_compare = 'username'
+
+
+class CheckUniqueEmailEdit(CheckUniqueEdit):
+    object_type = "email address"
+    object_class = User
+    attribute_to_compare = 'email'
+
+
+class CheckUniqueEmail(CheckUnique):
+    messages = {'duplicate': 'This email address already exists'}
+    object_class = User
+    attribute_to_compare = 'email'
+
+
+class CheckUniqueReferenceEdit(CheckUniqueEdit):
+    object_type = "evidence reference"
+    object_class = Evidence
+    attribute_to_compare = 'reference'
+
+
+class CheckUniqueReference(CheckUnique):
+    messages = {'duplicate': 'This evidence reference already exists'}
+    object_class = Evidence
+    attribute_to_compare = 'reference'
 
 
 class Match(v.FormValidator):
