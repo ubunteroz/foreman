@@ -5,10 +5,9 @@ import datetime
 from formencode import validators as v, Invalid
 from formencode.compound import CompoundValidator
 # local imports
-from foreman.model import Evidence
 from ..model import User, UserTaskRoles, UserRoles, Task, Case, ForemanOptions, TaskType
 from ..model import CaseType, CaseClassification, TaskCategory, CasePriority, Department, Team, EvidenceType
-from ..model import EvidenceStatus
+from ..model import EvidenceStatus, Evidence
 from ..utils.utils import ROOT_DIR
 
 
@@ -48,6 +47,7 @@ class CheckUnique(v.UnicodeString):
     def _to_python(self, value, state):
         comparer = {self.attribute_to_compare: value}
         obj = self.object_class.get_filter_by(**comparer).first()
+
         if obj is None:
             return value
         else:
