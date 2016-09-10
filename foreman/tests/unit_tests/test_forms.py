@@ -13,7 +13,7 @@ from foreman.utils.utils import ROOT_DIR
 from foreman.forms.forms import AddCaseForm, RequesterAddCaseForm, AuthoriseCaseForm, AddPriorityForm, \
     RemovePriorityForm, RemoveClassificationForm, RemoveCaseTypeForm, AddClassificationForm, AddCaseTypeForm, \
     AddTaskForm, RequesterAddTaskForm, LoginForm, PasswordChangeForm, AdminPasswordChangeForm, RegisterForm, \
-    QACheckerForm, AddTaskNotesForm, DeactivateUser, ReactivateUser, AssignInvestigatorForm, AssignQAForm, \
+    QACheckerForm, AddTaskNotesForm, DeactivateUser, ReactivateUser, AssignInvestigatorForm, AssignQADuringForensicsForm, \
     AssignQAFormSingle, AskForQAForm, ChainOfCustodyForm, EditEvidenceForm, EditEvidenceQRCodesForm, \
     AddEvidenceTypeForm, RemoveEvidenceTypeForm, MoveTaskTypeForm, AddTaskTypeForm, RemoveTaskTypeForm, \
     AddTaskCategoryForm, RemoveCategoryForm, AddEvidenceForm, AddEvidencePhotoForm, EvidenceAssociateForm, \
@@ -21,10 +21,10 @@ from foreman.forms.forms import AddCaseForm, RequesterAddCaseForm, AuthoriseCase
     ReAssignTasksForm, EditUserForm, AddUserForm, EditRolesForm, OptionsForm, UploadTaskFile, AuthOptionsForm, \
     AddTeamForm, RenameTeamForm, RemoveTeamForm, AddDepartmentForm, RenameDepartmentForm, RemoveDepartmentForm, \
     TimeSheetCell, CaseHours, TaskHours, CaseTimeSheetForm, TaskTimeSheetForm, ManagersInheritForm, CloseCaseForm, \
-    ChangeCaseStatusForm, EvidenceRetentionForm
-
+    ChangeCaseStatusForm, EvidenceRetentionForm, TaskEmailAlerts, CaseEmailAlerts, AssignQAForm
 
 INVALID_OBJECT_ID = '100'
+
 
 class FormTestCaseBase(base_tester.UnitTestCase):
 
@@ -57,9 +57,13 @@ class FormTestCaseBase(base_tester.UnitTestCase):
         for patcher in self._patchers.values():
             patcher.stop()
 
-    def mock_storage(self, filename, *args, **kwargs):
-        spec = ['__iter__','filename'] + [arg for arg in args]
-        return MagicMock(spec=spec, filename=filename, **kwargs)
+    def _bad_field_tester(self, form, exception, **bad_field):
+        input = self.make_input(**bad_field)
+        with self.assertRaises(exception) as cm:
+            result = form().to_python(input)
+        invalid = cm.exception
+        self.assertIn(bad_field.keys()[0], invalid.error_dict)
+        self.assertEqual(len(invalid.error_dict), 1)
 
 
 class AddCaseFormTestCase(FormTestCaseBase):
@@ -128,7 +132,6 @@ class AddCaseFormTestCase(FormTestCaseBase):
         self._bad_field_tester(self.original_class, Invalid, classification="100")
         self._bad_field_tester(self.original_class, Invalid, priority="100")
         self._bad_field_tester(self.original_class, Invalid, primary_case_manager=None)
-        self._bad_field_tester(self.original_class, Invalid, secondary_case_manager=None)
         self._bad_field_tester(self.original_class, Invalid, authoriser=None)
         self._bad_field_tester(self.original_class, Invalid, case_type=None)
         self._bad_field_tester(self.original_class, Invalid, classification=None)
@@ -667,6 +670,28 @@ class AssignQAFormTestCase(FormTestCaseBase):
     original_class = AssignQAForm
 
     def make_input(self, **overrides):
+        d = {'qa': "2",
+             'role': "Principle QA"}
+        d.update(overrides)
+        return d
+
+    def test_success(self):
+        input = self.make_input()
+        result = self.original_class().to_python(input)
+        self.assertIs(result['qa'], self.getObjectMocks['GetQA'].return_value)
+        self.assertEqual(result['role'], True)
+
+    def test_bad_fields(self):
+        self._bad_field_tester(self.original_class, Invalid, qa="100")
+        self._bad_field_tester(self.original_class, Invalid, qa="-1")
+        self._bad_field_tester(self.original_class, Invalid, qa="foo")
+        self._bad_field_tester(self.original_class, Invalid, role="foo")
+
+
+class AssignQAFormDuringForensicsTestCase(FormTestCaseBase):
+    original_class = AssignQADuringForensicsForm
+
+    def make_input(self, **overrides):
         d = {'investigator': "2",
              'investigator2': "3"}
         d.update(overrides)
@@ -744,7 +769,7 @@ class ChainOfCustodyFormTestCase(FormTestCaseBase):
     original_class = ChainOfCustodyForm
 
     def make_input(self, **overrides):
-        d = {'date': "12 March 2016",
+        d = {'date': "12/03/2016",
              'time': "14:15",
              'user': "Foo",
              'comments': "Foo",
@@ -779,7 +804,7 @@ class ChainOfCustodyFormTestCase(FormTestCaseBase):
 
     def test_bad_fields(self):
         self._bad_field_tester(self.original_class, Invalid, date=None)
-        self._bad_field_tester(self.original_class, Invalid, date="35 March 2016")
+        self._bad_field_tester(self.original_class, Invalid, date="35/03/2016")
         self._bad_field_tester(self.original_class, Invalid, date="foo")
         self._bad_field_tester(self.original_class, Invalid, time=None)
         self._bad_field_tester(self.original_class, Invalid, time="26:89")
@@ -798,7 +823,8 @@ class EditEvidenceFormTestCase(FormTestCaseBase):
              'type': "1",
              'originator': "foo",
              'comments': "comment",
-             'location': "loc"}
+             'location': "loc",
+             'edit_obj': "1"}
         d.update(overrides)
         return d
 
@@ -1151,7 +1177,8 @@ class EditTaskFormTestCase(FormTestCaseBase):
              'task_type': "1",
              'background': "Some background",
              'location': "London",
-             'deadline': self.future_date.strftime("%d/%m/%Y")}
+             'deadline': self.future_date.strftime("%d/%m/%Y"),
+             'edit_obj': "1"}
         d.update(overrides)
         return d
 
@@ -1187,7 +1214,8 @@ class EditCaseFormTestCase(FormTestCaseBase):
              'justification': "Some justification",
              'priority': "1",
              'authoriser': "40",
-             'deadline': self.future_date.strftime("%d/%m/%Y")}
+             'deadline': self.future_date.strftime("%d/%m/%Y"),
+             'edit_obj': "1"}
         d.update(overrides)
         return d
 
@@ -1392,7 +1420,6 @@ class EditUserFormTestCase(FormTestCaseBase):
         self._bad_field_tester(self.original_class, Invalid, user="foo")
         self._bad_field_tester(self.original_class, Invalid, user="100")
         self._bad_field_tester(self.original_class, Invalid, user="-1")
-        self._bad_field_tester(self.original_class, Invalid, manager=None)
         self._bad_field_tester(self.original_class, Invalid, manager="foo")
         self._bad_field_tester(self.original_class, Invalid, manager="100")
         self._bad_field_tester(self.original_class, Invalid, manager="-1")
@@ -2016,9 +2043,80 @@ class EvidenceRetentionFormTestCase(FormTestCaseBase):
         self.assertEqual(result['evi_ret_months'], 1)
         self.assertEqual(result['remove_evi_ret'], True)
 
+    def test_alternative_success(self):
+        input = self.make_input(evi_ret="False", evi_ret_months="")
+        result = self.original_class().to_python(input)
+        self.assertEqual(result['evi_ret'], False)
+        self.assertEqual(result['evi_ret_months'], None)
+        self.assertEqual(result['remove_evi_ret'], True)
+
     def test_bad_fields(self):
         self._bad_field_tester(self.original_class, Invalid, evi_ret="foo")
         self._bad_field_tester(self.original_class, Invalid, evi_ret=None)
         self._bad_field_tester(self.original_class, Invalid, evi_ret_months="foo")
-        self._bad_field_tester(self.original_class, Invalid, evi_ret_months=None)
+        self._bad_field_tester(self.original_class, Invalid, evi_ret_months="")
         self._bad_field_tester(self.original_class, Invalid, evi_ret_months="-1")
+
+
+class TaskEmailAlertsTestCase(FormTestCaseBase):
+    original_class = TaskEmailAlerts
+
+    def make_input(self, **overrides):
+        d = {'email_alert_ai_tq': "checked",
+             'email_alert_i_at': "checked",
+             'email_alert_qa_at': "checked",
+             'email_alert_cm_ia': "checked",
+             'email_alert_cm_qa': "checked",
+             'email_alert_r_tc': "checked",
+             'email_alert_c_tc': "checked",
+            }
+        d.update(overrides)
+        return d
+
+    def test_success(self):
+        input = self.make_input()
+        result = self.original_class().to_python(input)
+        self.assertEqual(result['email_alert_ai_tq'], True)
+        self.assertEqual(result['email_alert_i_at'], True)
+        self.assertEqual(result['email_alert_qa_at'], True)
+        self.assertEqual(result['email_alert_cm_ia'], True)
+        self.assertEqual(result['email_alert_cm_qa'], True)
+        self.assertEqual(result['email_alert_r_tc'], True)
+        self.assertEqual(result['email_alert_c_tc'], True)
+
+    def test_alternative_success(self):
+        input = self.make_input(email_alert_ai_tq=None, email_alert_i_at=None)
+        result = self.original_class().to_python(input)
+        self.assertEqual(result['email_alert_ai_tq'], False)
+        self.assertEqual(result['email_alert_i_at'], False)
+
+
+class CaseEmailAlertsTestCase(FormTestCaseBase):
+    original_class = CaseEmailAlerts
+
+    def make_input(self, **overrides):
+        d = {'email_alert_allcm_nc': "checked",
+             'email_alert_allcm_au': "checked",
+             'email_alert_r_cm': "checked",
+             'email_alert_r_o': "checked",
+             'email_alert_r_c': "checked",
+             'email_alert_r_a': "checked",
+            }
+        d.update(overrides)
+        return d
+
+    def test_success(self):
+        input = self.make_input()
+        result = self.original_class().to_python(input)
+        self.assertEqual(result['email_alert_allcm_nc'], True)
+        self.assertEqual(result['email_alert_allcm_au'], True)
+        self.assertEqual(result['email_alert_r_cm'], True)
+        self.assertEqual(result['email_alert_r_o'], True)
+        self.assertEqual(result['email_alert_r_c'], True)
+        self.assertEqual(result['email_alert_r_a'], True)
+
+    def test_alternative_success(self):
+        input = self.make_input(email_alert_allcm_nc=None, email_alert_allcm_au=None)
+        result = self.original_class().to_python(input)
+        self.assertEqual(result['email_alert_allcm_nc'], False)
+        self.assertEqual(result['email_alert_allcm_au'], False)
