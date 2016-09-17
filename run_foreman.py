@@ -53,21 +53,16 @@ def run_tests(args):
         warnings.simplefilter("ignore", category=sa_exc.SAWarning)
         from foreman.utils.utils import init_database, drop_database, populate_test_database, setup
 
-
         urls = False if args.test_urls == "False" else True
         unit = False if args.test_unit == "False" else True
         functional = False if args.test_func == "False" else True
 
-        if urls is False and unit is False and functional is False:
-            urls = unit = functional = True
+        print "\n\n~~ Setting up Test Database ~~\n\n"
 
-        if urls or functional:
-            print "\n\n~~ Setting up Test Database ~~\n\n"
-
-            setup(args.config_file)
-            drop_database()
-            init_database()
-            populate_test_database()
+        setup(args.config_file)
+        drop_database()
+        init_database()
+        populate_test_database()
 
         import foreman.tests
         foreman.tests.run_tests(args.config_file, unit, functional, urls)

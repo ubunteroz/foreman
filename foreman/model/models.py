@@ -36,6 +36,7 @@ class HistoryModel(Model):
     def get_changes(cls, current_obj):
         change_log = []
         history_list = getattr(current_obj, cls.history_backref)
+
         for new_obj, old_obj in zip(history_list, history_list[1:]):
             change_log.append({'date': old_obj.date,
                                'user': old_obj.user,

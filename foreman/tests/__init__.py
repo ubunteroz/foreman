@@ -8,6 +8,7 @@ from ..utils.utils import setup
 test_units = [
     'unit_tests.test_validators',
     'unit_tests.test_forms',
+    'unit_tests.test_case_model'
 ]
 
 test_functions = [

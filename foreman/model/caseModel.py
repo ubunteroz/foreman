@@ -78,8 +78,8 @@ class LinkedCase(Base, HistoryModel):
     __tablename__ = 'linked_cases'
 
     id = Column(Integer, primary_key=True)
-    case_linker_id = Column(Integer, ForeignKey('cases.id'), primary_key=True)
-    case_linkee_id = Column(Integer, ForeignKey('cases.id'), primary_key=True)
+    case_linker_id = Column(Integer, ForeignKey('cases.id'))
+    case_linkee_id = Column(Integer, ForeignKey('cases.id'))
     reason = Column(Unicode)
     date_time = Column(DateTime)
     removed = Column(Boolean)
@@ -369,21 +369,14 @@ class Case(Base, Model):
             return None
 
     @property
-    def date_range(self):
-        status = self.get_status()
-        if status.status in CaseStatus.active_statuses:
-            return self.creation_date, datetime.now()
-        else:
-            return self.creation_date, status.date_time
-
-    @property
     def name(self):
         return self.case_name
 
     def set_status(self, status, user):
-        self.currentStatus = status
-        self.statuses.append(CaseStatus(self.id, status, user))
-        session.flush()
+        if status in CaseStatus.all_statuses:
+            self.currentStatus = status
+            self.statuses.append(CaseStatus(self.id, status, user))
+            session.flush()
 
     def get_status(self):
         return session.query(CaseStatus).filter_by(case_id=self.id).order_by(desc(CaseStatus.id)).first()
@@ -433,22 +426,17 @@ class Case(Base, Model):
         return self.authorisations[0]
 
     @staticmethod
-    def get_num_cases_opened_on_date(date_required, on_status, case_type=None, by_month=False):
-        if by_month:
-            month = date_required.month
-            year = date_required.year
-            first_day = datetime(year, month, 1)
-            last_day = datetime(year, month, calendar.monthrange(year, month)[1])
-            q = session.query(func.count(Case.id))
-            if on_status == CaseStatus.OPEN:
-                q = q.filter(and_(Case.creation_date >= first_day, Case.creation_date <= last_day))
-            else:
-                q = q.join(CaseStatus).filter(
-                    and_(CaseStatus.status == on_status, CaseStatus.date_time >= first_day,
-                         CaseStatus.date_time <= last_day))
-            if case_type is not None:
-                q = q.filter(Case.case_type == case_type)
-            return q.scalar()
+    def get_num_cases_opened_on_date(date_required, on_status, case_type=None):
+        month = date_required.month
+        year = date_required.year
+        first_day = datetime(year, month, 1)
+        last_day = datetime(year, month, calendar.monthrange(year, month)[1])
+        q = session.query(func.count(Case.id))
+        q = q.join(CaseStatus).filter(and_(CaseStatus.status == on_status, CaseStatus.date_time >= first_day,
+                                           CaseStatus.date_time <= last_day))
+        if case_type is not None:
+            q = q.filter(Case.case_type == case_type)
+        return q.scalar()
 
     @staticmethod
     def cases_with_user_involved(user_id, active=False):
@@ -502,11 +490,19 @@ class Case(Base, Model):
 
     @staticmethod
     def get_cases_requested_case_manager(case_manager, case_perm_checker, current_user, statuses):
-        q = session.query(Case)
-        q = q.join(UserCaseRoles).filter(UserCaseRoles.user_id == case_manager.id). \
-            filter(UserCaseRoles.role == UserCaseRoles.PRINCIPLE_CASE_MANAGER)
-        q = q.filter(Case.currentStatus.in_(statuses))
-        return Case._check_perms(current_user, q, case_perm_checker)
+        # get cases that don't have a case requester
+        q_noreq = session.query(Case).outerjoin(UserCaseRoles, and_(Case.id == UserCaseRoles.case_id,
+                                                                    UserCaseRoles.role == UserCaseRoles.REQUESTER))
+        q_noreq = q_noreq.filter(UserCaseRoles.case_id == None)
+
+        # get cases that have a principle case manager same as the parameter passed in & status in statuses
+        q_caseman = session.query(Case).join(UserCaseRoles).filter_by(user_id=case_manager.id)
+        q_caseman = q_caseman.filter_by(role=UserCaseRoles.PRINCIPLE_CASE_MANAGER)
+        q_caseman = q_caseman.filter(Case.currentStatus.in_(statuses))
+
+        # final list is cases that have both of the above
+        q_cases = q_noreq.intersect(q_caseman)
+        return Case._check_perms(current_user, q_cases, case_perm_checker)
 
     @staticmethod
     def get_cases_authorised(authoriser, case_perm_checker, current_user, statuses):
@@ -531,7 +527,7 @@ class Case(Base, Model):
         return q.scalar()
 
     @staticmethod
-    def get_cases(status, current_user, user=False, QA=False, case_perm_checker=None, case_man=False):
+    def get_cases(status, current_user, worker=False, QA=False, case_perm_checker=None, case_man=False):
         q = session.query(Case)
         if status != 'All' and status != "Queued" and status != "Workable":
             q = q.filter_by(currentStatus=status)
@@ -539,7 +535,7 @@ class Case(Base, Model):
             q = q.filter_by(currentStatus=CaseStatus.OPEN).join('tasks').filter(Task.currentStatus == TaskStatus.QUEUED)
         elif status == "Workable":
             q = q.filter(Case.currentStatus.in_(CaseStatus.workable_statuses))
-        if user is True:
+        if worker is True:
             q = q.join('tasks').join(Task.task_roles)
             if QA:
                 q = q.filter(

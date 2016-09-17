@@ -406,18 +406,15 @@ Foreman
         active_tab = 0
         for status in CaseStatus.all_statuses:
             total_cases.append([start_date.strftime("%B %Y"), status,
-                                Case.get_num_cases_opened_on_date(start_date, status, case_type=None, by_month=True)])
+                                Case.get_num_cases_opened_on_date(start_date, status, case_type=None)])
         for category in categories:
             cases_opened.append([start_date.strftime("%B %Y"), category,
-                                 Case.get_num_cases_opened_on_date(start_date, CaseStatus.OPEN, case_type=category,
-                                                                   by_month=True)])
+                                 Case.get_num_cases_opened_on_date(start_date, CaseStatus.OPEN, case_type=category)])
             cases_closed.append([start_date.strftime("%B %Y"), category,
-                                 Case.get_num_cases_opened_on_date(start_date, CaseStatus.CLOSED, case_type=category,
-                                                                   by_month=True)])
+                                 Case.get_num_cases_opened_on_date(start_date, CaseStatus.CLOSED, case_type=category)])
             cases_archived.append([start_date.strftime("%B %Y"), category,
                                    Case.get_num_cases_opened_on_date(start_date, CaseStatus.ARCHIVED,
-                                                                     case_type=category,
-                                                                     by_month=True)])
+                                                                     case_type=category)])
         for category in TaskCategory.get_categories():
             for investigator in UserRoles.get_investigators():
                 cases_assigned_inv.append([investigator.fullname, category, Task.get_num_tasks_by_user(investigator,
@@ -430,19 +427,16 @@ Foreman
             months.append(start_date.strftime("%B %Y"))
             for status in CaseStatus.all_statuses:
                 total_cases.append([start_date.strftime("%B %Y"), status,
-                                    Case.get_num_cases_opened_on_date(start_date, status, case_type=None,
-                                                                      by_month=True)])
+                                    Case.get_num_cases_opened_on_date(start_date, status, case_type=None)])
             for category in categories:
                 cases_opened.append([start_date.strftime("%B %Y"), category,
-                                     Case.get_num_cases_opened_on_date(start_date, CaseStatus.OPEN, case_type=category,
-                                                                       by_month=True)])
+                                     Case.get_num_cases_opened_on_date(start_date, CaseStatus.OPEN, case_type=category)])
                 cases_closed.append([start_date.strftime("%B %Y"), category,
                                      Case.get_num_cases_opened_on_date(start_date, CaseStatus.CLOSED,
-                                                                       case_type=category,
-                                                                       by_month=True)])
+                                                                       case_type=category)])
                 cases_archived.append([start_date.strftime("%B %Y"), category,
                                        Case.get_num_cases_opened_on_date(start_date, CaseStatus.ARCHIVED,
-                                                                         case_type=category, by_month=True)])
+                                                                         case_type=category)])
             max_months -= 1
 
         return self.return_response('pages', 'report.html', cases_opened=cases_opened, cases_closed=cases_closed,

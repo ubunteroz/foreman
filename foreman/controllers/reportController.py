@@ -33,34 +33,32 @@ class ReportController(BaseController):
         active_tab = 0
         for status in CaseStatus.all_statuses:
             total_cases.append([start_date.strftime("%B %Y"), status,
-                                Case.get_num_cases_opened_on_date(start_date, status, case_type=None, by_month=True)])
+                                Case.get_num_cases_opened_on_date(start_date, status, case_type=None)])
         for category in categories:
             cases_opened.append([start_date.strftime("%B %Y"), category,
-                                 Case.get_num_cases_opened_on_date(start_date, CaseStatus.OPEN, case_type=category,
-                                                               by_month=True)])
+                                 Case.get_num_cases_opened_on_date(start_date, CaseStatus.OPEN, case_type=category)])
             cases_closed.append([start_date.strftime("%B %Y"), category,
-                                 Case.get_num_cases_opened_on_date(start_date, CaseStatus.CLOSED, case_type=category,
-                                                               by_month=True)])
+                                 Case.get_num_cases_opened_on_date(start_date, CaseStatus.CLOSED, case_type=category)])
             cases_archived.append([start_date.strftime("%B %Y"), category,
-                                   Case.get_num_cases_opened_on_date(start_date, CaseStatus.ARCHIVED, case_type=category,
-                                                                 by_month=True)])
+                                   Case.get_num_cases_opened_on_date(start_date, CaseStatus.ARCHIVED,
+                                                                     case_type=category)])
         max_months = 11
         while start_date.month != today_date.month and max_months != 0:
             start_date = start_date + MonthDelta(1)
             months.append(start_date.strftime("%B %Y"))
             for status in CaseStatus.all_statuses:
                 total_cases.append([start_date.strftime("%B %Y"), status,
-                                    Case.get_num_cases_opened_on_date(start_date, status, case_type=None, by_month=True)])
+                                    Case.get_num_cases_opened_on_date(start_date, status, case_type=None)])
             for category in categories:
                 cases_opened.append([start_date.strftime("%B %Y"), category,
-                                     Case.get_num_cases_opened_on_date(start_date, CaseStatus.OPEN, case_type=category,
-                                                                   by_month=True)])
+                                     Case.get_num_cases_opened_on_date(start_date, CaseStatus.OPEN,
+                                                                       case_type=category)])
                 cases_closed.append([start_date.strftime("%B %Y"), category,
-                                     Case.get_num_cases_opened_on_date(start_date, CaseStatus.CLOSED, case_type=category,
-                                                                   by_month=True)])
+                                     Case.get_num_cases_opened_on_date(start_date, CaseStatus.CLOSED,
+                                                                       case_type=category)])
                 cases_archived.append([start_date.strftime("%B %Y"), category,
                                        Case.get_num_cases_opened_on_date(start_date, CaseStatus.ARCHIVED,
-                                                                     case_type=category, by_month=True)])
+                                                                         case_type=category)])
             max_months -= 1
 
         return self.return_response('pages', 'report.html', cases_opened=cases_opened, cases_closed=cases_closed,

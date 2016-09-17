@@ -103,8 +103,8 @@ class BaseController():
         base_vars['form_result'] = self.user_posted
 
         if self.current_user:
-            base_vars['user_qa_cases'] = Case.get_cases(CaseStatus.OPEN, self.current_user, user=True, QA=True)
-            base_vars['user_cases'] = Case.get_cases(CaseStatus.OPEN, self.current_user, user=True)
+            base_vars['user_qa_cases'] = Case.get_cases(CaseStatus.OPEN, self.current_user, worker=True, QA=True)
+            base_vars['user_cases'] = Case.get_cases(CaseStatus.OPEN, self.current_user, worker=True)
             base_vars['open_cases'] = len(
                 Case.get_cases(CaseStatus.OPEN, self.current_user, case_perm_checker=self.check_permissions))
             base_vars['created_cases'] = len(

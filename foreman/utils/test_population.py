@@ -3,11 +3,12 @@ import hashlib
 
 from foreman.model import User, ForemanOptions, UserRoles, Case, UserCaseRoles, CaseType, EvidenceStatus, CaseStatus
 from foreman.model import TaskType, Task, TaskStatus, UserTaskRoles, EvidenceType, Evidence, EvidencePhotoUpload
+from foreman.model import LinkedCase
 from utils import session, config, ROOT_DIR
 from random import randint
 from os import path, mkdir, stat
 import shutil
-from datetime import datetime
+from datetime import datetime, timedelta
 import population
 
 now = datetime.now()
@@ -53,13 +54,14 @@ def create_test_cases(case_managers, requestors, investigators, authorisers):
                     'Ann Ackerman','Rodrigo Vanscyoc','Garrett Trudel','Stephenie Hurla','Travis Yokum',
                     'Clara Borkholder','Olin Kyles', 'Heriberto Slye','Ashley Tweed','Shanell Sikora',
                     'Karissa Pompei','Gema Shears']
-    print "Adding 10 cases:"
-    for i in xrange(0, 10):
-        case_manager = case_managers[i]
-        requestor = requestors[i]
+    print "Adding 12 cases:"
+    other_case = None
+    for i in xrange(0, 12):
+        case_manager = case_managers[i%len(case_managers)]
+        requestor = requestors[i%len(requestors)]
         justification = justifications[i%3]
-        background = backgrounds[i]
-        rand_user = random_users[i]
+        background = backgrounds[i%len(backgrounds)]
+        rand_user = random_users[i%len(random_users)]
         background = background.replace("{}", rand_user)
         classification = "Confidential"
         case_type = CaseType.get_case_types()[i%6]
@@ -75,15 +77,18 @@ def create_test_cases(case_managers, requestors, investigators, authorisers):
         session.flush()
         new_case.add_change(requestor)
         session.commit()
-        auth = authorisers[randint(0, len(authorisers) - 1)]
+        auth = authorisers[0:-1][i%(len(authorisers)-1)]
 
         UserCaseRoles(auth, new_case, UserCaseRoles.AUTHORISER)
         new_case.authorise(auth, "Case Creation", "PENDING")
 
-        n = UserCaseRoles(requestor, new_case, UserCaseRoles.REQUESTER)
-        n.add_change(requestor)
-        n1 = UserCaseRoles(case_manager, new_case, UserCaseRoles.PRINCIPLE_CASE_MANAGER)
-        n1.add_change(requestor)
+        if i != 2 and i != 10 and i != 11:
+            n = UserCaseRoles(requestor, new_case, UserCaseRoles.REQUESTER)
+            n.add_change(requestor)
+
+        if i != 9:
+            n1 = UserCaseRoles(case_manager, new_case, UserCaseRoles.PRINCIPLE_CASE_MANAGER)
+            n1.add_change(requestor)
 
         if i%2 == 0:
             case_manager_2 = case_managers[(i+1)%10]
@@ -91,23 +96,34 @@ def create_test_cases(case_managers, requestors, investigators, authorisers):
             n1.add_change(case_manager)
         session.flush()
 
-        new_case.authorise(auth, "Looks acceptable. Please go ahead.", "AUTH")
+        if i == 4:
+            other_case = new_case
+        if i == 5:
+            link = LinkedCase(new_case, other_case, "similar cases", case_manager)
+            session.add(link)
+            session.flush()
 
-        if i%4 == 1 and i != 9:
+        if i != 9 and i != 4 and i != 10 and i != 11:
+            new_case.authorise(auth, "Looks acceptable. Please go ahead.", "AUTH")
+        elif i == 9 or i == 10:
+            new_case.authorise(auth, "Not enough justification.", "NOAUTH")
+
+        if (i%4 == 1 or i%4 == 2) and i != 9 and i != 10 and i != 11:
             new_case.set_status(CaseStatus.OPEN, new_case.principle_case_manager)
-        if i%4 == 2:
+        if i%4 == 2 and i != 10:
             new_case.set_status(CaseStatus.CLOSED, new_case.principle_case_manager)
-        if i%4 == 3:
+        if i%4 == 3 and i != 11:
             new_case.set_status(CaseStatus.ARCHIVED, new_case.principle_case_manager)
         print "Case added to Foreman."
 
-        if i < 9:
+        if i != 9 and i != 4 and i != 10 and i != 11:
             inv = create_test_tasks(new_case, investigators, rand_user, i if i > 4 else 4)
         else:
             create_test_tasks(new_case, investigators, rand_user, 1, progress=False)
         create_evidence(new_case, inv, rand_user, i)
+    case = Case.get(4)
+    case.deadline = case.creation_date + timedelta(days=30)
     session.commit()
-
 
 def generate_task_background(task_type, rand_user):
     keywords = ['Accountant', 'Acid test ratio', 'Autocratic management', 'Production', 'Value Chain', 'Optimal',
@@ -201,7 +217,8 @@ def create_evidence(case, inv, rand_user, num):
         random = hashlib.md5(case.case_name + inv.fullname + rand_user + str(num)).hexdigest()[0:10]
         e = Evidence(case, case.case_name + "-SCH-" + random + "-HDD_00" + str(ref), evi,
                      "Hard drive from {}'s main machine".format(rand_user),
-                     case.requester.fullname, "Main Evidence Cabinet",
+                     case.requester.fullname if case.requester else case.principle_case_manager.fullname,
+                     "Main Evidence Cabinet",
                      case.principle_case_manager, "B0000"+str(i), True)
         ref += 1
         session.add(e)
