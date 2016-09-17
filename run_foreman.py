@@ -57,6 +57,9 @@ def run_tests(args):
         unit = False if args.test_unit == "False" else True
         functional = False if args.test_func == "False" else True
 
+        if urls is False and unit is False and functional is False:
+            urls = unit = functional = True
+
         print "\n\n~~ Setting up Test Database ~~\n\n"
 
         setup(args.config_file)

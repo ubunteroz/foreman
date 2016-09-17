@@ -33,7 +33,9 @@ class CaseManagerForCaseChecker(BaseChecker):
 
 class PrimaryCaseManagerForCaseChecker(BaseChecker):
     def check(self, user, case):
-        return user.id == case.principle_case_manager.id
+        if case.principle_case_manager is not None:
+            return user.id == case.principle_case_manager.id
+        return False
 
 
 class CaseManagerForTaskChecker(BaseChecker):
@@ -230,7 +232,10 @@ class RequesterForEvidenceChecker(BaseChecker):
         if evidence.case_id is not None:
             requester_role = UserRoles.check_user_has_active_role(user, UserRoles.REQUESTER)
             requester_user = evidence.case.requester
-            return requester_user.id == user.id and requester_role
+            if requester_user is not None:
+                return requester_user.id == user.id and requester_role
+            else:
+                return False
         else:
             return False
 

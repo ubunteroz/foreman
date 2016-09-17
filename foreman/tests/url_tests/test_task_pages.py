@@ -142,14 +142,15 @@ class TaskTestCase(URLTestCase):
 
     def test_change_all_statuses_task(self):
         self._check_url('/cases/testing/change_statuses/?status=Queued', 1, 404)  # login as admin, but wrong case
-        self._check_url('/cases/10/change_statuses/', 1, 404)  # login as admin, but no actual status change
-        self._check_url('/cases/10/change_statuses/?status=Testing', 1, 404)  # login as admin, but wrong type of status
+        self._check_url('/cases/6/change_statuses/', 1, 404)  # login as admin, but no actual status change
+        self._check_url('/cases/13/change_statuses/?status=Testing', 1, 404)  # login as admin, but wrong type of status
         self._check_url('/cases/2/change_statuses/?status=Queued', 1, 404)  # login as admin, but cannot work for this case
-        self._check_url('/cases/10/change_statuses/?status=Queued', None, 401)  # not logged in
-        self._check_url('/cases/10/change_statuses/?status=Queued', 1)  # login as admin
-        self._check_url('/cases/10/change_statuses/?status=Queued', 19, 403)  # login as a case manager
-        self._check_url('/cases/10/change_statuses/?status=Queued', 11, 403)  # login as an investigator
-        self._check_url('/cases/10/change_statuses/?status=Queued', 7, 403)  # login as a QA
-        self._check_url('/cases/10/change_statuses/?status=Queued', 33, 403)  # login as a requester
-        self._check_url('/cases/10/change_statuses/?status=Queued', 26)  # login as a primary case manager for this case
-        self._check_url('/cases/10/change_statuses/?status=Queued', 36, 403)  # login as a requester for this case
+        self._check_url('/cases/6/change_statuses/?status=Queued', None, 401)  # not logged in
+        self._check_url('/cases/6/change_statuses/?status=Queued', 1, 404)  # login as admin, but this cases tasks cannot be queued
+        self._check_url('/cases/13/change_statuses/?status=Queued', 1)  # login as admin
+        self._check_url('/cases/13/change_statuses/?status=Queued', 23, 403)  # login as a case manager
+        self._check_url('/cases/13/change_statuses/?status=Queued', 11, 403)  # login as an investigator
+        self._check_url('/cases/13/change_statuses/?status=Queued', 7, 403)  # login as a QA
+        self._check_url('/cases/13/change_statuses/?status=Queued', 33, 403)  # login as a requester
+        self._check_url('/cases/13/change_statuses/?status=Queued', 19)  # login as a primary case manager for this case
+        self._check_url('/cases/13/change_statuses/?status=Queued', 29, 403)  # login as a requester for this case

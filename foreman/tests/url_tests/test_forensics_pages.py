@@ -10,17 +10,15 @@ class ForensicsTestCase(URLTestCase):
 
     def test_work_on_task(self):
         self._check_url('/cases/2/test_doesnt_exist/notes/', 1, 404)  # login as admin, but wrong case
-        self._check_url('/cases/6/23/notes/', None, 401)  # not logged in
-        self._check_url('/cases/6/23/notes/', 1)  # login as admin
-        self._check_url('/cases/6/23/notes/', 19, 403)  # login as a case manager
-        self._check_url('/cases/6/23/notes/', 11, 403)  # login as an investigator
-        self._check_url('/cases/6/23/notes/', 7, 403)  # login as a QA
-        self._check_url('/cases/6/23/notes/', 33, 403)  # login as a requester
-        self._check_url('/cases/6/23/notes/', 22, 403)  # login as a primary case manager for this case
-        self._check_url('/cases/6/23/notes/', 4)  # login as a primary investigator for this case
-        self._check_url('/cases/6/23/notes/', 5)  # login as a primary QA for this case
-        self._check_url('/cases/6/23/notes/', 32, 403)  # login as a requester for this case
-        self._check_url('/cases/6/24/notes/', 4, 403)  # login as a primary investigator for this case
+        self._check_url('/cases/6/22/notes/', None, 401)  # not logged in
+        self._check_url('/cases/6/22/notes/', 1)  # login as admin
+        self._check_url('/cases/6/22/notes/', 19, 403)  # login as a case manager
+        self._check_url('/cases/6/22/notes/', 11, 403)  # login as an investigator
+        self._check_url('/cases/6/22/notes/', 7, 403)  # login as a QA
+        self._check_url('/cases/6/22/notes/', 33, 403)  # login as a requester
+        self._check_url('/cases/6/22/notes/', 22, 403)  # login as a primary case manager for this case
+        self._check_url('/cases/6/22/notes/', 6)  # login as a primary investigator for this case
+        self._check_url('/cases/6/22/notes/', 2)  # login as a primary QA for this case
 
     def test_qa_work(self):
         self._check_url('/cases/2/test_doesnt_exist/qa/', 1, 404)  # login as admin, but wrong case

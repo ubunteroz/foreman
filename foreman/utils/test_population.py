@@ -15,6 +15,7 @@ now = datetime.now()
 
 
 def create_test_cases(case_managers, requestors, investigators, authorisers):
+    num_cases = 13
     backgrounds = [
         """Employee {} has been accused of harassment and bullying. Please conduct an investigation into the
          matter. """,
@@ -54,9 +55,9 @@ def create_test_cases(case_managers, requestors, investigators, authorisers):
                     'Ann Ackerman','Rodrigo Vanscyoc','Garrett Trudel','Stephenie Hurla','Travis Yokum',
                     'Clara Borkholder','Olin Kyles', 'Heriberto Slye','Ashley Tweed','Shanell Sikora',
                     'Karissa Pompei','Gema Shears']
-    print "Adding 12 cases:"
+    print "Adding {} cases:".format(num_cases)
     other_case = None
-    for i in xrange(0, 12):
+    for i in xrange(0, num_cases):
         case_manager = case_managers[i%len(case_managers)]
         requestor = requestors[i%len(requestors)]
         justification = justifications[i%3]
@@ -116,7 +117,7 @@ def create_test_cases(case_managers, requestors, investigators, authorisers):
             new_case.set_status(CaseStatus.ARCHIVED, new_case.principle_case_manager)
         print "Case added to Foreman."
 
-        if i != 9 and i != 4 and i != 10 and i != 11:
+        if i != 9 and i != 4 and i != 10 and i != 11 and i != 12:
             inv = create_test_tasks(new_case, investigators, rand_user, i if i > 4 else 4)
         else:
             create_test_tasks(new_case, investigators, rand_user, 1, progress=False)

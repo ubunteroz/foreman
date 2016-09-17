@@ -150,20 +150,20 @@ class CaseReadTestCase(ModelTestCaseBase):
         cases = Case.get_cases_authorised(auth, perms, self.current_user, [statuses])
         self.assertEqual(len(cases), 1)
 
-        auth = User.get(37) # 4 cases authorised, 1 is rejected
+        auth = User.get(37) # 5 cases authorised, 1 is rejected
         statuses = CaseStatus.all_statuses
         cases = Case.get_cases_authorised(auth, perms, self.current_user, statuses)
-        self.assertEqual(len(cases), 4)
+        self.assertEqual(len(cases), 5)
 
         statuses = CaseStatus.approved_statuses
         cases = Case.get_cases_authorised(auth, perms, self.current_user, statuses)
-        self.assertEqual(len(cases), 3)
+        self.assertEqual(len(cases), 4)
 
         auth = User.get(3) # not an authoriser
         cases = Case.get_cases_authorised(auth, perms, self.current_user, statuses)
         self.assertFalse(cases)
 
-        auth = User.get(37) # 4 cases authorised: 2 private, 1 rejected
+        auth = User.get(37) # 5 cases authorised: 3 private, 1 rejected
         user = User.get(7) # user not allowed to see 1 private case
         statuses = CaseStatus.all_statuses
         cases = Case.get_cases_authorised(auth, perms, user, statuses)
@@ -264,7 +264,7 @@ class CaseReadTestCase(ModelTestCaseBase):
         self.assertEqual(len(Case._check_perms(caseman, cases, BaseController.check_permissions)), 6)
 
         caseman = User.get(1)
-        self.assertEqual(len(Case._check_perms(caseman, cases, BaseController.check_permissions)), 12)
+        self.assertEqual(len(Case._check_perms(caseman, cases, BaseController.check_permissions)), 13)
 
     def test_case_requests_test_case(self):
 
@@ -281,10 +281,10 @@ class CaseReadTestCase(ModelTestCaseBase):
         self.assertEqual(Case.get_num_cases_opened_on_date(date, status, case_type), 2)
 
         status = CaseStatus.PENDING
-        self.assertEqual(Case.get_num_cases_opened_on_date(date, status, case_type), 12)
+        self.assertEqual(Case.get_num_cases_opened_on_date(date, status, case_type), 13)
 
         status = CaseStatus.CREATED
-        self.assertEqual(Case.get_num_cases_opened_on_date(date, status, case_type), 8)
+        self.assertEqual(Case.get_num_cases_opened_on_date(date, status, case_type), 9)
 
         status = CaseStatus.REJECTED
         self.assertEqual(Case.get_num_cases_opened_on_date(date, status, case_type), 2)
@@ -301,8 +301,8 @@ class CaseReadTestCase(ModelTestCaseBase):
         self.assertEqual(len(Case.cases_with_user_involved(user, True)), 2)
 
         user = User.get(20).id # case manager
-        self.assertEqual(len(Case.cases_with_user_involved(user)), 2)
-        self.assertEqual(len(Case.cases_with_user_involved(user, True)), 0)
+        self.assertEqual(len(Case.cases_with_user_involved(user)), 3)
+        self.assertEqual(len(Case.cases_with_user_involved(user, True)), 1)
 
         # test .get_completed_cases()
         user = User.get(20)
