@@ -417,9 +417,9 @@ Foreman
                                                                      case_type=category)])
         for category in TaskCategory.get_categories():
             for investigator in UserRoles.get_investigators():
-                cases_assigned_inv.append([investigator.fullname, category, Task.get_num_tasks_by_user(investigator,
-                                                                                                       category,
-                                                                                                       start_date)])
+                cases_assigned_inv.append([investigator.fullname, category,
+                                           Task.get_num_created_tasks_for_given_month_user_is_investigator_for(investigator, category,
+                                                                                                               start_date)])
 
         max_months = 11
         while start_date.month != today_date.month and max_months != 0:
@@ -453,8 +453,8 @@ Foreman
         tasks_assigned_inv = []
         for category in TaskCategory.get_categories():
             for investigator in UserRoles.get_investigators():
-                tasks_assigned_inv.append([investigator.fullname, category, Task.get_num_tasks_by_user(investigator,
-                                                                                                       category,
-                                                                                                       start_date)])
+                tasks_assigned_inv.append([investigator.fullname, category, Task.get_num_created_tasks_for_given_month_user_is_investigator_for(investigator,
+                                                                                                                                                category,
+                                                                                                                                                start_date)])
         return tasks_assigned_inv
 

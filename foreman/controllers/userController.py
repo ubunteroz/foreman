@@ -54,7 +54,7 @@ class UserController(BaseController):
         worker_task_statuses = [TaskStatus.ALLOCATED, TaskStatus.PROGRESS, "Waiting for QA", "Performing QA",
                                 TaskStatus.DELIVERY, TaskStatus.COMPLETE]
         worker_case_statuses = CaseStatus.approved_statuses
-        get_worker_task_amounts = Task.get_num_completed_tasks_by_user
+        get_worker_task_amounts = Task.get_num_tasks_by_user_for_date_range
         get_worker_case_amounts = Case.get_num_completed_case_by_user
         return self.return_response('pages', 'timesheets.html', start_day=start_day,
                                     get_worker_task_amounts=get_worker_task_amounts,
@@ -121,9 +121,9 @@ class UserController(BaseController):
 
             task_timesheets = {}
             if user.is_examiner():
-                prim, second = Task.get_tasks_assigned_to_user(user, statuses=TaskStatus.notesAllowed,
-                                                               case_status=CaseStatus.all_statuses)
-                prim_qa, second_qa = Task.get_tasks_requiring_QA_by_user(user, case_status=CaseStatus.all_statuses,
+                prim, second = Task.get_tasks_assigned_to_user(user, task_statuses=TaskStatus.notesAllowed,
+                                                               case_statuses=CaseStatus.all_statuses)
+                prim_qa, second_qa = Task.get_tasks_requiring_QA_by_user(user, case_statuses=CaseStatus.all_statuses,
                                                                          task_statuses=TaskStatus.notesAllowed)
                 timesheet_user_tasks = prim + second + prim_qa + second_qa
                 timesheet_user_tasks.sort(key=lambda d: d.creation_date, reverse=True)
@@ -498,7 +498,7 @@ Foreman
                 titles.append(user.fullname)
         stringio = create_csv(
             self._create_metrics(examiners, statuses, categories, start_day, start_day + timedelta(days=7),
-                                 Task.get_num_completed_tasks_by_user), titles)
+                                 Task.get_num_tasks_by_user_for_date_range), titles)
         return Response(stringio.getvalue(), direct_passthrough=True, mimetype='text/csv', status=200)
 
     def case_metrics_download_csv(self, week):

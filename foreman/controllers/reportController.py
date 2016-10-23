@@ -79,7 +79,7 @@ class ReportController(BaseController):
             for investigator in UserRoles.get_investigators():
                 tasks_assigned_inv.append({
                     "Investigator": investigator.fullname,
-                    "Number of Tasks": int(Task.get_num_tasks_by_user(investigator, category, start_date)),
+                    "Number of Tasks": int(Task.get_num_created_tasks_for_given_month_user_is_investigator_for(investigator, category, start_date)),
                     "Task Type": category})
         return tasks_assigned_inv
 
@@ -96,7 +96,7 @@ class ReportController(BaseController):
         for investigator in UserRoles.get_investigators():
             tasks_assigned_inv.append({
                 "QA Partner": investigator.fullname,
-                "Number of QAs": Task.get_num_completed_qas(investigator, start_date)})
+                "Number of QAs": Task.get_num_completed_qas_for_given_month(investigator, start_date)})
         return tasks_assigned_inv
 
 
@@ -120,8 +120,8 @@ class ReportController(BaseController):
                 if investigator.is_examiner():
                     tasks_assigned_inv.append({
                         "Investigator": investigator.fullname,
-                        "Number of Tasks": int(Task.get_num_completed_tasks_by_user(investigator, category,
-                                                                                    start_date, end_date, task_status)),
+                        "Number of Tasks": Task.get_num_tasks_by_user_for_date_range(investigator, category, start_date,
+                                                                                     end_date, task_status),
                         "Task Type": category})
         return tasks_assigned_inv
 

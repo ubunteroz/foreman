@@ -1,53 +1,40 @@
 from datetime import datetime, timedelta
-from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
-from werkzeug import Local, LocalManager
 # local imports
 import base_tester
 from foreman.controllers.baseController import BaseController
 from foreman.model import Base, Case, User, CasePriority, ForemanOptions, CaseStatus, UserCaseRoles, CaseHistory
+from foreman.utils.utils import session
 
 
 class ModelTestCaseBase(base_tester.UnitTestCase):
     current_user = None
     defaults = ForemanOptions.get_options()
     now = datetime.now()
-    session = None
-    db = None
-
-    def setup_memory_database(self):
-        local = Local()
-        local_manager = LocalManager([local])
-        sessionMaker = sessionmaker(autocommit=True)
-        self.session = scoped_session(sessionMaker, local_manager.get_ident)
-        self.db = create_engine('sqlite://')
-        sessionMaker.configure(bind=self.db, autocommit=True, autoflush=True)
-        Base.metadata.create_all(self.db)
-
-    def drop_memory_database(self):
-        Base.metadata.reflect(self.db)
-        Base.metadata.drop_all(self.db)
 
 
 class CaseWriteTestCase(ModelTestCaseBase):
 
     def setUp(self):
-        self.setup_memory_database()
-
-        self.current_user = User("username1", "pass", "forename", "surname", "email", True)
-
+        self.current_user = User.get(1)
         self.new_case = Case("name", self.current_user)
-        self.case_authed = Case("auth", self.current_user)
-        self.case_rejected = Case("rejected", self.current_user)
-        self.case_changes = Case("changes", self.current_user)
-        self.case_changes.add_change(self.current_user)
+        session.add(self.new_case)
+        session.commit()
+
 
     def tearDown(self):
-        self.drop_memory_database()
+        session.delete(self.new_case)
+
+        cases = CaseHistory.get_all()
+        for t in cases:
+            if t.case_id is None:
+                session.delete(t)
+
+        session.commit()
 
     def test_creation_test_case(self):
-        self.assertEqual("name", self.new_case.case_name)
+
         status = self.new_case.get_status()
+        self.assertEqual("name", self.new_case.case_name)
         self.assertEqual(self.current_user, status.user)
         self.assertEqual(status.status, self.new_case.currentStatus)
         self.assertIsNone(self.new_case.reference)
@@ -63,52 +50,49 @@ class CaseWriteTestCase(ModelTestCaseBase):
         self.assertIsNone(self.new_case.deadline)
 
     def test_authorisation(self):
-        auth = User("username2", "pass", "forename", "surname", "email", True)
         reason = "reason"
 
         auth_code = "AUTH"
-        self.case_authed.authorise(auth, reason, auth_code)
-        self.assertEqual(self.case_authed.get_status().status, CaseStatus.CREATED)
+        self.new_case.authorise(self.current_user, reason, auth_code)
+        self.assertEqual(self.new_case.get_status().status, CaseStatus.CREATED)
 
         auth_code = "NOAUTH"
-        self.case_rejected.authorise(auth, reason, auth_code)
-        self.assertEqual(self.case_rejected.get_status().status, CaseStatus.REJECTED)
+        self.new_case.authorise(self.current_user, reason, auth_code)
+        self.assertEqual(self.new_case.get_status().status, CaseStatus.REJECTED)
 
     def test_setting_status(self):
         status = CaseStatus.OPEN
-        user = User.get(1)
 
-        self.new_case.set_status(status, user)
+        self.new_case.set_status(status, self.current_user)
         self.assertEqual(self.new_case.get_status().status, CaseStatus.OPEN)
         self.assertNotEqual(self.new_case.get_status().status, CaseStatus.CREATED)
 
         status = "nonsense"
-        self.new_case.set_status(status, user)
+        self.new_case.set_status(status, self.current_user)
         self.assertEqual(self.new_case.get_status().status, CaseStatus.OPEN)
         self.assertNotEqual(self.new_case.get_status().status, status)
 
     def test_closing_case(self):
         reason = "reason"
-        user = self.current_user
 
-        self.new_case.close_case(reason, user)
+        self.new_case.close_case(reason, self.current_user)
         current_status = self.new_case.get_status()
         self.assertEqual(current_status.status, CaseStatus.CLOSED)
         self.assertEqual(current_status.reason, reason)
 
     def test_add_change(self):
-        self.case_changes.case_name = "changed"
-        self.case_changes.add_change(self.current_user)
-        self.case_changes.case_name = "changed again"
-        self.case_changes.add_change(self.current_user)
+        self.new_case.case_name = "changed"
+        self.new_case.add_change(self.current_user)
+        self.new_case.case_name = "changed again"
+        self.new_case.add_change(self.current_user)
 
         user_changes = self.current_user.case_history_changes
-        self.assertEqual(len(user_changes), 3)
+        self.assertEqual(len(user_changes), 2)
 
-        case_changes = self.case_changes.history
+        case_changes = self.new_case.history
         self.assertEqual(len(case_changes), 2)
 
-        history = CaseHistory.get_changes(self.case_changes)
+        history = CaseHistory.get_changes(self.new_case)
         self.assertEqual(len(history), 1)
 
 
@@ -359,26 +343,18 @@ class CaseReadTestCase(ModelTestCaseBase):
 
         # test ._active_before_start()
         case = Case.get(1)
-        user = User.get(17)
-        self.assertTrue(case._active_before_start(user, case.creation_date))
-        self.assertFalse(case._active_before_start(user, case.creation_date - timedelta(days=1)))
+        self.assertTrue(case._active_before_start(case.creation_date))
+        self.assertFalse(case._active_before_start(case.creation_date - timedelta(days=1)))
 
         # test ._active_after_end()
         case = Case.get(3)
-        user = User.get(20)
-        self.assertTrue(case._active_after_end(user, case.creation_date))
-        self.assertFalse(case._active_after_end(user, case.creation_date + timedelta(days=1)))
+        self.assertTrue(case._active_after_end(case.creation_date))
+        self.assertFalse(case._active_after_end(case.creation_date + timedelta(days=1)))
 
         # test .active_user()
         case = Case.get(1)
-        user = User.get(17)
-        self.assertTrue(case.active_user(user, case.creation_date))
-        self.assertFalse(case.active_user(user, case.creation_date - timedelta(days=1)))
-
-        case = Case.get(3)
-        user = User.get(20)
-        self.assertTrue(case.active_user(user, case.creation_date))
-        self.assertFalse(case.active_user(user, case.creation_date + timedelta(days=1)))
+        self.assertTrue(case.active_user(case.creation_date))
+        self.assertFalse(case.active_user(case.creation_date - timedelta(days=1)))
 
         # test .get_cases()
         status = "All"
@@ -392,7 +368,7 @@ class CaseReadTestCase(ModelTestCaseBase):
 
         QA = True
         cases = Case.get_cases(status, user, worker, QA, perms, case_man)  # all cases for user 3 as QA
-        self.assertEqual(len(cases), 4)
+        self.assertEqual(len(cases), 5)
 
         status = CaseStatus.CLOSED
         cases = Case.get_cases(status, user, worker, QA, perms, case_man)  # all cases for user 3 as QA
@@ -400,7 +376,7 @@ class CaseReadTestCase(ModelTestCaseBase):
 
         status = "Workable"
         cases = Case.get_cases(status, user, worker, QA, perms, case_man)  # all cases for user 3 as QA
-        self.assertEqual(len(cases), 0)
+        self.assertEqual(len(cases), 1)
 
         worker = False
         QA = False

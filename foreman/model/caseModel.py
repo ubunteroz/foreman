@@ -15,7 +15,7 @@ from monthdelta import MonthDelta
 # local imports
 from models import Base, Model, HistoryModel
 from generalModel import ForemanOptions, TaskCategory, TaskType, CasePriority, CaseType
-from userModel import UserTaskRoles, User, UserCaseRoles
+from userModel import UserTaskRoles, User, UserCaseRoles, UserRoles
 from ..utils.utils import session, ROOT_DIR, config, upload_file
 
 hash_algorithm = config.get('forensics', 'hash_type').lower()
@@ -557,14 +557,14 @@ class Case(Base, Model):
                         pass
             return output
 
-    def _active_before_start(self, user, day_tracker):
+    def _active_before_start(self, day_tracker):
         if date(day_tracker.year, day_tracker.month, day_tracker.day) < date(self.creation_date.year,
                                                                              self.creation_date.month,
                                                                              self.creation_date.day):
             return False
         return True
 
-    def _active_after_end(self, user, day_tracker):
+    def _active_after_end(self, day_tracker):
         case_status = self.get_status()
         if case_status.status in CaseStatus.closedStatuses and date(day_tracker.year, day_tracker.month,
                                                                     day_tracker.day) > date(case_status.date_time.year,
@@ -573,8 +573,8 @@ class Case(Base, Model):
             return False
         return True
 
-    def active_user(self, user, day_tracker):
-        return self._active_before_start(user, day_tracker) and self._active_after_end(user, day_tracker)
+    def active_user(self, day_tracker):
+        return self._active_before_start(day_tracker) and self._active_after_end(day_tracker)
 
     def __repr__(self):
         return "<Case Object[{}] '{}' [{}]>".format(self.id, self.case_name, self.status)
@@ -1426,82 +1426,84 @@ class Task(Base, Model):
 
     @property
     def status(self):
-        return session.query(TaskStatus).filter_by(task_id=self.id).order_by(desc(TaskStatus.id)).first().status
+        return self.get_status().status
 
     def add_note(self, note, author):
         self.notes.append(TaskNotes(note, author.id, self.id))
 
     def assign_task(self, investigator, principle=True, manager=None):
-        if principle:
-            role_type = UserTaskRoles.PRINCIPLE_INVESTIGATOR
-            self.set_status(TaskStatus.ALLOCATED, investigator)
-        else:
-            role_type = UserTaskRoles.SECONDARY_INVESTIGATOR
+        if UserRoles.check_user_has_active_role(investigator, UserRoles.INV):
+            if principle:
+                role_type = UserTaskRoles.PRINCIPLE_INVESTIGATOR
+                self.set_status(TaskStatus.ALLOCATED, investigator)
+            else:
+                role_type = UserTaskRoles.SECONDARY_INVESTIGATOR
 
-        session.flush()
+            session.flush()
 
-        UserTaskRoles.delete_if_already_exists(self.id, investigator.id, role_type)
+            UserTaskRoles.delete_if_already_exists(self.id, investigator.id, role_type)
 
-        u = UserTaskRoles(investigator, self, role_type)
-        session.add(u)
-        session.flush()
-        if manager is None:
-            u.add_change(investigator)
-        else:
-            u.add_change(manager)
-        session.flush()
+            u = UserTaskRoles(investigator, self, role_type)
+            session.add(u)
+            session.flush()
+            if manager is None:
+                u.add_change(investigator)
+            else:
+                u.add_change(manager)
+            session.flush()
 
     def assign_qa(self, qa, principle=True, manager=None):
-        if principle:
-            role_type = UserTaskRoles.PRINCIPLE_QA
-        else:
-            role_type = UserTaskRoles.SECONDARY_QA
+        if UserRoles.check_user_has_active_role(qa, UserRoles.QA):
+            if principle:
+                role_type = UserTaskRoles.PRINCIPLE_QA
+            else:
+                role_type = UserTaskRoles.SECONDARY_QA
 
-        UserTaskRoles.delete_if_already_exists(self.id, qa.id, role_type)
+            UserTaskRoles.delete_if_already_exists(self.id, qa.id, role_type)
 
-        u = UserTaskRoles(qa, self, role_type)
-        session.add(u)
-        session.flush()
-        if manager is None:
-            u.add_change(qa)
-        else:
-            u.add_change(manager)
-        session.flush()
+            u = UserTaskRoles(qa, self, role_type)
+            session.add(u)
+            session.flush()
+            if manager is None:
+                u.add_change(qa)
+            else:
+                u.add_change(manager)
+            session.flush()
 
     def investigator_assign_qa(self, principle_qa, secondary_qa, assignee, single=False):
-        self.set_status(self.get_status().status, assignee)
-        currentStatus = self.get_status()
+        if (principle_qa is not None and UserRoles.check_user_has_active_role(principle_qa, UserRoles.QA)) or \
+                (secondary_qa is not None and UserRoles.check_user_has_active_role(secondary_qa, UserRoles.QA)):
+            self.set_status(self.get_status().status, assignee)
+            currentStatus = self.get_status()
 
-        if single is True and self.principle_QA is not None:
-            role = UserTaskRoles.SECONDARY_QA
-            role_name = "secondary"
-        else:
-            role = UserTaskRoles.PRINCIPLE_QA
-            role_name = "primary"
+            if single is True and self.principle_QA is not None:
+                role_name = "secondary"
+            else:
+                role_name = "primary"
 
-        if single is True:
-            currentStatus.note = "{} has assigned {} as {} QA".format(assignee.fullname, principle_qa.fullname,
-                                                                      role_name)
-        else:
-            secondary = ""
+            if single is True:
+                assigned = principle_qa.fullname if principle_qa is not None else secondary_qa.fullname
+                currentStatus.note = "{} has assigned {} as {} QA".format(assignee.fullname, assigned, role_name)
+            else:
+                secondary = ""
+                if secondary_qa:
+                    secondary = " and {} as secondary QA".format(secondary_qa.fullname)
+                currentStatus.note = "{} has assigned {} as primary QA {}".format(assignee.fullname,
+                                                                                  principle_qa.fullname, secondary)
+
+            if principle_qa:
+                UserTaskRoles.delete_if_already_exists(self.id, principle_qa.id, UserTaskRoles.PRINCIPLE_QA)
+                u = UserTaskRoles(principle_qa, self, UserTaskRoles.PRINCIPLE_QA)
+                session.add(u)
+                session.flush()
+                u.add_change(assignee)
+
             if secondary_qa:
-                secondary = " and {} as secondary QA".format(secondary_qa.fullname)
-            currentStatus.note = "{} has assigned {} as primary QA {}".format(assignee.fullname, principle_qa.fullname,
-                                                                              secondary)
-
-        UserTaskRoles.delete_if_already_exists(self.id, principle_qa.id, role)
-
-        u = UserTaskRoles(principle_qa, self, role)
-        session.add(u)
-        session.flush()
-        u.add_change(assignee)
-
-        if secondary_qa:
-            UserTaskRoles.delete_if_already_exists(self.id, secondary_qa.id, UserTaskRoles.SECONDARY_QA)
-            u2 = UserTaskRoles(secondary_qa, self, UserTaskRoles.SECONDARY_QA)
-            session.add(u2)
-            session.flush()
-            u2.add_change(assignee)
+                UserTaskRoles.delete_if_already_exists(self.id, secondary_qa.id, UserTaskRoles.SECONDARY_QA)
+                u2 = UserTaskRoles(secondary_qa, self, UserTaskRoles.SECONDARY_QA)
+                session.add(u2)
+                session.flush()
+                u2.add_change(assignee)
 
     def start_work(self, investigator):
         self.set_status(TaskStatus.PROGRESS, investigator)
@@ -1512,34 +1514,44 @@ class Task(Base, Model):
         session.flush()
 
     def pass_QA(self, note, author):
-        self.notes.append(TaskNotes(note, author.id, self.id))
-        currentStatus = self.get_status()
-
-        if author.id == self.principle_QA.id:
+        if self.principle_QA is not None and author.id == self.principle_QA.id:
             self.princQA = True
         elif self.secondary_QA is not None and author.id == self.secondary_QA.id:
             self.seconQA = True
+        else:
+            return
+
+        self.notes.append(TaskNotes(note, author.id, self.id))
+        currentStatus = self.get_status()
 
         if self.secondary_QA is not None and self.princQA and self.seconQA:
             # QA complete, both QA pass
             self.set_status(TaskStatus.DELIVERY, author)
             currentStatus.note = currentStatus.note + " and by {}".format(author.fullname)
+            # reset the QAs, in case task is set back to work
+            self.princQA = False
+            self.seconQA = False
         elif self.secondary_QA is None and self.princQA:
             # QA complete and only one QA
             self.set_status(TaskStatus.DELIVERY, author)
             currentStatus.note = "QA passed by {}".format(author.fullname)
+            # reset the QAs, in case task is set back to work
+            self.princQA = False
+            self.seconQA = False
         elif self.secondary_QA is not None and not (self.princQA and self.seconQA):
             # one out of two has completed QA. No QA complete
             currentStatus.note = "QA passed by {}".format(author.fullname)
 
     def fail_QA(self, note, author):
-        self.notes.append(TaskNotes(note, author.id, self.id))
-        currentStatus = self.get_status()
-
-        if author.id == self.principle_QA.id:
+        if self.principle_QA is not None and author.id == self.principle_QA.id:
             self.princQA = True
         elif self.secondary_QA is not None and author.id == self.secondary_QA.id:
             self.seconQA = True
+        else:
+            return
+
+        self.notes.append(TaskNotes(note, author.id, self.id))
+        currentStatus = self.get_status()
         currentStatus.note = "QA failed by {}".format(author.fullname)
 
         if self.secondary_QA is not None and not (self.princQA and self.seconQA):
@@ -1602,22 +1614,22 @@ class Task(Base, Model):
         return Task.get_active_tasks(investigator, case_perm_checker, True, current_user)
 
     @staticmethod
-    def get_num_tasks_by_user(investigator, category, date_required):
+    def get_num_created_tasks_for_given_month_user_is_investigator_for(investigator, category, date_required):
         month = date_required.month
         year = date_required.year
         first_day = datetime(year, month, 1)
         last_day = datetime(year, month, calendar.monthrange(year, month)[1])
         q = session.query(func.count(Task.id))
         q = q.filter(and_(Task.creation_date >= first_day, Task.creation_date <= last_day))
+        q = q.join(UserTaskRoles).filter(UserTaskRoles.user_id == investigator.id).filter(or_(
+            UserTaskRoles.role == UserTaskRoles.PRINCIPLE_INVESTIGATOR,
+            UserTaskRoles.role == UserTaskRoles.SECONDARY_INVESTIGATOR))
         if category is not None:
             q = q.join(TaskType).join(TaskCategory).filter(TaskCategory.category == category)
-            q = q.join(UserTaskRoles).filter(UserTaskRoles.user_id == investigator.id).filter(or_(
-                UserTaskRoles.role == UserTaskRoles.PRINCIPLE_INVESTIGATOR,
-                UserTaskRoles.role == UserTaskRoles.SECONDARY_INVESTIGATOR))
         return q.scalar()
 
     @staticmethod
-    def get_num_completed_tasks_by_user(investigator, category, start, end, status):
+    def get_num_tasks_by_user_for_date_range(investigator, category, start, end, status):
 
         user_roles = [UserTaskRoles.PRINCIPLE_INVESTIGATOR, UserTaskRoles.SECONDARY_INVESTIGATOR]
         if status == "Performing QA":
@@ -1626,7 +1638,7 @@ class Task(Base, Model):
         elif status == "Waiting for QA":
             status = TaskStatus.QA
         elif status not in TaskStatus.all_statuses:
-            status = TaskStatus.PROGRESS
+            return 0
 
         q = session.query(func.count(distinct(Task.id)))
         q = q.join(TaskStatus).filter(and_(TaskStatus.date_time >= start,
@@ -1639,7 +1651,7 @@ class Task(Base, Model):
         return q.scalar()
 
     @staticmethod
-    def get_num_completed_qas(investigator, date_required):
+    def get_num_completed_qas_for_given_month(investigator, date_required):
         month = date_required.month
         year = date_required.year
         first_day = datetime(year, month, 1)
@@ -1660,19 +1672,19 @@ class Task(Base, Model):
         return q.all()
 
     @staticmethod
-    def _get_user_tasks(user=None, usergroups=None, statusgroups=None, case_perm_checker=None, filter_check=None,
-                        current_user=None, case_status=None):
-        if case_status is None:
-            case_status = [CaseStatus.OPEN]
+    def _get_user_tasks(user=None, user_groups=None, task_statuses=None, case_perm_checker=None, filter_check=None,
+                        current_user=None, case_statuses=None):
+        if case_statuses is None:
+            case_statuses = [CaseStatus.OPEN]
         q = session.query(Task)
-        if statusgroups is not None:
-            q = q.filter(Task.currentStatus.in_(statusgroups))
+        if task_statuses is not None:
+            q = q.filter(Task.currentStatus.in_(task_statuses))
         if filter_check is not None:
-            q = q.join('task_roles').filter(and_(UserTaskRoles.user_id == user.id, UserTaskRoles.role.in_(usergroups)))
-        q = q.join('case').filter(Case.currentStatus.in_(case_status))
+            q = q.join('task_roles').filter(and_(UserTaskRoles.user_id == user.id, UserTaskRoles.role.in_(user_groups)))
+        q = q.join('case').filter(Case.currentStatus.in_(case_statuses))
         if case_perm_checker is not None:
             if current_user is None:
-                return Task._check_perms(user, q, case_perm_checker)  # do now want to show private cases
+                return Task._check_perms(user, q, case_perm_checker)  # do not want to show private cases
             else:
                 return Task._check_perms(current_user, q, case_perm_checker)
         else:
@@ -1698,23 +1710,23 @@ class Task(Base, Model):
         return query
 
     @staticmethod
-    def get_tasks_requiring_QA_by_user(user, task_statuses=None, case_status=None):
+    def get_tasks_requiring_QA_by_user(user, task_statuses=None, case_statuses=None):
         if task_statuses is None:
             task_statuses = [TaskStatus.QA]
         principle = Task._get_user_tasks(user, [UserTaskRoles.PRINCIPLE_QA], task_statuses, filter_check=True,
-                                         case_status=case_status)
+                                         case_statuses=case_statuses)
         secondary = Task._get_user_tasks(user, [UserTaskRoles.SECONDARY_QA], task_statuses, filter_check=True,
-                                         case_status=case_status)
+                                         case_statuses=case_statuses)
         return principle, secondary
 
     @staticmethod
-    def get_tasks_assigned_to_user(user, statuses=None, case_status=None):
-        if statuses is None:
-            statuses = TaskStatus.openStatuses
-        principle = Task._get_user_tasks(user, [UserTaskRoles.PRINCIPLE_INVESTIGATOR], statuses,
-                                         filter_check=True, case_status=case_status)
-        secondary = Task._get_user_tasks(user, [UserTaskRoles.SECONDARY_INVESTIGATOR], statuses,
-                                         filter_check=True, case_status=case_status)
+    def get_tasks_assigned_to_user(user, task_statuses=None, case_statuses=None):
+        if task_statuses is None:
+            task_statuses = TaskStatus.openStatuses
+        principle = Task._get_user_tasks(user, [UserTaskRoles.PRINCIPLE_INVESTIGATOR], task_statuses,
+                                         filter_check=True, case_statuses=case_statuses)
+        secondary = Task._get_user_tasks(user, [UserTaskRoles.SECONDARY_INVESTIGATOR], task_statuses,
+                                         filter_check=True, case_statuses=case_statuses)
         return principle, secondary
 
     @staticmethod
@@ -1759,28 +1771,9 @@ class Task(Base, Model):
         qas = self.QAs
         return [person for person in invs] + [person for person in qas]
 
-    def _active_before_start(self, user, day_tracker):
-        if date(day_tracker.year, day_tracker.month, day_tracker.day) < date(self.creation_date.year,
-                                                                             self.creation_date.month,
-                                                                             self.creation_date.day):
-            return False
-        return True
-
-    def _active_after_end(self, user, day_tracker):
-        case_status = self.case.get_status()
-        if case_status.status in CaseStatus.closedStatuses and date(day_tracker.year, day_tracker.month,
-                                                                    day_tracker.day) > date(case_status.date_time.year,
-                                                                                            case_status.date_time.month,
-                                                                                            case_status.date_time.day):
-            return False
-        return True
-
-    def active_user(self, user, day_tracker):
-        return self._active_before_start(user, day_tracker) and self._active_after_end(user, day_tracker)
-
     def __repr__(self):
         return "<Task Object[{}] '{}' for Case {} [{}]>".format(self.id, self.task_type, self.case.case_name,
-                                                                self.get_status())
+                                                                self.get_status().status)
 
     def __str__(self):
         return "{}".format(self.task_name)

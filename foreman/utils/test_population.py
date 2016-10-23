@@ -187,7 +187,7 @@ def create_test_tasks(case, investigators, rand_user, i, progress=True):
             else:
                 inv2 = None
 
-            if x % 3 == 1:
+            if x % 3 == 0 and x % 2 == 0:
                 qa2 = investigators[(x+3) % i]
                 u3 = UserTaskRoles(qa2, new_task, UserTaskRoles.SECONDARY_QA)
                 session.add(u3)

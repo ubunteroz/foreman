@@ -37,7 +37,7 @@
              <% not_active = 0 %>
              % for case_counter, case in enumerate(timesheet_user_items):
                 <% seventh_day = start_day + timedelta(days=6) %>
-                % if case._active_before_start(user, seventh_day) and case._active_after_end(user, start_day):
+                % if case._active_before_start(seventh_day) and case._active_after_end(start_day):
                 <tr>
                     % if case_task == "case":
                     <th><a href="${urls.build("case.view", dict(case_id=case.id))|h}">${case.name|h}</a></th>
@@ -47,7 +47,7 @@
                     ${forms.formTextField_Timesheet(case_task + "s-" + str(case_counter) + "." + case_task, hidden=True, value=case.id)}
                     <% day_tracker = start_day %>
                     % for i in range(0, 7):
-                        % if case.active_user(user, day_tracker):
+                        % if case.active_user(day_tracker):
                             <td class="case">
                                 <% ts = timesheets.get(day_tracker.strftime("%d%m%Y"), {}).get(case.id, None) %>
                                 % if check_perms(user, "edit_timesheet"):

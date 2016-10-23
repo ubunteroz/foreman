@@ -52,7 +52,8 @@ class ForensicsController(BaseController):
                 success = True
             elif 'assign_QA' in form_type and form_type['assign_QA'] == "true" and form_type['assign_num'] == "2" \
                     and self.validate_form(AssignQADuringForensicsForm()):
-                task.investigator_assign_qa(self.form_result['investigator'], self.form_result['investigator2'], self.current_user)
+                task.investigator_assign_qa(self.form_result['investigator'], self.form_result['investigator2'],
+                                            self.current_user)
                 success_qa = True
             elif 'assign_QA' in form_type and form_type['assign_QA'] == "true" and form_type['assign_num'] == "1" \
                     and self.validate_form(AssignQAFormSingle()):
