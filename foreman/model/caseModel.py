@@ -1,8 +1,7 @@
 # python imports
 from datetime import datetime, date
 import hashlib
-from os import path, rename, remove
-import shutil
+from os import path, remove
 import calendar
 # library imports
 from sqlalchemy import Table, Column, Integer, Boolean, Unicode, ForeignKey, DateTime, asc, desc, and_, or_, func
@@ -10,7 +9,7 @@ from sqlalchemy import Float, distinct
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import backref, relation
 from qrcode import *
-from werkzeug.exceptions import Forbidden
+from werkzeug.exceptions import Forbidden, InternalServerError
 from monthdelta import MonthDelta
 # local imports
 from models import Base, Model, HistoryModel
@@ -45,7 +44,10 @@ class CaseAuthorisation(Base, Model):
     def __init__(self, authoriser, case, authorised, reason):
         self.authoriser = authoriser
         self.case = case
-        self.case_authorised = authorised
+        if authorised in CaseAuthorisation.STATUS.keys():
+            self.case_authorised = authorised
+        else:
+            raise InternalServerError
         self.reason = reason
         self.date_time = datetime.now()
 
