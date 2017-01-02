@@ -24,6 +24,9 @@
     <h1>Edit Task ${task.task_name|h}</h1>
     <p><a href="${urls.build('task.view', dict(task_id=task.id, case_id=task.case.id))|h}">Back to Task</a> |
        <a href="${urls.build('case.view', dict(case_id=task.case.id))|h}">Back to Case</a></p>
+
+    ${task_special_text}
+
     <div id="tabs">
         <ul>
         <li><a href="#tabs-1">Edit Task Details</a></li>

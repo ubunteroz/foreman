@@ -18,6 +18,8 @@
         <p><a href="${urls.build('case.view', dict(case_id=case.id))|h}">Back to Case</a></p>
     % endif
 
+    ${evidence_special_text}
+
     % if case is None:
         <form method="post" action="${urls.build('evidence.add_no_case', dict(form='add_evidence'))|h}">
     % else:

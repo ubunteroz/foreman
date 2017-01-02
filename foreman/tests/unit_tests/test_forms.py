@@ -21,7 +21,8 @@ from foreman.forms.forms import AddCaseForm, RequesterAddCaseForm, AuthoriseCase
     ReAssignTasksForm, EditUserForm, AddUserForm, EditRolesForm, OptionsForm, UploadTaskFile, AuthOptionsForm, \
     AddTeamForm, RenameTeamForm, RemoveTeamForm, AddDepartmentForm, RenameDepartmentForm, RemoveDepartmentForm, \
     TimeSheetCell, CaseHours, TaskHours, CaseTimeSheetForm, TaskTimeSheetForm, ManagersInheritForm, CloseCaseForm, \
-    ChangeCaseStatusForm, EvidenceRetentionForm, TaskEmailAlerts, CaseEmailAlerts, AssignQAForm
+    ChangeCaseStatusForm, EvidenceRetentionForm, TaskEmailAlerts, CaseEmailAlerts, AssignQAForm, CaseSpecialText, \
+    TaskSpecialText, EvidenceSpecialText
 
 INVALID_OBJECT_ID = '100'
 
@@ -2120,3 +2121,45 @@ class CaseEmailAlertsTestCase(FormTestCaseBase):
         result = self.original_class().to_python(input)
         self.assertEqual(result['email_alert_allcm_nc'], False)
         self.assertEqual(result['email_alert_allcm_au'], False)
+
+
+class CaseSpecialTextTestCase(FormTestCaseBase):
+    original_class = CaseSpecialText
+
+    def make_input(self, **overrides):
+        d = {'custom_text_case': "words"}
+        d.update(overrides)
+        return d
+
+    def test_success(self):
+        input = self.make_input()
+        result = self.original_class().to_python(input)
+        self.assertEqual(result['custom_text_case'], "words")
+
+
+class EvidenceSpecialTextTestCase(FormTestCaseBase):
+    original_class = EvidenceSpecialText
+
+    def make_input(self, **overrides):
+        d = {'custom_text_evi': "words"}
+        d.update(overrides)
+        return d
+
+    def test_success(self):
+        input = self.make_input()
+        result = self.original_class().to_python(input)
+        self.assertEqual(result['custom_text_evi'], "words")
+
+
+class TaskSpecialTextTestCase(FormTestCaseBase):
+    original_class = TaskSpecialText
+
+    def make_input(self, **overrides):
+        d = {'custom_text_task': "words"}
+        d.update(overrides)
+        return d
+
+    def test_success(self):
+        input = self.make_input()
+        result = self.original_class().to_python(input)
+        self.assertEqual(result['custom_text_task'], "words")

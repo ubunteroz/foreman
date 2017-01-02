@@ -232,6 +232,16 @@
             </form>
             </div>
 
+            <h1>Task Custom Text</h1>
+            <div class="form_background">
+            <p>Add some custom text to the top of the add/edit task pages, e.g. specific instructions to the investigators, or links to Wikis and other useful URLs.
+                The text must be in HTML and start and end with an open/close paragraph (&lt;p&gt; & &lt;/p&gt;)</p>
+             <form method="post" action="${urls.build('general.admin', dict(form='task_special_text', active_tab=1))|h}">
+                 ${forms.formTextArea("Custom Text (HTML)", "custom_text_task", "custom_text_task", "form_label", "input_long", value=task_special_text, first=True, required=False)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Add Text" /></p>
+            </form>
+            </div>
+
             <h1>Task Types</h1>
 
             <div class="form_background">
@@ -311,6 +321,16 @@
             </form>
             </div>
 
+            <h1>Evidence Custom Text</h1>
+            <div class="form_background">
+            <p>Add some custom text to the top of the add/edit evidence pages, e.g. specific instructions to the investigators, or links to Wikis and other useful URLs.
+                The text must be in HTML and start and end with an open/close paragraph (&lt;p&gt; & &lt;/p&gt;)</p>
+             <form method="post" action="${urls.build('general.admin', dict(form='evidence_special_text', active_tab=2))|h}">
+                 ${forms.formTextArea("Custom Text (HTML)", "custom_text_evi", "custom_text_evi", "form_label", "input_long", value=evidence_special_text, first=True, required=False)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Add Text" /></p>
+            </form>
+            </div>
+
             <h2>Current Evidence Types</h2>
 
             % for evi in evidence_types:
@@ -358,6 +378,16 @@
                 ${forms.formCheckBoxes_labelright("Requester when their case is archived", "email_alert_r_a", "email_alert_r_a", "email_alert_r_a", "form_label_right", "radio_input_long", checked=options.email_alert_req_case_archived)}
 
                 <p style="clear:both; text-align:center"><input type="submit" value="Update alerts" /></p>
+            </form>
+            </div>
+
+            <h1>Case Custom Text</h1>
+            <div class="form_background">
+            <p>Add some custom text to the top of the add/edit case pages, e.g. specific instructions to the case managers, or links to Wikis and other useful URLs.
+                The text must be in HTML and start and end with an open/close paragraph (&lt;p&gt; & &lt;/p&gt;)</p>
+             <form method="post" action="${urls.build('general.admin', dict(form='case_special_text', active_tab=3))|h}">
+                 ${forms.formTextArea("Custom Text (HTML)", "custom_text_case", "custom_text_case", "form_label", "input_long", value=case_special_text, first=True, required=False)}
+                <p style="clear:both; text-align:center"><input type="submit" value="Add Text" /></p>
             </form>
             </div>
 
@@ -512,7 +542,7 @@
 
             <div class="form_background">
             <h2>Managers</h2>
-            <p>Chose whether managers of managers can see their direct reports, i.e. the head of department can see their team lead's direct report's timesheets & metrics.
+            <p>Choose whether managers of managers can see their direct reports, i.e. the head of department can see their team lead's direct report's timesheets & metrics.
                 By default, only the users direct line manager can see timesheets and reports - not managers higher up the chain.</p>
             <form method="post" action="${urls.build('general.admin', dict(form='managers', active_tab=7))|h}">
                 ${forms.formSelectBox("Managers inherit direct reports", "manager_inherit", "manager_inherit", "form_label", "input_long", manager_inherit_options, value=unicode(options.manager_inherit), first=True)}
@@ -523,6 +553,7 @@
 
             <div class="form_background">
             <h2>Authorisation Options</h2>
+            <p>Choose if you would like authorisers to see details of the cases they have authorised, such as viewing the case tasks and evidence associated with the case.</p>
 
             <form method="post" action="${urls.build('general.admin', dict(form='authoriser_options', active_tab=7))|h}">
                 ${forms.formSelectBox("Authorisers can view case tasks", "see_tasks", "see_tasks", "form_label", "input_long", authoriser_options, value=unicode(options.auth_view_tasks), first=True)}

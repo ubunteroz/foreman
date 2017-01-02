@@ -458,6 +458,7 @@ class TaskEmailAlerts(Schema):
    email_alert_r_tc = v.Bool()
    email_alert_c_tc = v.Bool()
 
+
 class CaseEmailAlerts(Schema):
     email_alert_allcm_nc = v.Bool()
     email_alert_allcm_au = v.Bool()
@@ -465,3 +466,15 @@ class CaseEmailAlerts(Schema):
     email_alert_r_o = v.Bool()
     email_alert_r_c = v.Bool()
     email_alert_r_a = v.Bool()
+
+
+class CaseSpecialText(Schema):
+    custom_text_case = v.UnicodeString()
+
+
+class TaskSpecialText(Schema):
+    custom_text_task = v.UnicodeString()
+
+
+class EvidenceSpecialText(Schema):
+    custom_text_evi = v.UnicodeString()

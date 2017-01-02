@@ -11,8 +11,8 @@ from formencode.variabledecode import variable_decode
 from ..utils.utils import session, ROOT_DIR, multidict_to_dict, config
 from ..utils.mail import email
 from ..model import User, CaseStatus, Case, Task, TaskStatus, Evidence, has_permissions, ForemanOptions, UserCaseRoles
-from ..model import TaskUpload, EvidencePhotoUpload, Team, Department, CaseHistory, UserTaskRoles, TaskHistory, \
-    EvidenceHistory, EvidenceStatus
+from ..model import TaskUpload, EvidencePhotoUpload, Team, Department, CaseHistory, UserTaskRoles, TaskHistory
+from ..model import EvidenceHistory, EvidenceStatus, SpecialText
 
 lookup = TemplateLookup(directories=[path.join(ROOT_DIR, 'templates')], output_encoding='utf-8', input_encoding='utf-8')
 
@@ -101,6 +101,12 @@ class BaseController():
         base_vars['error_message_website_wide'] = []
         base_vars['help_message_website_wide'] = []
         base_vars['form_result'] = self.user_posted
+        base_vars['case_special_text'] = SpecialText.get_text('case').text if SpecialText.get_text(
+            'case') is not None else ""
+        base_vars['task_special_text'] = SpecialText.get_text('task').text if SpecialText.get_text(
+            'task') is not None else ""
+        base_vars['evidence_special_text'] = SpecialText.get_text('evidence').text if SpecialText.get_text(
+            'evidence') is not None else ""
 
         if self.current_user:
             base_vars['user_qa_cases'] = Case.get_cases(CaseStatus.OPEN, self.current_user, worker=True, QA=True)

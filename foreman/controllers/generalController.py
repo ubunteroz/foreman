@@ -9,15 +9,17 @@ from werkzeug import Response, redirect
 # local imports
 from baseController import BaseController, jsonify
 from ..model.caseModel import Task, User, ForemanOptions, Case, Evidence, CaseStatus, EvidenceStatus
-from ..model.generalModel import TaskType, TaskCategory, EvidenceType, CaseClassification, CaseType, CasePriority
+from ..model.generalModel import TaskType, TaskCategory, EvidenceType, CaseClassification, CaseType, CasePriority, \
+    SpecialText
 from ..model.userModel import UserRoles, Department, Team, User
 from ..forms.forms import LoginForm, OptionsForm, AddEvidenceTypeForm, RegisterForm, AddClassificationForm, \
     TaskEmailAlerts, CaseEmailAlerts
 from ..forms.forms import AddCaseTypeForm, RemoveCaseTypeForm, RemoveClassificationForm, RemoveEvidenceTypeForm
 from ..forms.forms import MoveTaskTypeForm, AddTaskTypeForm, RemoveTaskTypeForm, AddTaskCategoryForm, RemoveCategoryForm
 from ..forms.forms import AddTeamForm, RenameTeamForm, RemoveTeamForm, AddDepartmentForm, RenameDepartmentForm
-from ..forms.forms import RemoveDepartmentForm, DeactivateUser, ReactivateUser, ManagersInheritForm
-from ..forms.forms import AddPriorityForm, RemovePriorityForm, AuthOptionsForm, EvidenceRetentionForm
+from ..forms.forms import RemoveDepartmentForm, DeactivateUser, ReactivateUser, ManagersInheritForm, TaskSpecialText
+from ..forms.forms import AddPriorityForm, RemovePriorityForm, AuthOptionsForm, EvidenceRetentionForm, CaseSpecialText
+from ..forms.forms import EvidenceSpecialText
 from ..utils.utils import multidict_to_dict, session, ROOT_DIR, config
 from ..utils.mail import email
 from ..utils.scheduled_tasks import retention_notifier
@@ -347,6 +349,30 @@ Foreman
         elif 'form' in form_type and form_type['form'] == "managers" and self.validate_form(ManagersInheritForm):
             options = ForemanOptions.get_options()
             options.manager_inherit = self.form_result['manager_inherit']
+        elif 'form' in form_type and form_type['form'] == "task_special_text" and self.validate_form(TaskSpecialText):
+            custom = SpecialText.get_text('task')
+            if custom is None:
+                custom = SpecialText("task", self.form_result['custom_text_task'])
+                session.add(custom)
+            else:
+                custom.text = self.form_result['custom_text_task']
+            session.commit()
+        elif 'form' in form_type and form_type['form'] == "case_special_text" and self.validate_form(CaseSpecialText):
+            custom = SpecialText.get_text('case')
+            if custom is None:
+                custom = SpecialText("case", self.form_result['custom_text_case'])
+                session.add(custom)
+            else:
+                custom.text = self.form_result['custom_text_case']
+            session.commit()
+        elif 'form' in form_type and form_type['form'] == "evidence_special_text" and self.validate_form(EvidenceSpecialText):
+            custom = SpecialText.get_text('evidence')
+            if custom is None:
+                custom = SpecialText("evidence", self.form_result['custom_text_evi'])
+                session.add(custom)
+            else:
+                custom.text = self.form_result['custom_text_evi']
+            session.commit()
 
         all_priorities = CasePriority.get_all()
         priorities = [(priority.case_priority, priority.case_priority) for priority in CasePriority.get_all()]

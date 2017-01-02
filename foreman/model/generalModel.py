@@ -316,6 +316,22 @@ class TaskType(Base, Model):
         return "{} > {}".format(self.category, self.task_type)
 
 
+class SpecialText(Base, Model):
+    __tablename__ = 'special_text'
+
+    id = Column(Integer, primary_key=True)
+    model = Column(Unicode)
+    text = Column(Unicode)
+
+    def __init__(self, model, text):
+        self.model = model
+        self.text = text
+
+    @staticmethod
+    def get_text(model):
+        return session.query(SpecialText).filter_by(model=model).first()
+
+
 class TaskCategory(Base, Model):
     __tablename__ = 'task_category'
 
