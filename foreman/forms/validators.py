@@ -33,7 +33,9 @@ class CheckUniqueEdit(v.FormValidator):
         result = self.object_class.get_filter_by(**comparer).first()
         if result is None:
             return True
-        elif obj_id.isdigit() and result.id == int(obj_id):
+        elif isinstance(obj_id, basestring) and obj_id.isdigit() and result.id == int(obj_id):
+            return True
+        elif result.id == obj_id:
             return True
         else:
             return False
