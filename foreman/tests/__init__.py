@@ -6,11 +6,19 @@ import unittest
 from ..utils.utils import setup
 
 test_units = [
+    'unit_tests.test_permissions',
     'unit_tests.test_validators',
     'unit_tests.test_forms',
     'unit_tests.test_case_model',
     'unit_tests.test_task_model',
+    'unit_tests.test_evidence_model',
+    'unit_tests.test_user_model',
+    'unit_tests.test_misc_model',
     'unit_tests.test_case_helper_models',
+    'unit_tests.test_task_helper_models',
+    'unit_tests.test_evidence_helper_models',
+    'unit_tests.test_user_helper_models',
+    'unit_tests.test_role_helper_models',
 ]
 
 test_functions = [

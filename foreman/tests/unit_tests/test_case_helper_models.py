@@ -2,7 +2,8 @@ from datetime import datetime
 from werkzeug.exceptions import InternalServerError
 # local imports
 import base_tester
-from foreman.model import CaseAuthorisation, Case, User, ForemanOptions, LinkedCase, CaseStatus, CaseHistory
+from foreman.model import CaseAuthorisation, Case, User, ForemanOptions, LinkedCase, CaseStatus, CaseHistory, \
+    CaseClassification, CaseType, CasePriority
 from foreman.utils.utils import session
 
 
@@ -10,6 +11,124 @@ class ModelTestCaseBase(base_tester.UnitTestCase):
     current_user = None
     defaults = ForemanOptions.get_options()
     now = datetime.now()
+
+
+class CaseClassificationTestCase(ModelTestCaseBase):
+    def tearDown(self):
+        cc = CaseClassification.get_filter_by(classification="Private").first()
+        if cc is not None:
+            session.delete(cc)
+            session.commit()
+
+    def test_case_classification_test_case(self):
+        # test defaults
+        default_list = ['Public', 'Secret', 'Confidential', 'Internal', 'Undefined']
+        defaults = CaseClassification.get_all()
+        default_output = [d.classification for d in defaults]
+        self.assertEqual(len(default_output), 5)
+        for d in default_list:
+            self.assertIn(d, default_output)
+
+        # test adding classification
+        classification = "Private"
+        cc = CaseClassification(classification)
+        session.add(cc)
+        session.commit()
+
+        new_list = CaseClassification.get_all()
+        list_output = [d.classification for d in new_list]
+        self.assertEqual(len(list_output), 6)
+        self.assertIn(classification, list_output)
+
+        # test get classifications
+        classifications = CaseClassification.get_classifications()
+        self.assertEqual(len(classifications), 5)
+        default_list.append(classification)
+        default_list.remove("Undefined")
+        for d in default_list:
+            self.assertIn(d, classifications)
+
+
+class CaseTypeTestCase(ModelTestCaseBase):
+    def tearDown(self):
+        cc = CaseType.get_filter_by(case_type="Policy Violation").first()
+        if cc is not None:
+            session.delete(cc)
+            session.commit()
+
+    def test_case_type_test_case(self):
+        # test defaults
+        default_list = ['eDiscovery', 'Internal Investigation', 'Fraud Investigation', 'Incident Response',
+                        'Security & Malware Investigation', 'Other', 'Undefined']
+        defaults = CaseType.get_all()
+        default_output = [d.case_type for d in defaults]
+        self.assertEqual(len(default_output), 7)
+        for d in default_list:
+            self.assertIn(d, default_output)
+
+        # test adding case types
+        case_type = "Policy Violation"
+        cc = CaseType(case_type)
+        session.add(cc)
+        session.commit()
+
+        new_list = CaseType.get_all()
+        list_output = [d.case_type for d in new_list]
+        self.assertEqual(len(list_output), 8)
+        self.assertIn(case_type, list_output)
+
+        # test get case types
+        casetypes = CaseType.get_case_types()
+        self.assertEqual(len(casetypes), 7)
+        default_list.append(case_type)
+        default_list.remove("Undefined")
+        for d in default_list:
+            self.assertIn(d, casetypes)
+
+
+class CasePriorityTestCase(ModelTestCaseBase):
+    def tearDown(self):
+        cc = CasePriority.get_filter_by(case_priority="Informational").first()
+        if cc is not None:
+            session.delete(cc)
+        cc = CasePriority.get_filter_by(case_priority="Major").first()
+        if cc is not None:
+            session.delete(cc)
+        session.commit()
+
+    def test_case_priority_test_case(self):
+        # test defaults
+        default_list = [("Low", "#00CCFF", False),
+                        ("Normal", "#009900", True),
+                        ("High", "#FF9933", False),
+                        ("Critical", "#CC0000", False)]
+        defaults = CasePriority.get_all()
+        default_output = [(default.case_priority, default.colour, default.default) for default in defaults]
+        self.assertEqual(len(default_output), 4)
+        for d in default_list:
+            self.assertIn(d, default_output)
+
+        self.assertEqual("Normal", CasePriority.default_value().case_priority)
+
+        # test adding priority
+        case_priority = "Informational"
+        cc = CasePriority(case_priority, "#FFFFFF", False)
+        session.add(cc)
+        session.commit()
+
+        new_list = CasePriority.get_all()
+        list_output = [default.case_priority for default in new_list]
+        self.assertEqual(len(list_output), 5)
+        self.assertIn(case_priority, list_output)
+
+        # test adding a new default priority
+        case_priority = "Major"
+        cc = CasePriority(case_priority, "#000000", True)
+        session.add(cc)
+        session.commit()
+
+        self.assertEqual("Major", CasePriority.default_value().case_priority)
+        self.assertFalse(CasePriority.get_filter_by(case_priority="Normal").first().default)
 
 
 class CaseAuthorisationTestCase(ModelTestCaseBase):
@@ -164,7 +283,7 @@ class CaseStatusTestCase(ModelTestCaseBase):
         result = self.new_status_1.previous
         self.assertEqual(result, self.new_status)
 
-        result = self.new_status.previous # the 1st status is automatically added on a new case, go back one more
+        result = self.new_status.previous  # the 1st status is automatically added on a new case, go back one more
         self.assertFalse(result.previous)
 
 

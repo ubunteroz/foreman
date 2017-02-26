@@ -6,9 +6,11 @@ from hashlib import sha256
 # library imports
 from sqlalchemy import Table, Column, Integer, DateTime, Boolean, Unicode, ForeignKey, asc, desc, func, and_, or_
 from sqlalchemy.orm import backref, relation
+from werkzeug.exceptions import InternalServerError
 # local imports
 from models import Base, Model
 from ..utils.utils import session, ROOT_DIR
+
 
 class ForemanOptions(Base, Model):
     __tablename__ = 'options'
@@ -485,7 +487,7 @@ class CasePriority(Base, Model):
     def __init__(self, case_priority, colour, default=False):
         self.case_priority = case_priority
         self.colour = colour
-        self.default = default
+        self.default = self._check_default(default)
 
     @staticmethod
     def populate_default():
@@ -501,7 +503,31 @@ class CasePriority(Base, Model):
 
     @staticmethod
     def default_value():
-        return session.query(CasePriority).filter_by(default=True).first()
+        default = session.query(CasePriority).filter_by(default=True).first()
+        if default is not None:
+            return default
+        else:
+            # no default value, was somehow deleted - use the first on the list
+            default = session.query(CasePriority).get(1)
+            default.priority = True
+            return default
+
+    @staticmethod
+    def _check_default(default):
+        if default is False:
+            return False
+        if default is True:
+            already_default = CasePriority.get_filter_by(default=True).all()
+            if len(already_default) == 0:
+                return True
+            elif len(already_default) == 1:
+                # we already have a default! We cannot have more than one default
+                already_default[0].default = False
+                return True
+            else:
+                # more than one default, something really not right!!
+                raise InternalServerError
+
 
     def __str__(self):
         return self.case_priority
