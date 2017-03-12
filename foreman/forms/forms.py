@@ -372,6 +372,12 @@ class UploadTaskFile(Schema):
     file = UploadTaskFiles(not_empty=True)
 
 
+class UploadCaseFile(Schema):
+    file_title = v.UnicodeString(not_empty=True)
+    comments = v.UnicodeString()
+    file = UploadCaseFiles(not_empty=True)
+
+
 class AuthOptionsForm(Schema):
     see_tasks = GetBooleanYesNo(not_empty=True)
     see_evidence = GetBooleanYesNo(not_empty=True)

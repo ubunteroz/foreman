@@ -52,7 +52,7 @@ class TaskController(BaseController):
             return self.return_404()
 
     def view_upload(self, case_id, task_id, upload_id):
-        upload = self._validate_upload(case_id, task_id, upload_id)
+        upload = self._validate_task_upload(case_id, task_id, upload_id)
         if upload is not None:
             self.check_permissions(self.current_user, upload.task, 'add_file')
             self._create_task_specific_breadcrumbs(upload.task, upload.task.case)
@@ -60,12 +60,12 @@ class TaskController(BaseController):
                                      'path': self.urls.build('task.view_upload',
                                                              dict(case_id=upload.task.case.id,
                                                                   task_id=upload.task.id, upload_id=upload.id))})
-            return self.return_response('pages', 'view_upload.html', upload=upload)
+            return self.return_response('pages', 'view_task_upload.html', upload=upload)
         else:
             return self.return_404()
 
     def delete_upload(self, case_id, task_id, upload_id):
-        upload = self._validate_upload(case_id, task_id, upload_id)
+        upload = self._validate_task_upload(case_id, task_id, upload_id)
         if upload is not None:
             self.check_permissions(self.current_user, upload.task, 'delete_file')
             self._create_task_specific_breadcrumbs(upload.task, upload.task.case)
@@ -84,7 +84,7 @@ class TaskController(BaseController):
                 upload.delete(self.current_user)
                 closed = True
 
-            return self.return_response('pages', 'delete_upload.html', upload=upload, closed=closed)
+            return self.return_response('pages', 'delete_task_upload.html', upload=upload, closed=closed)
         else:
             return self.return_404()
 

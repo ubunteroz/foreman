@@ -1,23 +1,55 @@
 # library imports
 from werkzeug import Response, redirect
 from datetime import datetime
+from os import path
 # local imports
 from baseController import BaseController
 from taskController import TaskController
 from ..model import Case, CaseStatus, UserCaseRoles, Task, UserTaskRoles, LinkedCase, UserRoles
 from ..model import CaseHistory, TaskHistory, TaskStatus, ForemanOptions, CaseClassification, CaseType, TaskType
-from ..model import CasePriority, EvidenceStatus
-from ..utils.utils import multidict_to_dict, session, config
+from ..model import CasePriority, EvidenceStatus, CaseUpload
+from ..utils.utils import multidict_to_dict, session, config, upload_file
 from ..utils.mail import email
 from ..forms.forms import AddCaseForm, EditCaseForm, AddCaseLinkForm, RemoveCaseLinkForm, RequesterAddTaskForm
 from ..forms.forms import EditCaseManagersForm, ReAssignTasksForm, RequesterAddCaseForm, AddTaskForm, AuthoriseCaseForm
-from ..forms.forms import CloseCaseForm, ChangeCaseStatusForm
+from ..forms.forms import CloseCaseForm, ChangeCaseStatusForm, UploadCaseFile
 
 
 class CaseController(BaseController):
     def _create_breadcrumbs(self):
         BaseController._create_breadcrumbs(self)
         self.breadcrumbs.append({'title': 'Cases', 'path': self.urls.build('case.view_all')})
+
+    def view_upload(self, case_id, upload_id):
+        upload = self._validate_case_upload(case_id, upload_id)
+        if upload is not None:
+            self.check_permissions(self.current_user, upload.case, 'add_file')
+            self.breadcrumbs.append({'title': upload.file_title,
+                                     'path': self.urls.build('case.view_upload',
+                                                             dict(case_id=upload.case.id, upload_id=upload.id))})
+            return self.return_response('pages', 'view_case_upload.html', upload=upload)
+        else:
+            return self.return_404()
+
+    def delete_upload(self, case_id, upload_id):
+        upload = self._validate_case_upload(case_id, upload_id)
+        if upload is not None:
+            self.check_permissions(self.current_user, upload.case, 'delete_file')
+            self.breadcrumbs.append({'title': upload.file_title,
+                                     'path': self.urls.build('case.view_upload', dict(case_id=upload.case.id,
+                                                                                      upload_id=upload.id))})
+            self.breadcrumbs.append({'title': "Delete",
+                                     'path': self.urls.build('case.delete_upload', dict(case_id=upload.case.id,
+                                                                                        upload_id=upload.id))})
+            closed = False
+            confirm_close = multidict_to_dict(self.request.args)
+            if 'confirm' in confirm_close and confirm_close['confirm'] == "true":
+                upload.delete(self.current_user)
+                closed = True
+
+            return self.return_response('pages', 'delete_case_upload.html', upload=upload, closed=closed)
+        else:
+            return self.return_404()
 
     def view_all(self):
         self.check_permissions(self.current_user, 'Case', 'view-all')
@@ -415,6 +447,20 @@ The case can be viewed here: {}""".format(new_case.requester.fullname, new_case.
                     return self._return_edit_response(case, 1)
                 else:
                     return self._return_edit_response(case, 1, self.form_error)
+            elif 'form' in form_type and form_type['form'] == "upload_file":
+                if self.validate_form(UploadCaseFile()):
+                    f = self.form_result['file']
+                    new_directory = path.join(CaseUpload.ROOT, CaseUpload.DEFAULT_FOLDER, str(case.id))
+                    file_name = upload_file(f, new_directory)
+
+                    upload = CaseUpload(self.current_user.id, case.id, file_name, self.form_result['comments'],
+                                        self.form_result['file_title'])
+                    session.add(upload)
+                    session.commit()
+                    success_upload = True
+                    return self._return_edit_response(case, 4)
+                else:
+                    return self._return_edit_response(case, 4, self.form_error)
             elif 'form' in form_type and form_type['form'] == "edit_case_managers":
                 if self.validate_form(EditCaseManagersForm()):
                     options = ForemanOptions.get_options()

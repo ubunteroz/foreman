@@ -1234,6 +1234,62 @@ class TaskUpload(UploadModel, Base):
         return change_log
 
 
+class CaseUpload(UploadModel, Base):
+    __tablename__ = 'case_uploads'
+
+    case_id = Column(Integer, ForeignKey('cases.id'))
+    case = relation('Case', backref=backref('case_uploads'))
+    uploader = relation('User', backref=backref('files_uploaded_to_cases'), foreign_keys='CaseUpload.uploader_id')
+    deleter = relation('User', backref=backref('files_deleted_from_cases'), foreign_keys='CaseUpload.deleter_id')
+    DEFAULT_FOLDER = 'case_uploads'
+
+    def __init__(self, uploader_id, case_id, file_name, file_note, title):
+        self.case_id = case_id
+        self.upload_location = path.join(CaseUpload.DEFAULT_FOLDER, str(case_id))
+        UploadModel.__init__(self, uploader_id, file_name, file_note, title)
+
+    @staticmethod
+    def get_changes_for_user(user):
+        q_added = session.query(CaseUpload).filter_by(uploader_id=user.id)
+        q_removed = session.query(CaseUpload).filter_by(deleter_id=user.id)
+
+        change_log = []
+        for entry in q_added.all():
+            change_log.append({'date': entry.date,
+                               'date_time': entry.date_time,
+                               'object': ("Case", entry.case.case_name, entry.case.id),
+                               'change_log': "File '{}' was uploaded".format(entry.file_title)})
+
+        for entry in q_removed.all():
+            change_log.append({'date': entry.deleted_date,
+                               'date_time': entry.date_deleted,
+                               'object': ("Case", entry.case.case_name, entry.case.id),
+                               'change_log': "File '{}' was deleted".format(entry.file_title)})
+        return change_log
+
+    @staticmethod
+    def get_changes(case):
+        q_added = session.query(CaseUpload).filter_by(case_id=case.id)
+        q_removed = session.query(CaseUpload).filter_by(case_id=case.id, deleted=True)
+
+        change_log = []
+        for entry in q_added.all():
+            change_log.append({'date': entry.date,
+                               'date_time': entry.date_time,
+                               'user': entry.uploader,
+                               'current': entry,
+                               'object': ("Case", entry.case.case_name, entry.case.id),
+                               'change_log': "File '{}' was uploaded".format(entry.file_title)})
+        for entry in q_removed.all():
+            change_log.append({'date': entry.deleted_date,
+                               'date_time': entry.date_deleted,
+                               'user': entry.deleter,
+                               'current': entry,
+                               'object': ("Case", entry.case.case_name, entry.case.id),
+                               'change_log': "File '{}' was deleted".format(entry.file_title)})
+        return change_log
+
+
 class TaskNotes(Base, Model):
     __tablename__ = 'notes'
 

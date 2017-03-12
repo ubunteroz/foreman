@@ -42,6 +42,7 @@
                 % endif
             % endif
         % endif
+        <li><a href="#tabs-5">Upload File</a></li>
         </ul>
 
         <div id="tabs-1" class="forensics_work_contents">
@@ -109,7 +110,7 @@
 
         </div>
 
-        % if case.requester is None or current_user.id != case.requester.id:
+    % if case.requester is None or current_user.id != case.requester.id:
         <div id="tabs-2" class="forensics_work_contents">
 
             <h2>Linked Cases</h2>
@@ -257,7 +258,7 @@
 
                 <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
             </form>
-         </div>
+        </div>
 
             % if len(case.tasks) != 0:
             <div id="tabs-4" class="forensics_work_contents">
@@ -280,5 +281,20 @@
             % endif
         % endif
     % endif
+
+        <div id="tabs-5" class="forensics_work_contents">
+
+        <h2>Upload Files</h2>
+            <p>Upload a file relating to the case. If a file is relevant to only one task, upload it to that task instead.</p>
+
+            <form method="post" enctype="multipart/form-data" action="${urls.build('case.edit', dict(case_id=case.id, form='upload_file'))|h}">
+                ${forms.formTextField("File Title", "file_title", "file_title", "form_label", "input_long", first=True)}
+                ${forms.formTextArea("Comments", "comments", "comments", "form_label", "addeditcase", required=False)}
+                ${forms.formTextField("File", "file", "file", "form_label", "input_long", input_type="file")}
+
+                <p style="clear:both; text-align:center"><input type="submit" value="Submit" /></p>
+            </form>
+
+        </div>
     </div>
 </div>

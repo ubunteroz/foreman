@@ -12,7 +12,7 @@ from ..utils.utils import session, ROOT_DIR, multidict_to_dict, config
 from ..utils.mail import email
 from ..model import User, CaseStatus, Case, Task, TaskStatus, Evidence, has_permissions, ForemanOptions, UserCaseRoles
 from ..model import TaskUpload, EvidencePhotoUpload, Team, Department, CaseHistory, UserTaskRoles, TaskHistory
-from ..model import EvidenceHistory, EvidenceStatus, SpecialText
+from ..model import EvidenceHistory, EvidenceStatus, SpecialText, CaseUpload
 
 lookup = TemplateLookup(directories=[path.join(ROOT_DIR, 'templates')], output_encoding='utf-8', input_encoding='utf-8')
 
@@ -244,7 +244,7 @@ Foreman
             return None
 
     @staticmethod
-    def _validate_upload(case_id, task_id, upload_id):
+    def _validate_task_upload(case_id, task_id, upload_id):
         task = BaseController._validate_task(case_id, task_id)
         if task is not None:
             try:
@@ -252,6 +252,22 @@ Foreman
             except ValueError:
                 return None
             upload = TaskUpload.get_filter_by(task_id=task.id, id=upload_id).first()
+            if upload is not None and upload.deleted is False:
+                return upload
+            else:
+                return None
+        else:
+            return None
+
+    @staticmethod
+    def _validate_case_upload(case_id, upload_id):
+        case = BaseController._validate_case(case_id)
+        if case is not None:
+            try:
+                int(upload_id)
+            except ValueError:
+                return None
+            upload = CaseUpload.get_filter_by(case_id=case.id, id=upload_id).first()
             if upload is not None and upload.deleted is False:
                 return upload
             else:

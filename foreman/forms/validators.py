@@ -853,6 +853,13 @@ class UploadTaskFiles(UploadWithoutStorage):
     type = None  # allow all types
 
 
+class UploadCaseFiles(UploadWithoutStorage):
+    messages = {
+        'invalid': 'An invalid file was uploaded.'
+    }
+    type = None  # allow all types
+
+
 class UploadEvidencePhoto(UploadWithoutStorage):
     messages = {
         'invalid': 'An invalid image file was uploaded.'

@@ -118,6 +118,8 @@ class Application(object):
         map.add(Rule('/cases/edit/<case_id>/', endpoint='case.edit'))
         map.add(Rule('/cases/close/<case_id>/', endpoint='case.close'))
         map.add(Rule('/cases/change_status/<case_id>/', endpoint='case.change_status'))
+        map.add(Rule('/cases/<case_id>/uploads/<upload_id>/', endpoint='case.view_upload'))
+        map.add(Rule('/cases/<case_id>/uploads/<upload_id>/delete/', endpoint='case.delete_upload'))
 
         map.add(Rule('/tasks/', endpoint='task.view_all'))
         map.add(Rule('/tasks/qa/', endpoint='task.view_qas'))
@@ -185,7 +187,7 @@ class Application(object):
         map.add(Rule('/export/<case_id>/<task_id>.rtf', endpoint='export.notes_rtf'))
         map.add(Rule('/export/<case_id>/<task_id>.csv', endpoint='export.notes_csv'))
 
-        map.add(Rule('/cases/<case_id>/<task_id>/uploads/<upload_id>', endpoint='task.view_upload'))
+        map.add(Rule('/cases/<case_id>/<task_id>/uploads/<upload_id>/', endpoint='task.view_upload'))
         map.add(Rule('/cases/<case_id>/<task_id>/uploads/<upload_id>/delete/', endpoint='task.delete_upload'))
 
         # Static rules -- these never match, they're only used for building.

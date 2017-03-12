@@ -1,0 +1,26 @@
+﻿<%inherit file="/base/base.html"/>
+<%namespace file="/utils/sidebars.html" name="sidebars" />
+
+<%def name="javascripts()" filter="trim">
+
+</%def>
+
+
+<div id="sidebar">
+    ${sidebars.tasks_menu()}
+</div>
+<div id="mainbar">
+
+    % if closed == False:
+        <h1>Confirm the deletion of ${upload.file_title|h}</h1>
+        <div class="confirmclosurebox">
+            <p>Are you sure you want to delete the upload '${upload.file_title|h}'?</p>
+            <p><a href="?confirm=true">Yes</a> | <a href="#" onclick="goBack()">No</a></p>
+        </div>
+    % else:
+        <h1>Uploaded file ${upload.file_title|h} has been deleted</h1>
+        <p><a href='${urls.build("case.view", dict(case_id=upload.case.id))|h}'>View case</a>
+            or <a href='${urls.build("case.edit", dict(case_id=upload.case.id, active_tab=5))|h}'>upload another</a>.</p>
+    % endif
+
+</div>
