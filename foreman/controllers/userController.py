@@ -11,7 +11,7 @@ from baseController import BaseController
 from ..model import User, UserRoles, Case, CaseHistory, TaskHistory, TaskStatus, CaseStatus, EvidenceHistory
 from ..model import UserHistory, UserRolesHistory, UserTaskRolesHistory, UserCaseRolesHistory, Task, TaskUpload
 from ..model import EvidencePhotoUpload, Team, Evidence, LinkedCase, TaskNotes, ChainOfCustody, CaseTimeSheets
-from ..model import TaskTimeSheets, TaskCategory, CaseType, EvidenceStatus
+from ..model import TaskTimeSheets, TaskCategory, CaseType, EvidenceStatus, CaseUpload
 from ..forms.forms import PasswordChangeForm, EditUserForm, EditRolesForm, AddUserForm, AdminPasswordChangeForm
 from ..forms.forms import CaseTimeSheetForm, TaskTimeSheetForm
 from ..utils.utils import multidict_to_dict, session, config, upload_file
@@ -603,6 +603,7 @@ def get_user_changes(user):
     results += UserCaseRolesHistory.get_changes_for_user(user)
     results += UserRolesHistory.get_changes_for_user(user)
     results += TaskUpload.get_changes_for_user(user)
+    results += CaseUpload.get_changes_for_user(user)
     results += EvidencePhotoUpload.get_changes_for_user(user)
     results += LinkedCase.get_changes_for_user(user)
     results += TaskNotes.get_changes_for_user(user)

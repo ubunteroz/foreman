@@ -22,7 +22,7 @@ from foreman.forms.forms import AddCaseForm, RequesterAddCaseForm, AuthoriseCase
     AddTeamForm, RenameTeamForm, RemoveTeamForm, AddDepartmentForm, RenameDepartmentForm, RemoveDepartmentForm, \
     TimeSheetCell, CaseHours, TaskHours, CaseTimeSheetForm, TaskTimeSheetForm, ManagersInheritForm, CloseCaseForm, \
     ChangeCaseStatusForm, EvidenceRetentionForm, TaskEmailAlerts, CaseEmailAlerts, AssignQAForm, CaseSpecialText, \
-    TaskSpecialText, EvidenceSpecialText
+    TaskSpecialText, EvidenceSpecialText, UploadCaseFile
 
 INVALID_OBJECT_ID = '100'
 
@@ -1640,6 +1640,29 @@ class UploadTaskFileTestCase(FormTestCaseBase):
     def test_bad_fields(self):
         self._bad_field_tester(self.original_class, Invalid, file_title=None)
         self._bad_field_tester(self.original_class, Invalid, comments=None)
+        self._bad_field_tester(self.original_class, Invalid, file=None)
+
+
+class UploadCaseFileTestCase(FormTestCaseBase):
+    original_class = UploadCaseFile
+
+    def make_input(self, **overrides):
+        self.mock = self.mock_storage('test.png', 'seek', 'content_type')
+        d = {'file_title': "Foo",
+             'comments': "Foo1",
+             'file': self.mock}
+        d.update(overrides)
+        return d
+
+    def test_success(self):
+        input = self.make_input()
+        result = self.original_class().to_python(input)
+        self.assertEqual(result['file_title'], 'Foo')
+        self.assertEqual(result['comments'], 'Foo1')
+        self.assertEqual(result['file'], self.mock)
+
+    def test_bad_fields(self):
+        self._bad_field_tester(self.original_class, Invalid, file_title=None)
         self._bad_field_tester(self.original_class, Invalid, file=None)
 
 

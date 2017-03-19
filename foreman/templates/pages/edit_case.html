@@ -42,7 +42,7 @@
                 % endif
             % endif
         % endif
-        % if case.status != case_statuses['rejected'] and case.status != case_statuses['pending']:
+        % if case.status != case_statuses['rejected'] and case.status != case_statuses['pending'] and check_perms(case, "add_file"):
         <li><a href="#tabs-5">Upload File</a></li>
         % endif
         </ul>
@@ -284,7 +284,7 @@
         % endif
     % endif
 
-    % if case.status != case_statuses['rejected'] and case.status != case_statuses['pending']:
+    % if case.status != case_statuses['rejected'] and case.status != case_statuses['pending'] and check_perms(case, "add_file"):
         <div id="tabs-5" class="forensics_work_contents">
 
         % if success_upload:

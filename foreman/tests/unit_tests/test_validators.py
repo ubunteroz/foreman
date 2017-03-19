@@ -14,7 +14,8 @@ from foreman.forms.validators import Match, GetInvestigator, GetQA, GetCaseManag
     UploadTaskFiles, UploadEvidencePhoto, UploadNames, UploadProfilePhoto, PasswordCheck, ManagerCheck, \
     RequiredFieldEvidence, IsPrincipleQA, CheckUniqueUsername, CheckUniqueEmail, CheckUniqueDepartment, CheckUniqueTeam, \
     CheckUniqueTask, CheckUniqueCase, CheckUniqueReference, CheckUniqueCaseEdit, CheckUniqueReferenceEdit, \
-    CheckUniqueEmailEdit, CheckUniqueUsernameEdit, CheckUniqueDepartmentEdit, CheckUniqueTeamEdit, CheckUniqueTaskEdit
+    CheckUniqueEmailEdit, CheckUniqueUsernameEdit, CheckUniqueDepartmentEdit, CheckUniqueTeamEdit, CheckUniqueTaskEdit, \
+    UploadCaseFiles
 from foreman.model import UserRoles
 from foreman.utils.utils import ROOT_DIR
 
@@ -1018,6 +1019,17 @@ class UploadTaskFilesTestCase(ValidatorTestCaseBase):
     def test_failure(self):
         with self.assertRaises(Invalid):
             UploadTaskFiles.to_python('foo')
+
+
+class UploadCaseFilesTestCase(ValidatorTestCaseBase):
+    def test_success(self):
+        mockFile = self.mock_storage('test.png', 'seek', 'type', 'mimetype', 'content_type', mimetype="image/png")
+        result = UploadCaseFiles.to_python(mockFile)
+        self.assertEqual(result, mockFile)
+
+    def test_failure(self):
+        with self.assertRaises(Invalid):
+            UploadCaseFiles.to_python('foo')
 
 
 class UploadEvidencePhotoTestCase(ValidatorTestCaseBase):

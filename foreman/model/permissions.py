@@ -444,7 +444,7 @@ permissions = {
             Not(RequesterExistsChecker()),
             PrimaryCaseManagerForCaseChecker())),
     ('Case', 'add'): Or(AdminChecker(), CaseManagerChecker(), RequesterChecker()),
-    ('Case', 'authorise'): AuthoriserForCaseChecker(),
+    ('Case', 'authorise'): And(AuthoriserForCaseChecker(), NotApprovedCaseChecker()),
     ('Task', 'edit'): And(Or(AdminChecker(), CaseManagerForTaskChecker()), Not(TaskEditableChecker())),
     ('Task', 'close'): And(Or(AdminChecker(), CaseManagerForTaskChecker()), Not(ArchivedTaskChecker())),
     ('Task', 'view-all'): Or(AdminChecker(), InvestigatorChecker(), QAChecker(), CaseManagerChecker()),

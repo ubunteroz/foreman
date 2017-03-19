@@ -115,6 +115,7 @@ class Application(object):
         map.add(Rule('/cases/', endpoint='case.view_all'))
         map.add(Rule('/cases/<case_id>/', endpoint='case.view'))
         map.add(Rule('/cases/add/', endpoint='case.add'))
+        map.add(Rule('/cases/authorise/<case_id>/', endpoint='case.authorise'))
         map.add(Rule('/cases/edit/<case_id>/', endpoint='case.edit'))
         map.add(Rule('/cases/close/<case_id>/', endpoint='case.close'))
         map.add(Rule('/cases/change_status/<case_id>/', endpoint='case.change_status'))
@@ -133,7 +134,6 @@ class Application(object):
         map.add(Rule('/cases/<case_id>/<task_id>/close/', endpoint='task.close'))
         map.add(Rule('/cases/<case_id>/<task_id>/change_status/', endpoint='task.change_status'))
         map.add(Rule('/cases/<case_id>/change_statuses/', endpoint='case.change_task_statuses'))
-        map.add(Rule('/cases/<case_id>/authorise/', endpoint='case.authorise'))
 
         map.add(Rule('/evidence/', endpoint='evidence.view_all'))
         map.add(Rule('/evidence/<evidence_id>/associate/', endpoint='evidence.associate'))

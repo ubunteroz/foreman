@@ -3,7 +3,7 @@ import hashlib
 
 from foreman.model import User, ForemanOptions, UserRoles, Case, UserCaseRoles, CaseType, EvidenceStatus, CaseStatus
 from foreman.model import TaskType, Task, TaskStatus, UserTaskRoles, EvidenceType, Evidence, EvidencePhotoUpload
-from foreman.model import LinkedCase
+from foreman.model import LinkedCase, CaseUpload
 from utils import session, config, ROOT_DIR
 from random import randint
 from os import path, mkdir, stat
@@ -96,6 +96,15 @@ def create_test_cases(case_managers, requestors, investigators, authorisers):
             n1 = UserCaseRoles(case_manager_2, new_case, UserCaseRoles.SECONDARY_CASE_MANAGER)
             n1.add_change(case_manager)
         session.flush()
+
+        if i == 1:
+            upload_location = path.join('tests', 'test_images')
+            shutil.copyfile(path.join(ROOT_DIR, upload_location, "original.png"),
+                     path.join(ROOT_DIR, upload_location, "test_case_upload.png"))
+            new_case_upload = CaseUpload(requestor.id, new_case.id, "test_case_upload.png", "notes", "Photo of user",
+                                         upload_location)
+            session.add(new_case_upload)
+            session.flush()
 
         if i == 4:
             other_case = new_case

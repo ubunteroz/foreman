@@ -1,10 +1,12 @@
 from datetime import datetime
+from os import path
+from shutil import copyfile
 from werkzeug.exceptions import InternalServerError
 # local imports
 import base_tester
 from foreman.model import CaseAuthorisation, Case, User, ForemanOptions, LinkedCase, CaseStatus, CaseHistory, \
-    CaseClassification, CaseType, CasePriority
-from foreman.utils.utils import session
+    CaseClassification, CaseType, CasePriority, CaseUpload
+from foreman.utils.utils import session, ROOT_DIR
 
 
 class ModelTestCaseBase(base_tester.UnitTestCase):
@@ -326,3 +328,69 @@ class CaseHistoryTestCase(ModelTestCaseBase):
         self.assertEqual(case_hist[0].classification, case_hist[1].classification)
         self.assertEqual(case_hist[0].reference, case_hist[1].reference)
         self.assertEqual(case_hist[0].deadline, case_hist[1].deadline)
+
+
+class CaseUploadTestCase(ModelTestCaseBase):
+    def setUp(self):
+        self.upload_location = path.join('tests', 'test_images')
+        copyfile(path.join(ROOT_DIR, self.upload_location, "original.png"),
+                 path.join(ROOT_DIR, self.upload_location, "test_case_upload.png"))
+
+        self.current_user = User.get(1)
+        self.delete_user = User.get(2)
+        self.case = Case.get(1)
+        self.new_case_upload = CaseUpload(self.current_user.id, self.case.id, "test_case_upload.png", "notes", "title4",
+                                          self.upload_location)
+        session.add(self.new_case_upload)
+        session.commit()
+
+    def tearDown(self):
+        session.delete(self.new_case_upload)
+        session.commit()
+
+    def test_new_upload(self):
+        self.assertEqual(self.new_case_upload.file_note, "notes")
+        self.assertEqual(self.new_case_upload.uploader, self.current_user)
+        self.assertEqual(self.new_case_upload.case, self.case)
+        self.assertEqual(self.new_case_upload.file_name, "test_case_upload.png")
+        self.assertEqual(self.new_case_upload.file_title, "title4")
+        self.assertEqual(self.new_case_upload.deleted, False)
+        self.assertEqual(self.new_case_upload.date_deleted, None)
+        self.assertEqual(self.new_case_upload.deleter, None)
+        self.assertGreaterEqual(self.new_case_upload.date_time, self.now)
+
+    def test_file_deletion(self):
+        self.new_case_upload.delete(self.delete_user)
+        self.assertEqual(self.new_case_upload.deleted, True)
+        self.now = datetime.now()
+        self.assertGreaterEqual(self.now, self.new_case_upload.date_deleted)
+        self.assertEqual(self.new_case_upload.deleter, self.delete_user)
+
+    def test_changes(self):
+        upload_1 = CaseUpload(self.current_user.id, self.case.id, "test_case_upload.png", "notes", "title1",
+                              self.upload_location)
+        upload_2 = CaseUpload(self.current_user.id, self.case.id, "test_case_upload.png", "notes", "title2",
+                              self.upload_location)
+        session.add(upload_1)
+        session.add(upload_2)
+        session.commit()
+        upload_1.delete(self.current_user)
+        session.commit()
+
+        self.assertEqual(4, len(CaseUpload.get_changes_for_user(self.current_user)))
+        self.assertEqual(4, len(CaseUpload.get_changes(self.case)))
+        self.assertEqual(0, len(CaseUpload.get_changes_for_user(self.delete_user)))
+
+        session.delete(upload_1)
+        session.delete(upload_2)
+
+    def test_hashing(self):
+        hash_upload = CaseUpload(self.current_user.id, self.case.id, "test_case_upload.png", "notes", "title3",
+                                 self.upload_location)
+        session.add(hash_upload)
+        session.commit()
+
+        hash = "8d88d048b3930f1c9d2989221b7dde62393d42ed8e746ddae5cf706c4c392f60"
+        self.assertEqual(hash_upload.file_hash, hash)
+        session.delete(hash_upload)
+

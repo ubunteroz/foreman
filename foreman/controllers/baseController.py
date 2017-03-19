@@ -369,7 +369,8 @@ Foreman
     def _get_case_history_changes(case):
         history = CaseHistory.get_changes(case)
         statuses = CaseStatus.get_changes(case)
-        results = history + statuses
+        uploads = CaseUpload.get_changes(case)
+        results = history + statuses + uploads
         results.sort(key=lambda d: d['date_time'])
         return results
 

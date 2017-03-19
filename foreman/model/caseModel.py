@@ -1079,7 +1079,7 @@ class UploadModel(Model):
     def deleter_id(cls):
         return Column(Integer, ForeignKey('users.id'))
 
-    ROOT = path.join(ROOT_DIR, 'files')
+    ROOT = path.join(ROOT_DIR)
 
     def __init__(self, uploader_id, file_name, file_note, title):
         self.uploader_id = uploader_id
@@ -1129,7 +1129,7 @@ class EvidencePhotoUpload(UploadModel, Base):
                         foreign_keys='EvidencePhotoUpload.uploader_id')
     deleter = relation('User', backref=backref('evidence_photos_deleted'),
                        foreign_keys='EvidencePhotoUpload.deleter_id')
-    DEFAULT_FOLDER = 'evidence_photos'
+    DEFAULT_FOLDER = path.join('files', 'evidence_photos')
 
     def __init__(self, uploader_id, evidence_id, file_name, file_note, title):
         self.evidence_id = evidence_id
@@ -1185,7 +1185,7 @@ class TaskUpload(UploadModel, Base):
     task = relation('Task', backref=backref('task_uploads'))
     uploader = relation('User', backref=backref('files_uploaded_to_tasks'), foreign_keys='TaskUpload.uploader_id')
     deleter = relation('User', backref=backref('files_deleted_from_tasks'), foreign_keys='TaskUpload.deleter_id')
-    DEFAULT_FOLDER = 'task_uploads'
+    DEFAULT_FOLDER = path.join('files', 'task_uploads')
 
     def __init__(self, uploader_id, task_id, case_id, file_name, file_note, title):
         self.task_id = task_id
@@ -1241,11 +1241,14 @@ class CaseUpload(UploadModel, Base):
     case = relation('Case', backref=backref('case_uploads'))
     uploader = relation('User', backref=backref('files_uploaded_to_cases'), foreign_keys='CaseUpload.uploader_id')
     deleter = relation('User', backref=backref('files_deleted_from_cases'), foreign_keys='CaseUpload.deleter_id')
-    DEFAULT_FOLDER = 'case_uploads'
+    DEFAULT_FOLDER = path.join('files', 'case_uploads')
 
-    def __init__(self, uploader_id, case_id, file_name, file_note, title):
+    def __init__(self, uploader_id, case_id, file_name, file_note, title, upload_location=None):
         self.case_id = case_id
-        self.upload_location = path.join(CaseUpload.DEFAULT_FOLDER, str(case_id))
+        if upload_location is None:
+            self.upload_location = path.join(CaseUpload.DEFAULT_FOLDER, str(case_id))
+        else:
+            self.upload_location = upload_location
         UploadModel.__init__(self, uploader_id, file_name, file_note, title)
 
     @staticmethod

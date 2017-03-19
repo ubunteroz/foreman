@@ -23,7 +23,7 @@ class CaseController(BaseController):
     def view_upload(self, case_id, upload_id):
         upload = self._validate_case_upload(case_id, upload_id)
         if upload is not None:
-            self.check_permissions(self.current_user, upload.case, 'add_file')
+            self.check_permissions(self.current_user, upload.case, 'view')
             self.breadcrumbs.append({'title': upload.file_title,
                                      'path': self.urls.build('case.view_upload',
                                                              dict(case_id=upload.case.id, upload_id=upload.id))})
@@ -455,7 +455,6 @@ The case can be viewed here: {}""".format(new_case.requester.fullname, new_case.
                                         self.form_result['file_title'])
                     session.add(upload)
                     session.commit()
-                    success_upload = True
                     return self._return_edit_response(case, -1, success_upload=True, upload_id=upload.id)
                 else:
                     return self._return_edit_response(case, -1, self.form_error)
