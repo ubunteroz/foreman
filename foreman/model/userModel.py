@@ -619,8 +619,11 @@ class UserRoles(Base, Model):
         return q.all()
 
     @staticmethod
-    def get_authorisers():
-        q = session.query(User).join('roles').filter_by(role=UserRoles.AUTH, removed=False)
+    def get_authorisers(department=None):
+        q = session.query(User)
+        if department:
+            q = q.join('team').join(Team.department).filter_by(department=department)
+        q = q.join('roles').filter_by(role=UserRoles.AUTH, removed=False)
         return q.all()
 
     @staticmethod

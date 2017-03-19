@@ -42,7 +42,9 @@
                 % endif
             % endif
         % endif
+        % if case.status != case_statuses['rejected'] and case.status != case_statuses['pending']:
         <li><a href="#tabs-5">Upload File</a></li>
+        % endif
         </ul>
 
         <div id="tabs-1" class="forensics_work_contents">
@@ -282,10 +284,21 @@
         % endif
     % endif
 
+    % if case.status != case_statuses['rejected'] and case.status != case_statuses['pending']:
         <div id="tabs-5" class="forensics_work_contents">
 
-        <h2>Upload Files</h2>
-            <p>Upload a file relating to the case. If a file is relevant to only one task, upload it to that task instead.</p>
+        % if success_upload:
+        <div class="success">
+            <h1>Success!</h1>
+            <p>The file has been successfully uploaded. Please
+                <a href='${urls.build("case.view_upload", dict(case_id=case.id, upload_id=upload_id))|h}'>click here to see the file details</a> or go to the
+                 <a href='${urls.build("case.view", dict(case_id=case.id))|h}'>case overview</a> to see all uploaded files.</p>
+        </div>
+        % endif
+
+        <h2>Upload File</h2>
+            <p>Upload a file relating to the case. This will be viewable by all who are able to view the case details. </p>
+
 
             <form method="post" enctype="multipart/form-data" action="${urls.build('case.edit', dict(case_id=case.id, form='upload_file'))|h}">
                 ${forms.formTextField("File Title", "file_title", "file_title", "form_label", "input_long", first=True)}
@@ -296,5 +309,6 @@
             </form>
 
         </div>
+    % endif
     </div>
 </div>

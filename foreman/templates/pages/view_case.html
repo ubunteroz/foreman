@@ -94,5 +94,27 @@
         % else:
             <p>No Evidence has been added.</p>
         % endif
+
+        <h2>File Uploads</h2>
+        % if check_perms(case, 'edit'):
+            <p><a href='${urls.build("case.edit", dict(case_id=case.id, active_tab=-1))|h}'>Upload a File</a></p>
+        % endif
+
+        <% count = 0 %>
+        % for upload in case.case_uploads:
+            % if upload.deleted is False:
+                <% count += 1 %>
+                <div class="task_uploads">
+                    <img src='${urls.build("images", dict(file="siteimages/icons/document.png"))|h}' class='evidenceicon' />
+                    <p><a href='${urls.build("case.view_upload", dict(case_id=case.id, upload_id=upload.id))|h}'>${upload.file_title|h}</a>
+                    <br/>Uploaded: ${upload.date|h}</p>
+                </div>
+            % endif
+        % endfor
+
+        % if count == 0:
+            <p>No uploaded files.</p>
+        % endif
+
     % endif
 </div>

@@ -68,22 +68,33 @@
 
         <div id="logo_img"><img src="/images/siteimages/logo.png" width="450px" /></div>
         <div id="logo_text">Forensic Management Software</div>
+
+        <div id="message_list">
         % if check_perms("Case", "admin") and len(error_message_website_wide) != 0:
-            <div id="message_list">
-            % for error_message in error_message_website_wide:
-            <div class="error_messages">
-                <b>${error_message['title']}</b><br/>
-                ${error_message['text']}
-            </div>
-           % endfor
-            % for help_message in help_message_website_wide:
-            <div class="help_messages">
-                <b>${help_message['title']}</b><br/>
-                ${help_message['text']}
-            </div>
-           % endfor
-            </div>
+
+                % for error_message in error_message_website_wide:
+                <div class="error_messages">
+                    <b>${error_message['title']}</b><br/>
+                    ${error_message['text']}
+                </div>
+                % endfor
+                % for help_message in admin_help_message_website_wide:
+                <div class="help_messages">
+                    <b>${help_message['title']}</b><br/>
+                    ${help_message['text']}
+                </div>
+               % endfor
         % endif
+        % if current_user is not None:
+            % for help_message in help_message_website_wide:
+                <div class="help_messages">
+                    <b>${help_message['title']}</b><br/>
+                    ${help_message['text']}
+                </div>
+            % endfor
+        % endif
+        </div>
+
     </div>
 
     <div id="breadcrumbs">

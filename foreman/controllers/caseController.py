@@ -173,8 +173,7 @@ The case can be viewed here: {}""".format(case.case_name, verb[1], url))
         is_requester = self.current_user.is_requester()
         case_loc = ForemanOptions.get_default_location()
         managers = [(user.id, user.fullname) for user in UserRoles.get_managers()]
-        authorisers = [(user.id, user.fullname) for user in UserRoles.get_authorisers() if
-                       user.department == self.current_user.department]  # only user authorisers in same department
+        authorisers = [(user.id, user.fullname) for user in UserRoles.get_authorisers(self.current_user.department)]
         classifications = [(cl.id, cl.classification) for cl in CaseClassification.get_all() if cl != "Undefined"]
         case_types = [(ct.id, ct.case_type) for ct in CaseType.get_all() if ct.case_type != "Undefined"]
         priorities = [(priority.id, priority.case_priority) for priority in CasePriority.get_all()]
@@ -340,7 +339,7 @@ The case can be viewed here: {}""".format(new_case.requester.fullname, new_case.
         else:
             return self.return_404(reason="The case or status change you are trying to make is incorrect.")
 
-    def _return_edit_response(self, case, active_tab, errors=None):
+    def _return_edit_response(self, case, active_tab, errors=None, **pass_through_args):
         email_alert_flag = False
         options = ForemanOptions.get_options()
         if options.email_alert_req_case_caseman_assigned and case.requester is not None:
@@ -367,8 +366,7 @@ The case can be viewed here: {}""".format(new_case.requester.fullname, new_case.
         classifications = [(cl.id, cl.classification) for cl in CaseClassification.get_all() if cl != "Undefined"]
         case_types = [(ct.id, ct.case_type) for ct in CaseType.get_all() if ct.case_type != "Undefined"]
         priorities = [(priority.id, priority.case_priority) for priority in CasePriority.get_all()]
-        authorisers = [(user.id, user.fullname) for user in UserRoles.get_authorisers() if
-                       user.department == self.current_user.department]
+        authorisers = [(user.id, user.fullname) for user in UserRoles.get_authorisers(self.current_user.department)]
         return self.return_response('pages', 'edit_case.html', case=case, active_tab=active_tab,
                                     status_options=status_options, case_link_options=case_link_options,
                                     case_link_remove_options=case_link_remove_options, managers=managers,
@@ -377,7 +375,7 @@ The case can be viewed here: {}""".format(new_case.requester.fullname, new_case.
                                     case_history=case_history, case_manager_history=case_manager_history,
                                     tasks_history=tasks_history, errors=errors, classifications=classifications,
                                     case_types=case_types, priorities=priorities, authorisers=authorisers,
-                                    email_alert_flag=email_alert_flag)
+                                    email_alert_flag=email_alert_flag, **pass_through_args)
 
     def edit(self, case_id):
         case = self._validate_case(case_id)
@@ -458,9 +456,9 @@ The case can be viewed here: {}""".format(new_case.requester.fullname, new_case.
                     session.add(upload)
                     session.commit()
                     success_upload = True
-                    return self._return_edit_response(case, 4)
+                    return self._return_edit_response(case, -1, success_upload=True, upload_id=upload.id)
                 else:
-                    return self._return_edit_response(case, 4, self.form_error)
+                    return self._return_edit_response(case, -1, self.form_error)
             elif 'form' in form_type and form_type['form'] == "edit_case_managers":
                 if self.validate_form(EditCaseManagersForm()):
                     options = ForemanOptions.get_options()

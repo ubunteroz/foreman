@@ -12,6 +12,15 @@
 <div id="mainbar">
     <h1>${upload.evidence.reference|h}: ${upload.file_title|h}</h1>
 
+    % if upload.check_hash() is False:
+        <div class="warningbox">
+            <h1>Warning!</h1>
+            <p>The file hash does not match the original file hash!</p>
+            <p>Original hash: ${upload.file_hash|h}</p>
+            <p>Current hash: ${upload.compute_hash()|h}</p>
+        </div>
+    % endif
+
     <img src="${urls.build("files", dict(file=upload.file_path))|h}" style="max-width: 100%" />
 
     <p>

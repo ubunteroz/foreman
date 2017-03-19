@@ -12,7 +12,7 @@ from ..utils.utils import session, ROOT_DIR, multidict_to_dict, config
 from ..utils.mail import email
 from ..model import User, CaseStatus, Case, Task, TaskStatus, Evidence, has_permissions, ForemanOptions, UserCaseRoles
 from ..model import TaskUpload, EvidencePhotoUpload, Team, Department, CaseHistory, UserTaskRoles, TaskHistory
-from ..model import EvidenceHistory, EvidenceStatus, SpecialText, CaseUpload
+from ..model import EvidenceHistory, EvidenceStatus, SpecialText, CaseUpload, UserRoles
 
 lookup = TemplateLookup(directories=[path.join(ROOT_DIR, 'templates')], output_encoding='utf-8', input_encoding='utf-8')
 
@@ -100,6 +100,7 @@ class BaseController():
         base_vars['check_perms_user'] = self.check_permissions
         base_vars['error_message_website_wide'] = []
         base_vars['help_message_website_wide'] = []
+        base_vars['admin_help_message_website_wide'] = []
         base_vars['form_result'] = self.user_posted
         base_vars['case_special_text'] = SpecialText.get_text('case').text if SpecialText.get_text(
             'case') is not None else ""
@@ -124,51 +125,61 @@ class BaseController():
             else:
                 base_vars['my_cases'] = 0
 
-            overload = ForemanOptions.run_out_of_names()
-            if overload[0]:
-                base_vars['error_message_website_wide'].append(
-                    {'title': "Task name issue",
-                     'text': """Foreman has run out of names from your uploaded task names list.
-                     Please ask your administrator to add more.
-                     More details can be found in the admin control panel."""
-                     }
-                )
-            if overload[1]:
-                base_vars['error_message_website_wide'].append(
-                    {'title': "Case name issue",
-                     'text': """Foreman has run out of names from your uploaded case names list.
-                     Please ask your administrator to add more.
-                     More details can be found in the admin control panel."""
-                     }
-                )
 
-            if User.get_amount() == 1:
+            if self.current_user.is_admin():
+                overload = ForemanOptions.run_out_of_names()
+                if overload[0]:
+                    base_vars['error_message_website_wide'].append(
+                        {'title': "Task name issue",
+                         'text': """Foreman has run out of names from your uploaded task names list.
+                         Please ask your administrator to add more.
+                         More details can be found in the admin control panel."""
+                         }
+                    )
+                if overload[1]:
+                    base_vars['error_message_website_wide'].append(
+                        {'title': "Case name issue",
+                         'text': """Foreman has run out of names from your uploaded case names list.
+                         Please ask your administrator to add more.
+                         More details can be found in the admin control panel."""
+                         }
+                    )
+
+                if User.get_amount() == 1:
+                    base_vars['admin_help_message_website_wide'].append(
+                        {'title': "Add more users",
+                         'text': "You are currently the only user of Foreman.<a href='" +
+                                 self.urls.build('user.add') + "'>Add more users here.</a>"
+                         }
+                    )
+
+                if self.current_user.id == 1 and User.check_password(self.current_user.username, "changeme"):
+                    base_vars['error_message_website_wide'].append(
+                        {'title': "Change your default password",
+                         'text': """You are currently using the default admin password which is published publicly.
+                         You are advised to change this immediately. """
+                         }
+                    )
+
+                num_invalid = User.get_number_unvalidated()
+                if num_invalid >= 1:
+                    plural = "s" if num_invalid > 1 else ""
+                    base_vars['help_message_website_wide'].append(
+                        {'title': "Validate Users",
+                         'text': "You currently have {} user{} waiting to be validated. "
+                                 "<a href='{}'>Validate them here</a>".format(num_invalid, plural,
+                                                                              self.urls.build("general.admin",
+                                                                                              dict(active_tab=5)))
+                         }
+                    )
+
+        if self.current_user and self.current_user.is_requester():
+            auths = len(UserRoles.get_authorisers(self.current_user.department))
+            if auths == 0:
                 base_vars['help_message_website_wide'].append(
-                    {'title': "Add more users",
-                     'text': "You are currently the only user of Foreman.<a href='" +
-                             self.urls.build('user.add') + "'>Add more users here.</a>"
-                     }
-                )
-
-            if self.current_user.id == 1 and User.check_password(self.current_user.username, "changeme"):
-                base_vars['error_message_website_wide'].append(
-                    {'title': "Change your default password",
-                     'text': """You are currently using the default admin password which is published publicly.
-                     You are advised to change this immediately. """
-                     }
-                )
-
-            num_invalid = User.get_number_unvalidated()
-            if num_invalid >= 1:
-                plural = "s" if num_invalid > 1 else ""
-                base_vars['help_message_website_wide'].append(
-                    {'title': "Validate Users",
-                     'text': "You currently have {} user{} waiting to be validated. "
-                             "<a href='{}'>Validate them here</a>".format(num_invalid, plural,
-                                                                          self.urls.build("general.admin",
-                                                                                          dict(active_tab=5)))
-                     }
-                )
+                    {'title': "You have no authorisers",
+                     'text': """You are currently a requester with no authorisers for your department.
+                     You will not be able to add any new cases unless authorisers are added."""})
 
         base_vars['invRoles'] = TaskStatus.invRoles
         base_vars['qaRoles'] = TaskStatus.qaRoles
