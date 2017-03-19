@@ -337,7 +337,8 @@ Foreman
                 allowed_managers.remove(user)
             except ValueError:
                 pass
-            managers = sorted([(u.id, u.fullname) for u in allowed_managers], key=lambda t: t[1])
+            managers = sorted([(u.id, u.fullname) for u in allowed_managers if u.department == user.department and
+                               u.validated is True], key=lambda t: t[1])
             return self.return_response('pages', 'edit_user.html', user=user, active_tab=active_tab,
                                         role_types=role_types, user_history=user_history, teams=teams,
                                         user_role_history=user_role_history, errors=self.form_error, managers=managers)

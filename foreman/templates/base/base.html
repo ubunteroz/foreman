@@ -56,7 +56,9 @@
             <div id="top_menu_right">
                 % if current_user is not None:
                 <a href='${urls.build("user.view", dict(user_id=current_user.id))|h}'>${current_user.fullname|h}</a> is logged in |
+                % if current_user.is_worker():
                 <a href='${urls.build("user.timesheet_default", dict(user_id=current_user.id))|h}'>Timesheet</a> |
+                % endif
                 <a href='${urls.build("general.logout")|h}'>Log out</a> |
                 <a href='${urls.build("user.edit", dict(user_id=current_user.id))|h}'>Edit Profile</a>
                 % else:

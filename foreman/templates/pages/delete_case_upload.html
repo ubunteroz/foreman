@@ -24,7 +24,7 @@
     % else:
         <h1>Uploaded file ${upload.file_title|h} has been deleted</h1>
         <p><a href='${urls.build("case.view", dict(case_id=upload.case.id))|h}'>View case</a>
-            or <a href='${urls.build("case.edit", dict(case_id=upload.case.id, active_tab=5))|h}'>upload another</a>.</p>
+            or <a href='${urls.build("case.edit", dict(case_id=upload.case.id, active_tab=-1))|h}'>upload another</a>.</p>
     % endif
 
 </div>
