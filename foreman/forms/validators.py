@@ -1,9 +1,8 @@
-#python imports
+# python imports
 from os import path
 import datetime
-# #library imports
+# library imports
 from formencode import validators as v, Invalid
-from formencode.compound import CompoundValidator
 # local imports
 from ..model import User, UserTaskRoles, UserRoles, Task, Case, ForemanOptions, TaskType
 from ..model import CaseType, CaseClassification, TaskCategory, CasePriority, Department, Team, EvidenceType
@@ -500,7 +499,7 @@ class GetCaseManager(GetUser):
 
 class GetAuthoriser(GetUser):
     allow_null = False
-    
+
     def getObject(self, user_id):
         if user_id.isdigit():
             user = User.get(int(user_id))
@@ -724,11 +723,11 @@ class CheckHex(v.UnicodeString):
 
     def _to_python(self, value, state):
         try:
-            hex = value[1:]
-            if value[0] != "#" or len(hex) != 6:
+            hexval = value[1:]
+            if value[0] != "#" or len(hexval) != 6:
                 raise Invalid(self.message('null', state), value, state)
 
-            int(hex, 16)
+            int(hexval, 16)
             return value
         except ValueError:
             raise Invalid(self.message('invalid', state), value, state)

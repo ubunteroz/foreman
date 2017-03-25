@@ -4,8 +4,8 @@ from ConfigParser import ConfigParser
 import random
 import string
 # library imports
-from werkzeug import Local, LocalManager, MultiDict
-from sqlalchemy import create_engine, exc as sa_exc
+from werkzeug import Local, LocalManager
+from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 # Useful variables

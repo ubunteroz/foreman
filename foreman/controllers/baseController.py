@@ -2,7 +2,7 @@
 from os import path
 import simplejson as json
 # library imports
-from werkzeug import Response, redirect
+from werkzeug import Response
 from werkzeug.exceptions import Forbidden
 from mako.lookup import TemplateLookup
 from formencode import Invalid
@@ -67,7 +67,7 @@ class BaseController():
         return Response(html, mimetype='text/html', status=vars.get('_status', 200))
 
     def validate_form(self, schema):
-        """ Validates a form post against schema. If no form was posted, return False. 
+        """ Validates a form post against schema. If no form was posted, return False.
         If form was posted and it is invalid, return False and set self.form_error.
         If form validated correctly, return True and set self.form_result """
         if self.request.method != 'POST':

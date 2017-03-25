@@ -4,7 +4,7 @@ from werkzeug import Response, redirect
 
 # local imports
 from baseController import BaseController
-from foreman.model import CaseAuthorisation, TaskNotes, TaskUpload, EvidenceHistory, ChainOfCustody, EvidencePhotoUpload
+from foreman.model import CaseAuthorisation, TaskNotes, TaskUpload, ChainOfCustody, EvidencePhotoUpload
 from ..utils.case_note_renders import render_rtf, render_csv, render_pdf
 from ..utils.report_renders import render_rtf_report
 

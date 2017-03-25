@@ -1,11 +1,9 @@
 from collections import OrderedDict
-from os import path, mkdir
-import random
-import string
+from os import path
 
 # local imports
-from baseController import BaseController, lookup, jsonify
-from ..model import Task, Case, TaskNotes, UserRoles, UserMessage, TaskUpload, ForemanOptions
+from baseController import BaseController
+from ..model import UserRoles, UserMessage, TaskUpload, ForemanOptions
 from ..forms.forms import QACheckerForm, AddTaskNotesForm, AssignQADuringForensicsForm, AssignQAFormSingle, AskForQAForm
 from ..forms.forms import UploadTaskFile
 from ..utils.utils import session, multidict_to_dict, config, upload_file
@@ -21,7 +19,7 @@ class ForensicsController(BaseController):
         self.breadcrumbs.append({'title': task.task_name,
                                  'path': self.urls.build('task.view', dict(case_id=case.id,
                                                                            task_id=task.id))})
-    
+
     def work(self, case_id, task_id):
         task = self._validate_task(case_id, task_id)
         if task is not None:

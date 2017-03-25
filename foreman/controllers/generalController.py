@@ -302,7 +302,6 @@ Foreman
             for task in tasks:
                 task.task_type = TaskType.get_filter_by(task_type=TaskType.undefined()).first()
                 session.flush()
-                pass
             session.delete(task_type)
             session.commit()
         elif 'form' in form_type and form_type['form'] == 'add_task_category' and self.validate_form(

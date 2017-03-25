@@ -2,9 +2,8 @@
 from datetime import datetime
 import shutil
 from os import path
-from hashlib import sha256
 # library imports
-from sqlalchemy import Table, Column, Integer, DateTime, Boolean, Unicode, ForeignKey, asc, desc, func, and_, or_
+from sqlalchemy import Table, Column, Integer, DateTime, Boolean, Unicode, ForeignKey, asc, desc
 from sqlalchemy.orm import backref, relation
 from werkzeug.exceptions import InternalServerError
 # local imports
@@ -218,9 +217,9 @@ class ForemanOptions(Base, Model):
             return results
 
         with open(filename, 'r') as contents:
-            all = contents.readlines()
+            all_content = contents.readlines()
             try:
-                results = all[increment].strip()
+                results = all_content[increment].strip()
                 if test is True:
                 # if it's a test, and there is actually a next one; then reverse the increment otherwise
                 # using one for no reason

@@ -1,8 +1,7 @@
 # library imports
-from formencode import Schema, Invalid, validators as v
+from formencode import Schema, validators as v
 from formencode.foreach import ForEach
-from formencode.compound import All, Pipe
-from formencode.variabledecode import NestedVariables
+from formencode.compound import Pipe
 # local imports
 from validators import *
 

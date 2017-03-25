@@ -12,8 +12,7 @@ try:
 except ImportError:
     pdf_import = False
 
-from os import path, remove
-from shutil import move
+from os import path
 from datetime import datetime
 import csv
 

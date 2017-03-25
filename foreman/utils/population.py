@@ -633,7 +633,7 @@ def create_evidence(case, inv, rand_user):
         e.check_in(inv.fullname, inv, now, "Initial check in to the storage cabinet")
         try:
             mkdir(path.abspath(path.join(ROOT_DIR, "files", "evidence_photos")))
-        except:
+        except OSError:
             pass
         photo_location = path.abspath(path.join(ROOT_DIR, "files", "evidence_photos", str(e.id)))
         try:

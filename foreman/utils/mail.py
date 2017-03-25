@@ -13,7 +13,7 @@ def send_email(to_addrs, subject, msg, from_addr, cc=None, bcc=None):
 
     assert isinstance(to_addrs, list)
     msg['To'] = ', '.join(to_addrs)
-    
+
     if cc:
         msg['CC'] = ', '.join(cc)
         to_addrs.extend(cc)
@@ -39,7 +39,7 @@ def print_email(to_addrs, subject, msg, from_addr, cc=None, bcc=None):
     s += '\nSubject: ' + subject
     s += '\n\n'
     s += msg
-    s += '\n**End Email**'    
+    s += '\n**End Email**'
     print s.encode('utf-8')
 
 

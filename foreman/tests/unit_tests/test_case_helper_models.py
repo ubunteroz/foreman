@@ -390,7 +390,7 @@ class CaseUploadTestCase(ModelTestCaseBase):
         session.add(hash_upload)
         session.commit()
 
-        hash = "8d88d048b3930f1c9d2989221b7dde62393d42ed8e746ddae5cf706c4c392f60"
-        self.assertEqual(hash_upload.file_hash, hash)
+        hashed = "8d88d048b3930f1c9d2989221b7dde62393d42ed8e746ddae5cf706c4c392f60"
+        self.assertEqual(hash_upload.file_hash, hashed)
         session.delete(hash_upload)
 

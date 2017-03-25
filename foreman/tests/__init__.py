@@ -66,7 +66,6 @@ def run_tests(config_file, unit_tests=True, functional_tests=True, url_tests=Tru
 
     if functional_tests:
         print "\n\n~~ Running Functional Tests ~~\n\n"
-        pass
         #suite_functional_tests = build_app_suite(test_functions)
         #unittest.TextTestRunner(verbosity=2).run(suite_functional_tests)
 

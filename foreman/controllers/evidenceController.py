@@ -1,10 +1,9 @@
 from os import path
 from datetime import datetime
-from sqlalchemy import asc, desc
 # local imports
 from baseController import BaseController
 from ..utils.utils import ROOT_DIR, multidict_to_dict, session
-from ..model import Evidence, Case, EvidenceHistory, ForemanOptions, EvidencePhotoUpload, EvidenceType, EvidenceStatus
+from ..model import Evidence, Case, EvidencePhotoUpload, EvidenceType, EvidenceStatus
 from ..forms.forms import ChainOfCustodyForm, EditEvidenceForm, EditEvidenceQRCodesForm, EvidenceAssociateForm, \
     AddEvidenceForm, AddEvidencePhotoForm
 from ..utils.utils import upload_file

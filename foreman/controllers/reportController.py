@@ -1,14 +1,8 @@
-from os import listdir
-from os.path import isfile, join
 from datetime import datetime, timedelta
 from monthdelta import MonthDelta
-
-# library imports
-from werkzeug import Response, redirect
-
 # local imports
 from baseController import BaseController, jsonify
-from ..model.caseModel import Task, ForemanOptions, Case, CaseStatus, TaskStatus
+from ..model.caseModel import Task, ForemanOptions, Case, CaseStatus
 from ..model.generalModel import TaskCategory, CaseType
 from ..model.userModel import UserRoles
 

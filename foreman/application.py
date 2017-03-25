@@ -25,7 +25,7 @@ staticLocations = {
 
 def make_app(session_store=None):
     application = Application(session_store=session_store)
-    application = SharedDataMiddleware(application, staticLocations)    
+    application = SharedDataMiddleware(application, staticLocations)
     application = local_manager.make_middleware(application)
 
     if config.getboolean('debugging', 'debug') is True:
@@ -33,7 +33,7 @@ def make_app(session_store=None):
     return application
 
 
-class Application(object):    
+class Application(object):
     def __init__(self, session_store=None):
         if session_store is None:
             session_store = FilesystemSessionStore()
@@ -45,7 +45,7 @@ class Application(object):
         request = Request(environ)
         self.load_session(request)
         response = None
-        try:    
+        try:
             adapter = self.url_map.bind_to_environ(environ)
             endpoint, vars = adapter.match()
             if 'userid' not in request.session and endpoint != "general.register":
@@ -80,14 +80,14 @@ class Application(object):
         else:
             request.session = self.session_store.get(sid)
 
-    def save_session(self, request, response): 
+    def save_session(self, request, response):
         if request.session.should_save:
             self.session_store.save(request.session)
             response.set_cookie('foreman', request.session.sid)
 
     def dispatch(self, request, adapter, endpoint, vars):
         ctrl_str, act_str = endpoint.split('.')
-        
+
         controller = controller_lookup[ctrl_str](request, adapter)
         method_to_call = getattr(controller, act_str)
 
@@ -96,7 +96,7 @@ class Application(object):
         except:
             session.rollback()
             raise
-        else:            
+        else:
             session.commit()
             return response
 

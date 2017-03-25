@@ -1,11 +1,10 @@
 # python imports
 from datetime import datetime
 import random
-import hashlib
 import string
 from os import path
 # library imports
-from sqlalchemy import Table, Column, Integer, Boolean, Float, Unicode, MetaData, ForeignKey, DateTime, CheckConstraint, \
+from sqlalchemy import Column, Integer, Boolean, Float, Unicode, ForeignKey, DateTime, \
     asc, desc, func, and_, Date
 from sqlalchemy.orm import backref, relation
 import bcrypt

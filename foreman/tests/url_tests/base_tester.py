@@ -1,12 +1,9 @@
 # python imports
 import unittest
-import random
-import string
 
 from werkzeug.test import Client
 from werkzeug.wrappers import BaseResponse
 from foreman.application import make_app
-from foreman.model import User, UserRoles
 
 
 class MockSession(dict):

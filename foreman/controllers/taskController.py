@@ -1,12 +1,9 @@
 # library imports
-from os import path, listdir
 from datetime import datetime
-from werkzeug import Response
-from werkzeug.utils import redirect
 # local imports
-from baseController import BaseController, lookup, jsonify
+from baseController import BaseController
 from ..model import Task, UserTaskRoles, UserRoles, TaskStatus, TaskHistory, ForemanOptions, TaskType, TaskUpload
-from ..utils.utils import multidict_to_dict, session, ROOT_DIR, config
+from ..utils.utils import multidict_to_dict, config
 from ..forms.forms import AssignInvestigatorForm, EditTaskUsersForm, EditTaskForm, AssignQAForm
 
 

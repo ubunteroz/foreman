@@ -6,7 +6,7 @@ from os import path
 from baseController import BaseController
 from taskController import TaskController
 from ..model import Case, CaseStatus, UserCaseRoles, Task, UserTaskRoles, LinkedCase, UserRoles
-from ..model import CaseHistory, TaskHistory, TaskStatus, ForemanOptions, CaseClassification, CaseType, TaskType
+from ..model import TaskStatus, ForemanOptions, CaseClassification, CaseType, TaskType
 from ..model import CasePriority, EvidenceStatus, CaseUpload
 from ..utils.utils import multidict_to_dict, session, config, upload_file
 from ..utils.mail import email

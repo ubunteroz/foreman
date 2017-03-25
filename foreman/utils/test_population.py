@@ -1,12 +1,12 @@
 # foreman imports
 import hashlib
 
-from foreman.model import User, ForemanOptions, UserRoles, Case, UserCaseRoles, CaseType, EvidenceStatus, CaseStatus
+from foreman.model import ForemanOptions, Case, UserCaseRoles, CaseType, EvidenceStatus, CaseStatus
 from foreman.model import TaskType, Task, TaskStatus, UserTaskRoles, EvidenceType, Evidence, EvidencePhotoUpload
 from foreman.model import LinkedCase, CaseUpload
-from utils import session, config, ROOT_DIR
+from utils import session, ROOT_DIR
 from random import randint
-from os import path, mkdir, stat
+from os import path
 import shutil
 from datetime import datetime, timedelta
 import population
