@@ -19,5 +19,6 @@ setup(
                       "Werkzeug==0.9.4",
                       "qrcode==4.0.4",
                       "monthdelta==1.0b",
-                      "mock"]
+                      "mock",
+                      "bcrypt"]
 )

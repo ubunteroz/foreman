@@ -8,6 +8,7 @@ from os import path
 from sqlalchemy import Table, Column, Integer, Boolean, Float, Unicode, MetaData, ForeignKey, DateTime, CheckConstraint, \
     asc, desc, func, and_, Date
 from sqlalchemy.orm import backref, relation
+import bcrypt
 # local imports
 from models import Base, Model, UserHistoryModel, HistoryModel
 from ..utils.utils import session, ROOT_DIR
@@ -299,15 +300,12 @@ class User(Base, Model):
         return "<User Object[{}] '{}'>".format(self.id, self.fullname)
 
     def set_password(self, raw_password):
-        salt = str(random.random())[3:10]
-        hash = hashlib.sha256('%s%s' % (salt, raw_password)).hexdigest()
-        self.password = '%s$%s' % (salt, hash)
+        self.password = bcrypt.hashpw(raw_password.encode('utf-8'), bcrypt.gensalt())
 
     @staticmethod
     def check_password(username, raw_password):
         user = User.get_user_with_username(username)
-        salt, hash = user.password.split('$')
-        return hash == hashlib.sha256('%s%s' % (salt, raw_password)).hexdigest()
+        return user.password == bcrypt.hashpw(raw_password.encode('utf-8'), user.password.encode('utf-8'))
 
     @staticmethod
     def make_random_password():
