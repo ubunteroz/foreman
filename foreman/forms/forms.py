@@ -462,6 +462,7 @@ class TaskEmailAlerts(Schema):
    email_alert_cm_qa = v.Bool()
    email_alert_r_tc = v.Bool()
    email_alert_c_tc = v.Bool()
+   email_alert_cm_ra = v.Bool()
 
 
 class CaseEmailAlerts(Schema):

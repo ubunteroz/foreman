@@ -4,7 +4,7 @@ from caseModel import CaseStatus, TaskStatus, EvidenceStatus, ForemanOptions
 
 class BaseChecker(object):
     def check(self, user, obj):
-        raise NotImplemented("Must be overridden")
+        raise NotImplementedError("Must be overridden")
 
 
 class UserIsCurrentUserChecker(BaseChecker):

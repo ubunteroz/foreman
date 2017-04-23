@@ -3,9 +3,6 @@ from os.path import isfile, join
 from datetime import datetime
 from monthdelta import MonthDelta
 
-# library imports
-from werkzeug import Response, redirect
-
 # local imports
 from baseController import BaseController, jsonify
 from ..model.caseModel import Task, User, ForemanOptions, Case, Evidence, CaseStatus, EvidenceStatus
@@ -190,6 +187,7 @@ Foreman
             options.email_alert_caseman_qa_self_assigned = self.form_result['email_alert_cm_qa']
             options.email_alert_req_task_completed = self.form_result['email_alert_r_tc']
             options.email_alert_case_man_task_completed = self.form_result['email_alert_c_tc']
+            options.email_alert_caseman_requester_add_task = self.form_result['email_alert_cm_ra']
         elif 'form' in form_type and form_type['form'] == "email_case" and self.validate_form(CaseEmailAlerts()):
             options = ForemanOptions.get_options()
             options.email_alert_all_caseman_new_case = self.form_result['email_alert_allcm_nc']

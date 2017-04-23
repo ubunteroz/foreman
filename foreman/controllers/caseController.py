@@ -1,5 +1,4 @@
 # library imports
-from werkzeug import Response, redirect
 from datetime import datetime
 from os import path
 # local imports
@@ -273,6 +272,19 @@ The case can be viewed here: {}""".format(new_case.requester.fullname, new_case.
                     session.flush()
                     new_task.add_change(self.current_user)
                     session.flush()
+
+                    options = ForemanOptions.get_options()
+                    if options.email_alert_caseman_requester_add_task and (case.principle_case_manager is not None or
+                                                                        case.secondary_case_manager is not None):
+                        self.send_email_alert(case.case_managers, "Requester has added a new task to your case",
+                                              """{} has added a task to case {}. Task details:
+Type: {}
+Background info: {}
+
+Link to new task: {}{}""".format(self.current_user.fullname, case.case_name, self.form_result['task_type'],
+                                 self.form_result['background'], config.get('admin', 'website_domain'),
+                                 self.urls.build('task.view', dict(case_id=case.id, task_id=new_task.id))))
+
                     return self.return_response('pages', 'task_added.html', task=new_task)
                 else:
                     return self.return_response('pages', 'add_task.html', task_type_options=task_type_options,

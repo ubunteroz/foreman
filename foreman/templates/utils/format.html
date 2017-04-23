@@ -593,7 +593,7 @@
             <td>${case.date_created|h}</td>
             % if case.principle_case_manager is None and case.secondary_case_manager is None:
             <td colspan="2">
-                % if check_perms(case, 'edit') and case.authorised is not None and case.authorised.case_authorised != "NOAUTH":
+                % if current_user.is_case_manager() and case.authorised is not None and case.authorised.case_authorised != "NOAUTH":
                  <a href='${urls.build("case.edit", dict(case_id=case.id, active_tab=2))|h}'>Assign yourself to case</a>
                 % else:
                 None assigned
@@ -661,7 +661,13 @@
                             </td>
                         % endif
                         <% start_again = False %>
-                        <td><a href='${urls.build("task.view", dict(task_id=task.id,case_id=case.id))|h}'>${task.task_name|h}</a></td>
+                        <td>
+                            % if check_perms(task, "view"):
+                            <a href='${urls.build("task.view", dict(task_id=task.id, case_id=case.id))|h}'>${task.task_name|h}</a>
+                            % else:
+                            ${task.task_name|h}
+                            % endif
+                        </td>
                         <td>${task.task_type.task_type|h}</td>
                         <td>${task.status|h}</td>
                         <td ${highlight(task, 'principle_investigator', highlighted)}>

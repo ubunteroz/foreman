@@ -2093,6 +2093,7 @@ class TaskEmailAlertsTestCase(FormTestCaseBase):
              'email_alert_cm_qa': "checked",
              'email_alert_r_tc': "checked",
              'email_alert_c_tc': "checked",
+             'email_alert_cm_ra': "checked"
             }
         d.update(overrides)
         return d
@@ -2107,6 +2108,7 @@ class TaskEmailAlertsTestCase(FormTestCaseBase):
         self.assertEqual(result['email_alert_cm_qa'], True)
         self.assertEqual(result['email_alert_r_tc'], True)
         self.assertEqual(result['email_alert_c_tc'], True)
+        self.assertEqual(result['email_alert_cm_ra'], True)
 
     def test_alternative_success(self):
         input = self.make_input(email_alert_ai_tq=None, email_alert_i_at=None)

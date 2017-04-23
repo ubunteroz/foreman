@@ -1,7 +1,3 @@
-
-# library imports
-from werkzeug import Response, redirect
-
 # local imports
 from baseController import BaseController
 from foreman.model import CaseAuthorisation, TaskNotes, TaskUpload, ChainOfCustody, EvidencePhotoUpload

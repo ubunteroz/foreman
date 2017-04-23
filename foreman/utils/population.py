@@ -638,7 +638,7 @@ def create_evidence(case, inv, rand_user):
         photo_location = path.abspath(path.join(ROOT_DIR, "files", "evidence_photos", str(e.id)))
         try:
             stat(photo_location)
-        except:
+        except OSError:
             mkdir(photo_location)
         amount = randint(1, 3)
         for x in xrange(0, amount):

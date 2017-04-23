@@ -900,7 +900,7 @@ class PasswordCheckTestCase(ValidatorTestCaseBase):
         d.update(overrides)
         return d
 
-    def mock_user(self, username):
+    def mock_user(self, username=None):
         if username is not None:
             self.user = Mock()
             return self.user

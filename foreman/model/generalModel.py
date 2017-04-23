@@ -49,6 +49,7 @@ class ForemanOptions(Base, Model):
     email_alert_req_case_opened = Column(Boolean)
     email_alert_req_case_closed = Column(Boolean)
     email_alert_req_case_archived = Column(Boolean)
+    email_alert_caseman_requester_add_task = Column(Boolean)
 
     CASE_NAME_OPTIONS = ['NumericIncrement', 'DateNumericIncrement', 'FromList']
     TASK_NAME_OPTIONS = ['NumericIncrement', 'FromList', 'TaskTypeNumericIncrement']
@@ -98,6 +99,7 @@ class ForemanOptions(Base, Model):
         self.email_alert_req_case_opened = False
         self.email_alert_req_case_closed = False
         self.email_alert_req_case_archived = False
+        self.email_alert_caseman_requester_add_task = False
 
         session.commit()
 

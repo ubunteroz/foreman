@@ -4,8 +4,7 @@ import hashlib
 from os import path, remove
 import calendar
 # library imports
-from sqlalchemy import Table, Column, Integer, Boolean, Unicode, ForeignKey, DateTime, asc, desc, and_, or_, func
-from sqlalchemy import Float, distinct
+from sqlalchemy import Column, Integer, Boolean, Unicode, ForeignKey, DateTime, asc, desc, and_, or_, func, distinct
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import backref, relation
 from qrcode import *
@@ -13,7 +12,7 @@ from werkzeug.exceptions import Forbidden, InternalServerError
 from monthdelta import MonthDelta
 # local imports
 from models import Base, Model, HistoryModel
-from generalModel import ForemanOptions, TaskCategory, TaskType, CasePriority, CaseType
+from generalModel import ForemanOptions, TaskCategory, TaskType, CasePriority
 from userModel import UserTaskRoles, User, UserCaseRoles, UserRoles
 from ..utils.utils import session, ROOT_DIR, config, upload_file
 

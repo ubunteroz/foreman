@@ -34,7 +34,10 @@
             <td>
                 % if not isinstance(history['change_log'], basestring):
                 % for entry, change in history['change_log'].iteritems():
-                    The ${entry|h} changed from ${change[0]|h} to ${change[1]|h} <br/>
+                     The <i>${entry|h}</i> changed from:
+                            <span class="change">${change[0]|h}</span>
+                            <br/>To:
+                            <span class="change">${change[1]|h}</span>
                 % endfor
                 % else:
                     ${history['change_log']|h}

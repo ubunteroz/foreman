@@ -89,7 +89,7 @@ if __name__ == '__main__':
 
     subparsers = parser.add_subparsers()
 
-    runserver_parser = subparsers.add_parser('runserver', help='Start Foreman using a simple development server')
+    runserver_parser = subparsers.add_parser('run_server', help='Start Foreman using a simple development server')
     runserver_parser.add_argument('--host', default='localhost')
     runserver_parser.add_argument('--port', type=int, default=5000)
     runserver_parser.add_argument('--reloader', action='store_true')
