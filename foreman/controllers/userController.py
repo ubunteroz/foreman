@@ -466,8 +466,8 @@ Foreman
             titles.append(day_tracker.strftime("%Y-%m-%d"))
             day_tracker += timedelta(days=1)
 
-        stringio = create_csv(self._create_timesheets(self.current_user.direct_reports, start_day,
-                                                      start_day + timedelta(days=7)), titles)
+        stringio = create_csv(create_timesheets(self.current_user.direct_reports, start_day,
+                                                start_day + timedelta(days=7)), titles)
         return Response(stringio.getvalue(), direct_passthrough=True, mimetype='text/csv', status=200)
 
     def task_metrics_download_csv(self, week):
@@ -493,9 +493,8 @@ Foreman
             if user.is_examiner():
                 examiners.append(user)
                 titles.append(user.fullname)
-        stringio = create_csv(
-            self._create_metrics(examiners, statuses, categories, start_day, start_day + timedelta(days=7),
-                                 Task.get_num_tasks_by_user_for_date_range), titles)
+        stringio = create_csv(create_metrics(examiners, statuses, categories, start_day, start_day + timedelta(days=7),
+                                             Task.get_num_tasks_by_user_for_date_range), titles)
         return Response(stringio.getvalue(), direct_passthrough=True, mimetype='text/csv', status=200)
 
     def case_metrics_download_csv(self, week):
@@ -520,31 +519,33 @@ Foreman
             if user.is_case_manager():
                 case_managers.append(user)
                 titles.append(user.fullname)
-        stringio = create_csv(
-            self._create_metrics(case_managers, statuses, categories, start_day, start_day + timedelta(days=7),
-                                 Case.get_num_completed_case_by_user), titles)
+        stringio = create_csv(create_metrics(case_managers, statuses, categories, start_day,
+                                             start_day + timedelta(days=7), Case.get_num_completed_case_by_user),
+                              titles)
         return Response(stringio.getvalue(), direct_passthrough=True, mimetype='text/csv', status=200)
 
-    def _create_timesheets(self, user_list, start, end):
-        entries = []
-        for user in user_list:
-            user_entry = [user.fullname]
-            current = start
-            while current < end:
-                user_entry.append(user.get_hours_worked(date(current.year, current.month, current.day)))
-                current += timedelta(days=1)
-            entries.append(user_entry)
-        return entries
 
-    def _create_metrics(self, user_list, statuses, categories, start, end, case_or_task):
-        entries = []
-        for status in statuses:
-            for category in categories:
-                user_entry = [status, category]
-                for user in user_list:
-                    user_entry.append(case_or_task(user, category, start, end, status))
-                entries.append(user_entry)
-        return entries
+def create_timesheets(self, user_list, start, end):
+    entries = []
+    for user in user_list:
+        user_entry = [user.fullname]
+        current = start
+        while current < end:
+            user_entry.append(user.get_hours_worked(date(current.year, current.month, current.day)))
+            current += timedelta(days=1)
+        entries.append(user_entry)
+    return entries
+
+
+def create_metrics(self, user_list, statuses, categories, start, end, case_or_task):
+    entries = []
+    for status in statuses:
+        for category in categories:
+            user_entry = [status, category]
+            for user in user_list:
+                user_entry.append(case_or_task(user, category, start, end, status))
+            entries.append(user_entry)
+    return entries
 
 
 def create_csv(input_list, titles):

@@ -2,7 +2,7 @@
 from os import path
 import sys, traceback
 # library imports
-from werkzeug import ClosingIterator, Request, SharedDataMiddleware, DebuggedApplication, Response
+from werkzeug import ClosingIterator, Request, SharedDataMiddleware, DebuggedApplication
 from werkzeug.exceptions import HTTPException, NotFound, InternalServerError, Forbidden
 from werkzeug.routing import Map, Rule
 from werkzeug.contrib.sessions import FilesystemSessionStore

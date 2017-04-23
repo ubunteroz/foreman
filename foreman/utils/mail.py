@@ -17,7 +17,6 @@ def send_email(to_addrs, subject, msg, from_addr, cc=None, bcc=None):
     if cc:
         msg['CC'] = ', '.join(cc)
         to_addrs.extend(cc)
-    
     if bcc:
         to_addrs.extend(bcc)
         

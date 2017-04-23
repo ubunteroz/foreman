@@ -1,6 +1,6 @@
 # python imports
 from formencode import Invalid
-from mock import patch, DEFAULT, Mock, MagicMock
+from mock import patch, MagicMock
 from datetime import datetime, timedelta, date, time
 from os import path
 
@@ -59,9 +59,9 @@ class FormTestCaseBase(base_tester.UnitTestCase):
             patcher.stop()
 
     def _bad_field_tester(self, form, exception, **bad_field):
-        input = self.make_input(**bad_field)
+        inputs = self.make_input(**bad_field)
         with self.assertRaises(exception) as cm:
-            result = form().to_python(input)
+            result = form().to_python(inputs)
         invalid = cm.exception
         self.assertIn(bad_field.keys()[0], invalid.error_dict)
         self.assertEqual(len(invalid.error_dict), 1)
@@ -100,9 +100,8 @@ class AddCaseFormTestCase(FormTestCaseBase):
 
         self.getObjectMocks['GetCaseManager'].side_effect = mock_case_manager_getobject
 
-        input = self.make_input()
-
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
 
         self.assertEqual(result['case_name'], 'Case Foo')
         self.assertEqual(result['reference'], '1234567')
@@ -158,17 +157,17 @@ class RegisterFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['forename'], 'Foo')
         self.assertEqual(result['middlename'], '')
         self.assertIs(result['team'], self.getObjectMocks['GetTeam'].return_value)
 
     def test_password_mismatch(self):
-        input = self.make_input(password_2="foo")
+        inputs = self.make_input(password_2="foo")
 
         with self.assertRaises(Invalid) as cm:
-            result = self.original_class().to_python(input)
+            result = self.original_class().to_python(inputs)
 
         invalid = cm.exception
         self.assertIn('password', invalid.error_dict)
@@ -206,9 +205,8 @@ class RequesterAddCaseFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
 
         self.assertEqual(result['reference'], '1234567')
         self.assertEqual(result['background'], 'Some background')
@@ -248,14 +246,14 @@ class AuthoriseCaseFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['reason'], 'Foo')
         self.assertEqual(result['auth'], True)
 
     def test_alternatives(self):
-        input = self.make_input(auth="Rejected")
-        result = self.original_class().to_python(input)
+        inputs = self.make_input(auth="Rejected")
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['auth'], False)
 
     def test_bad_fields(self):
@@ -275,15 +273,15 @@ class AddPriorityFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['priority'], 'Foo')
         self.assertEqual(result['default'], True)
         self.assertEqual(result['colour'], '#FFFFFF')
 
     def test_alternatives(self):
-        input = self.make_input(default="no")
-        result = self.original_class().to_python(input)
+        inputs = self.make_input(default="no")
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['default'], False)
 
     def test_bad_fields(self):
@@ -304,8 +302,8 @@ class RemovePriorityFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertIs(result['priority_remove'], self.getObjectMocks['GetPriority'].return_value)
 
     def test_bad_fields(self):
@@ -323,8 +321,8 @@ class RemoveClassificationFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertIs(result['classification'], self.getObjectMocks['GetCaseClassification'].return_value)
 
     def test_bad_fields(self):
@@ -342,8 +340,8 @@ class RemoveCaseTypeFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertIs(result['case_type'], self.getObjectMocks['GetCaseType'].return_value)
 
     def test_bad_fields(self):
@@ -361,8 +359,8 @@ class AddClassificationFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['new_classification'], 'Foo')
 
     def test_bad_fields(self):
@@ -378,8 +376,8 @@ class AddCaseTypeFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['new_case_type'], 'Foo')
 
     def test_bad_fields(self):
@@ -426,9 +424,8 @@ class AddTaskFormTestCase(FormTestCaseBase):
         self.getObjectMocks['GetQA'].side_effect = mock_qa_getobject
         self.getObjectMocks['GetInvestigator'].side_effect = mock_investigator_getobject
 
-        input = self.make_input()
-
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
 
         self.assertEqual(result['task_name'], 'Case Foo')
         self.assertEqual(result['task_type'], self.getObjectMocks['GetTaskTypes'].return_value)
@@ -466,9 +463,9 @@ class RequesterAddTaskFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
 
-        result = self.original_class().to_python(input)
         self.assertEqual(result['task_type'], self.getObjectMocks['GetTaskTypes'].return_value)
         self.assertEqual(result['background'], 'Some background')
 
@@ -488,8 +485,9 @@ class LoginFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
+
         self.assertEqual(result['username'], 'administrator')
         self.assertEqual(result['password'], 'changeme')
 
@@ -509,17 +507,17 @@ class PasswordChangeFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
+
         self.assertEqual(result['password'], 'pass')
         self.assertEqual(result['new_password'], 'pass1')
         self.assertEqual(result['new_password_2'], 'pass1')
 
     def test_password_mismatch(self):
-        input = self.make_input(new_password_2="foo")
-
+        inputs = self.make_input(new_password_2="foo")
         with self.assertRaises(Invalid) as cm:
-            result = self.original_class().to_python(input)
+            result = self.original_class().to_python(inputs)
 
         invalid = cm.exception
         self.assertIn('new_password', invalid.error_dict)
@@ -542,16 +540,16 @@ class AdminPasswordChangeFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
+
         self.assertEqual(result['new_password'], 'pass1')
         self.assertEqual(result['new_password_2'], 'pass1')
 
     def test_password_mismatch(self):
-        input = self.make_input(new_password_2="foo")
-
+        inputs = self.make_input(new_password_2="foo")
         with self.assertRaises(Invalid) as cm:
-            result = self.original_class().to_python(input)
+            result = self.original_class().to_python(inputs)
 
         invalid = cm.exception
         self.assertIn('new_password', invalid.error_dict)
@@ -573,14 +571,16 @@ class QACheckerFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
+
         self.assertEqual(result['notes'], 'Foo')
         self.assertEqual(result['qa_decision'], True)
 
     def test_alternatives(self):
-        input = self.make_input(qa_decision="qa_fail")
-        result = self.original_class().to_python(input)
+        inputs = self.make_input(qa_decision="qa_fail")
+        result = self.original_class().to_python(inputs)
+
         self.assertEqual(result['qa_decision'], False)
 
     def test_bad_fields(self):
@@ -597,8 +597,9 @@ class AddTaskNotesFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
+
         self.assertEqual(result['notes'], 'Foo')
 
     def test_bad_fields(self):
@@ -614,8 +615,9 @@ class DeactivateUserTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
+
         self.assertIs(result['deactivate_user'], self.getObjectMocks['GetUser'].return_value)
 
     def test_bad_fields(self):
@@ -634,8 +636,9 @@ class ReactivateUserTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
+
         self.assertIs(result['reactivate_user'], self.getObjectMocks['GetUser'].return_value)
 
     def test_bad_fields(self):
@@ -655,8 +658,8 @@ class AssignInvestigatorFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertIs(result['investigator'], self.getObjectMocks['GetInvestigator'].return_value)
         self.assertEqual(result['role'], True)
 
@@ -677,8 +680,8 @@ class AssignQAFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertIs(result['qa'], self.getObjectMocks['GetQA'].return_value)
         self.assertEqual(result['role'], True)
 
@@ -699,14 +702,16 @@ class AssignQAFormDuringForensicsTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
+
         self.assertIs(result['investigator'], self.getObjectMocks['GetQA'].return_value)
         self.assertIs(result['investigator2'], self.getObjectMocks['GetQA'].return_value)
 
     def test_alternatives(self):
-        input = self.make_input(investigator2="null")
-        result = self.original_class().to_python(input)
+        inputs = self.make_input(investigator2="null")
+        result = self.original_class().to_python(inputs)
+
         self.assertEqual(result['investigator2'], None)
 
     def test_bad_fields(self):
@@ -728,8 +733,9 @@ class AssignQAFormSingleTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
+
         self.assertIs(result['investigator'], self.getObjectMocks['GetQA'].return_value)
 
     def test_bad_fields(self):
@@ -751,8 +757,9 @@ class AskForQAFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
+
         self.assertIs(result['qa_partners'], self.getObjectMocks['GetUsers'].return_value)
         self.assertEqual(result['subject'], 'foo')
         self.assertEqual(result['body'], 'foo1')
@@ -780,8 +787,9 @@ class ChainOfCustodyFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
+
         self.assertEqual(result['user'], 'Foo')
         self.assertEqual(result['comments'], 'Foo')
         self.assertEqual(result['date'], date(2016, 3, 12))
@@ -789,17 +797,19 @@ class ChainOfCustodyFormTestCase(FormTestCaseBase):
 
     def test_alternatives(self):
         mock_file_storage = self.mock_storage('test.txt', 'seek')
-        input = self.make_input(attach=mock_file_storage, label="foo")
-        result = self.original_class().to_python(input)
+        inputs = self.make_input(attach=mock_file_storage, label="foo")
+        result = self.original_class().to_python(inputs)
+
         mock_file_storage.seek.assert_called_once_with(0)
         self.assertEqual(result['label'], "foo")
         self.assertIs(result['attach'], mock_file_storage)
 
     def test_required_fields(self):
-        input = self.make_input(attach=self.mock_storage('test.txt', 'seek'), label=None)
+        inputs = self.make_input(attach=self.mock_storage('test.txt', 'seek'), label=None)
         with self.assertRaises(Invalid) as cm:
-            result = self.original_class().to_python(input)
+            result = self.original_class().to_python(inputs)
         invalid = cm.exception
+
         self.assertIn('label', invalid.error_dict)
         self.assertEqual(len(invalid.error_dict), 1)
 
@@ -830,8 +840,9 @@ class EditEvidenceFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
+
         self.assertIs(result['type'], self.getObjectMocks['GetEvidenceType'].return_value)
         self.assertEqual(result['reference'], 'foo')
         self.assertEqual(result['status'], 'Inactive')
@@ -862,14 +873,16 @@ class EditEvidenceQRCodesFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
+
         self.assertEqual(result['qr_code_text'], 'Foo')
         self.assertEqual(result['qr_code'], False)
 
     def test_alternatives(self):
-        input = self.make_input(qr_code="checked")
-        result = self.original_class().to_python(input)
+        inputs = self.make_input(qr_code="checked")
+        result = self.original_class().to_python(inputs)
+
         self.assertEqual(result['qr_code'], True)
 
     def test_bad_fields(self):
@@ -886,8 +899,9 @@ class AddEvidenceTypeFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
+
         self.assertEqual(result['evi_type_new'], 'Foo')
         self.assertEqual(result['icon_input'], path.join(ROOT_DIR, 'static', 'images', 'siteimages',
                                                            'evidence_icons_unique', "cd.png"))
@@ -907,8 +921,9 @@ class RemoveEvidenceTypeFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
+
         self.assertIs(result['evi_type'], self.getObjectMocks['GetEvidenceType'].return_value)
 
     def test_bad_fields(self):
@@ -928,8 +943,9 @@ class MoveTaskTypeFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
+
         self.assertIs(result['task_category'], self.getObjectMocks['GetTaskCategory'].return_value)
         self.assertIs(result['task_type'], self.getObjectMocks['GetTaskTypes'].return_value)
 
@@ -954,8 +970,9 @@ class AddTaskTypeFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
+
         self.assertIs(result['change_task_category'], self.getObjectMocks['GetTaskCategory'].return_value)
         self.assertEqual(result['new_task_type'], 'foo')
 
@@ -976,8 +993,9 @@ class RemoveTaskTypeFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
+
         self.assertIs(result['remove_task_type'], self.getObjectMocks['GetTaskTypes'].return_value)
 
     def test_bad_fields(self):
@@ -996,8 +1014,8 @@ class AddTaskCategoryFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['new_task_category'], 'Foo')
 
     def test_bad_fields(self):
@@ -1013,8 +1031,8 @@ class RemoveCategoryFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertIs(result['remove_task_category'], self.getObjectMocks['GetTaskCategory'].return_value)
 
     def test_bad_fields(self):
@@ -1040,8 +1058,8 @@ class AddEvidenceFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertIs(result['type'], self.getObjectMocks['GetEvidenceType'].return_value)
         self.assertEqual(result['reference'], 'foo')
         self.assertEqual(result['status'], 'Inactive')
@@ -1052,8 +1070,8 @@ class AddEvidenceFormTestCase(FormTestCaseBase):
         self.assertEqual(result['qr'], True)
 
     def test_alternatives(self):
-        input = self.make_input(qr=None)
-        result = self.original_class().to_python(input)
+        inputs = self.make_input(qr=None)
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['qr'], False)
 
     def test_bad_fields(self):
@@ -1080,8 +1098,8 @@ class AddEvidencePhotoFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.mock.seek.assert_called_once_with(0)
         self.assertEqual(result['file_title'], 'Foo')
         self.assertEqual(result['comments'], 'Foo1')
@@ -1105,8 +1123,8 @@ class EvidenceAssociateFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertIs(result['case_reassign'], self.getObjectMocks['GetCase'].return_value)
 
     def test_bad_fields(self):
@@ -1150,9 +1168,8 @@ class EditTaskUsersFormTestCase(FormTestCaseBase):
         self.getObjectMocks['GetQA'].side_effect = mock_qa_getobject
         self.getObjectMocks['GetInvestigator'].side_effect = mock_investigator_getobject
 
-        input = self.make_input()
-
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertIs(result['primary_investigator'], primary_investigator_mock)
         self.assertIs(result['primary_qa'], primary_qa_mock)
         self.assertIs(result['secondary_investigator'], secondary_investigator_mock)
@@ -1185,8 +1202,8 @@ class EditTaskFormTestCase(FormTestCaseBase):
 
     def test_success(self):
 
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['task_name'], 'Case Foo')
         self.assertEqual(result['task_type'], self.getObjectMocks['GetTaskTypes'].return_value)
         self.assertEqual(result['background'], 'Some background')
@@ -1221,9 +1238,9 @@ class EditCaseFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
+        inputs = self.make_input()
 
-        result = self.original_class().to_python(input)
+        result = self.original_class().to_python(inputs)
 
         self.assertEqual(result['case_name'], 'Case Foo')
         self.assertEqual(result['reference'], '1234567')
@@ -1267,8 +1284,8 @@ class AddCaseLinkFormTestCase(FormTestCaseBase):
 
     def test_success(self):
 
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['reason_add'], 'foo')
         self.assertEqual(result['case_links_add'], self.getObjectMocks['GetCase'].return_value)
 
@@ -1291,8 +1308,8 @@ class RemoveCaseLinkFormTestCase(FormTestCaseBase):
 
     def test_success(self):
 
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['reason'], 'foo')
         self.assertEqual(result['case_links'], self.getObjectMocks['GetCase'].return_value)
 
@@ -1325,8 +1342,8 @@ class EditCaseManagersFormTestCase(FormTestCaseBase):
 
         self.getObjectMocks['GetCaseManager'].side_effect = mock_case_manager_getobject
 
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['primary_case_manager'], primary_case_manager_mock)
         self.assertEqual(result['secondary_case_manager'], secondary_case_manager_mock)
 
@@ -1352,8 +1369,8 @@ class ReAssignTasksFormTestCase(FormTestCaseBase):
 
     def test_success(self):
 
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['task_reassign'], self.getObjectMocks['GetTask'].return_value)
         self.assertEqual(result['case_reassign'], self.getObjectMocks['GetCase'].return_value)
 
@@ -1401,8 +1418,8 @@ class EditUserFormTestCase(FormTestCaseBase):
 
         self.getObjectMocks['GetUser'].side_effect = mock_user_getobject
 
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['forename'], 'foo')
         self.assertEqual(result['surname'], 'foo1')
         self.assertEqual(result['middlename'], 'foo2')
@@ -1460,8 +1477,8 @@ class AddUserFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['forename'], 'foo')
         self.assertEqual(result['surname'], 'foo1')
         self.assertEqual(result['middlename'], 'foo2')
@@ -1481,9 +1498,9 @@ class AddUserFormTestCase(FormTestCaseBase):
         self.assertEqual(result['qa'], True)
 
     def test_alternatives(self):
-        input = self.make_input(administrator="no", casemanager="no", requester="no", authoriser="no",
+        inputs = self.make_input(administrator="no", casemanager="no", requester="no", authoriser="no",
                                 investigator="no", qa="no")
-        result = self.original_class().to_python(input)
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['administrator'], False)
         self.assertEqual(result['casemanager'], False)
         self.assertEqual(result['requester'], False)
@@ -1533,8 +1550,8 @@ class EditRolesFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['administrator'], True)
         self.assertEqual(result['casemanager'], True)
         self.assertEqual(result['requester'], True)
@@ -1543,9 +1560,9 @@ class EditRolesFormTestCase(FormTestCaseBase):
         self.assertEqual(result['qa'], True)
 
     def test_alternatives(self):
-        input = self.make_input(administrator="no", casemanager="no", requester="no", authoriser="no",
+        inputs = self.make_input(administrator="no", casemanager="no", requester="no", authoriser="no",
                                 investigator="no", qa="no")
-        result = self.original_class().to_python(input)
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['administrator'], False)
         self.assertEqual(result['casemanager'], False)
         self.assertEqual(result['requester'], False)
@@ -1584,8 +1601,8 @@ class OptionsFormTestCase(FormTestCaseBase):
        return d
 
    def test_success(self):
-       input = self.make_input()
-       result = self.original_class().to_python(input)
+       inputs = self.make_input()
+       result = self.original_class().to_python(inputs)
        self.assertEqual(result['company'], "Foo")
        self.assertEqual(result['department'], "dep")
        self.assertEqual(result['folder'], "folder")
@@ -1599,12 +1616,12 @@ class OptionsFormTestCase(FormTestCaseBase):
        self.mock_case = self.mock_storage('test.txt', 'seek', 'mimetype', 'content_type', 'save', mimetype="text/plain")
        self.mock_task = self.mock_storage('test.txt', 'seek', 'mimetype', 'content_type', 'save', mimetype="text/plain")
 
-       input = self.make_input(upload_case_names=self.mock_case)
-       result = self.original_class().to_python(input)
+       inputs = self.make_input(upload_case_names=self.mock_case)
+       result = self.original_class().to_python(inputs)
        self.assertIs(result['upload_case_names'], self.mock_case.filename)
 
-       input = self.make_input(upload_task_names=self.mock_task)
-       result = self.original_class().to_python(input)
+       inputs = self.make_input(upload_task_names=self.mock_task)
+       result = self.original_class().to_python(inputs)
        self.assertIs(result['upload_task_names'], self.mock_task.filename)
 
    def test_bad_fields(self):
@@ -1631,8 +1648,8 @@ class UploadTaskFileTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['file_title'], 'Foo')
         self.assertEqual(result['comments'], 'Foo1')
         self.assertEqual(result['file'], self.mock)
@@ -1655,8 +1672,8 @@ class UploadCaseFileTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['file_title'], 'Foo')
         self.assertEqual(result['comments'], 'Foo1')
         self.assertEqual(result['file'], self.mock)
@@ -1676,14 +1693,14 @@ class AuthOptionsFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['see_tasks'], True)
         self.assertEqual(result['see_evidence'], True)
 
     def test_alternatives(self):
-        input = self.make_input(see_evidence="no", see_tasks="no")
-        result = self.original_class().to_python(input)
+        inputs = self.make_input(see_evidence="no", see_tasks="no")
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['see_tasks'], False)
         self.assertEqual(result['see_evidence'], False)
 
@@ -1704,8 +1721,8 @@ class AddTeamFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertIs(result['t_department_name'], self.getObjectMocks['GetDepartment'].return_value)
         self.assertEqual(result['new_team_name'], "Foo")
 
@@ -1726,8 +1743,8 @@ class RenameTeamFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertIs(result['old_team_name'], self.getObjectMocks['GetTeam'].return_value)
         self.assertEqual(result['rename_team'], "Foo")
 
@@ -1747,8 +1764,8 @@ class RemoveTeamFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertIs(result['team_name'], self.getObjectMocks['GetTeam'].return_value)
 
     def test_bad_fields(self):
@@ -1767,8 +1784,8 @@ class AddDepartmentFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['department_name'], "words")
 
     def test_bad_fields(self):
@@ -1785,8 +1802,8 @@ class RenameDepartmentFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertIs(result['old_department_name'], self.getObjectMocks['GetDepartment'].return_value)
         self.assertEquals(result['new_dep_name'], "Foo")
 
@@ -1806,8 +1823,8 @@ class RemoveDepartmentFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertIs(result['remove_department_name'], self.getObjectMocks['GetDepartment'].return_value)
 
     def test_bad_fields(self):
@@ -1827,15 +1844,15 @@ class TimeSheetCellTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['value'], 10)
         self.assertEqual(result['datetime'], datetime(2000, 1, 1).date())
 
     def _bad_field_tester(self, **bad_field):
-        input = self.make_input(**bad_field)
+        inputs = self.make_input(**bad_field)
         with self.assertRaises(Invalid) as cm:
-            result = self.original_class().to_python(input)
+            result = self.original_class().to_python(inputs)
         invalid = cm.exception
         self.assertIn(bad_field.keys()[0], invalid.error_dict)
         self.assertEqual(len(invalid.error_dict), 1)
@@ -1863,8 +1880,8 @@ class CaseHoursTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertIs(result['case'], self.getObjectMocks['GetCase'].return_value)
         self.assertEqual(result['timesheet'][0]['datetime'], date(2016, 8, 15))
         self.assertEqual(result['timesheet'][0]['value'], 1)
@@ -1901,8 +1918,8 @@ class TaskHoursTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertIs(result['task'], self.getObjectMocks['GetTask'].return_value)
         self.assertEqual(result['timesheet'][0]['datetime'], date(2016, 8, 15))
         self.assertEqual(result['timesheet'][0]['value'], 1)
@@ -1940,8 +1957,8 @@ class CaseTimeSheetFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertIs(result['cases'][0]['case'], self.getObjectMocks['GetCase'].return_value)
         self.assertEqual(result['cases'][0]['timesheet'][0]['datetime'], date(2016, 8, 15))
         self.assertEqual(result['cases'][0]['timesheet'][0]['value'], 1)
@@ -1977,8 +1994,8 @@ class TaskTimeSheetFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertIs(result['tasks'][0]['task'], self.getObjectMocks['GetTask'].return_value)
         self.assertEqual(result['tasks'][0]['timesheet'][0]['datetime'], date(2016, 8, 15))
         self.assertEqual(result['tasks'][0]['timesheet'][0]['value'], 1)
@@ -2007,8 +2024,8 @@ class ManagersInheritFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['manager_inherit'], True)
 
     def test_bad_fields(self):
@@ -2025,8 +2042,8 @@ class CloseCaseFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['closure'], "words")
 
     def test_bad_fields(self):
@@ -2042,8 +2059,8 @@ class ChangeCaseStatusFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['change'], "words")
 
     def test_bad_fields(self):
@@ -2061,15 +2078,15 @@ class EvidenceRetentionFormTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['evi_ret'], True)
         self.assertEqual(result['evi_ret_months'], 1)
         self.assertEqual(result['remove_evi_ret'], True)
 
     def test_alternative_success(self):
-        input = self.make_input(evi_ret="False", evi_ret_months="")
-        result = self.original_class().to_python(input)
+        inputs = self.make_input(evi_ret="False", evi_ret_months="")
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['evi_ret'], False)
         self.assertEqual(result['evi_ret_months'], None)
         self.assertEqual(result['remove_evi_ret'], True)
@@ -2099,8 +2116,8 @@ class TaskEmailAlertsTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['email_alert_ai_tq'], True)
         self.assertEqual(result['email_alert_i_at'], True)
         self.assertEqual(result['email_alert_qa_at'], True)
@@ -2111,8 +2128,8 @@ class TaskEmailAlertsTestCase(FormTestCaseBase):
         self.assertEqual(result['email_alert_cm_ra'], True)
 
     def test_alternative_success(self):
-        input = self.make_input(email_alert_ai_tq=None, email_alert_i_at=None)
-        result = self.original_class().to_python(input)
+        inputs = self.make_input(email_alert_ai_tq=None, email_alert_i_at=None)
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['email_alert_ai_tq'], False)
         self.assertEqual(result['email_alert_i_at'], False)
 
@@ -2132,8 +2149,8 @@ class CaseEmailAlertsTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['email_alert_allcm_nc'], True)
         self.assertEqual(result['email_alert_allcm_au'], True)
         self.assertEqual(result['email_alert_r_cm'], True)
@@ -2142,8 +2159,8 @@ class CaseEmailAlertsTestCase(FormTestCaseBase):
         self.assertEqual(result['email_alert_r_a'], True)
 
     def test_alternative_success(self):
-        input = self.make_input(email_alert_allcm_nc=None, email_alert_allcm_au=None)
-        result = self.original_class().to_python(input)
+        inputs = self.make_input(email_alert_allcm_nc=None, email_alert_allcm_au=None)
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['email_alert_allcm_nc'], False)
         self.assertEqual(result['email_alert_allcm_au'], False)
 
@@ -2157,8 +2174,8 @@ class CaseSpecialTextTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['custom_text_case'], "words")
 
 
@@ -2171,8 +2188,8 @@ class EvidenceSpecialTextTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['custom_text_evi'], "words")
 
 
@@ -2185,6 +2202,6 @@ class TaskSpecialTextTestCase(FormTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = self.original_class().to_python(input)
+        inputs = self.make_input()
+        result = self.original_class().to_python(inputs)
         self.assertEqual(result['custom_text_task'], "words")
