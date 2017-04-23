@@ -19,7 +19,7 @@ def send_email(to_addrs, subject, msg, from_addr, cc=None, bcc=None):
         to_addrs.extend(cc)
     if bcc:
         to_addrs.extend(bcc)
-        
+
     smtp = smtplib.SMTP()
     smtp.connect(config.get('email', 'email_host'))
     smtp.sendmail(from_addr, to_addrs, msg.as_string())

@@ -135,123 +135,123 @@ class CheckUniqueReferenceTestCase(CheckUniqueBase):
 class CheckUniqueBaseEdit(ValidatorTestCaseBase):
     state = None
 
-    def success_tester(self, validator, input):
+    def success_tester(self, validator, inputs):
         with patch.object(validator, 'object_class') as mockObj:
             mockObj.get_filter_by.return_value.first.return_value = None
-            result = validator.to_python(input, self.state)
-            self.assertEqual(result, input)
+            result = validator.to_python(inputs, self.state)
+            self.assertEqual(result, inputs)
 
         # ok if the returned value is the object we are editing
         with patch.object(validator, 'object_class') as mockObj:
             result_mock = Mock()
             result_mock.id = 1
             mockObj.get_filter_by.return_value.first.return_value = result_mock
-            result = validator.to_python(input, self.state)
+            result = validator.to_python(inputs, self.state)
 
-            self.assertEqual(result, input)
+            self.assertEqual(result, inputs)
             called_with = {validator.attribute_to_compare: "foo"}
             mockObj.get_filter_by.assert_called_once_with(**called_with)
 
-    def failure_tester(self, validator, input):
+    def failure_tester(self, validator, inputs):
         with patch.object(validator, 'object_class') as mockObj:
             result_mock = Mock()
             result_mock.id = 2
             mockObj.get_filter_by.return_value.first.return_value = result_mock
             with self.assertRaises(Invalid):
-                result = validator.to_python(input, self.state)
+                result = validator.to_python(inputs, self.state)
             called_with = {validator.attribute_to_compare: "foo"}
             mockObj.get_filter_by.assert_called_once_with(**called_with)
 
 
 class CheckUniqueCaseTestCaseEdit(CheckUniqueBaseEdit):
-    input = {
+    inputs = {
         'case_name': "foo",
         'edit_obj': "1"
     }
 
     def test_success(self):
-        self.success_tester(CheckUniqueCaseEdit('case_name', 'edit_obj'), self.input)
+        self.success_tester(CheckUniqueCaseEdit('case_name', 'edit_obj'), self.inputs)
 
     def test_failure(self):
-        self.failure_tester(CheckUniqueCaseEdit('case_name', 'edit_obj'), self.input)
+        self.failure_tester(CheckUniqueCaseEdit('case_name', 'edit_obj'), self.inputs)
 
 
 class CheckUniqueTaskTestCaseEdit(CheckUniqueBaseEdit):
-    input = {
+    inputs = {
         'task_name': "foo",
         'edit_obj': "1"
     }
 
     def test_success(self):
-        self.success_tester(CheckUniqueTaskEdit('task_name', 'edit_obj'), self.input)
+        self.success_tester(CheckUniqueTaskEdit('task_name', 'edit_obj'), self.inputs)
 
     def test_failure(self):
-        self.failure_tester(CheckUniqueTaskEdit('task_name', 'edit_obj'), self.input)
+        self.failure_tester(CheckUniqueTaskEdit('task_name', 'edit_obj'), self.inputs)
 
 
 class CheckUniqueTeamTestCaseEdit(CheckUniqueBaseEdit):
-    input = {
+    inputs = {
         'team': "foo",
         'edit_obj': "1"
     }
 
     def test_success(self):
-        self.success_tester(CheckUniqueTeamEdit('team', 'edit_obj'), self.input)
+        self.success_tester(CheckUniqueTeamEdit('team', 'edit_obj'), self.inputs)
 
     def test_failure(self):
-        self.failure_tester(CheckUniqueTeamEdit('team', 'edit_obj'), self.input)
+        self.failure_tester(CheckUniqueTeamEdit('team', 'edit_obj'), self.inputs)
 
 
 class CheckUniqueDepartmentTestCaseEdit(CheckUniqueBaseEdit):
-    input = {
+    inputs = {
         'department': "foo",
         'edit_obj': "1"
     }
 
     def test_success(self):
-        self.success_tester(CheckUniqueDepartmentEdit('department', 'edit_obj'), self.input)
+        self.success_tester(CheckUniqueDepartmentEdit('department', 'edit_obj'), self.inputs)
 
     def test_failure(self):
-        self.failure_tester(CheckUniqueDepartmentEdit('department', 'edit_obj'), self.input)
+        self.failure_tester(CheckUniqueDepartmentEdit('department', 'edit_obj'), self.inputs)
 
 
 class CheckUniqueUsernameTestCaseEdit(CheckUniqueBaseEdit):
-    input = {
+    inputs = {
         'username': "foo",
         'edit_obj': "1"
     }
 
     def test_success(self):
-        self.success_tester(CheckUniqueUsernameEdit('username', 'edit_obj'), self.input)
+        self.success_tester(CheckUniqueUsernameEdit('username', 'edit_obj'), self.inputs)
 
     def test_failure(self):
-        self.failure_tester(CheckUniqueUsernameEdit('username', 'edit_obj'), self.input)
+        self.failure_tester(CheckUniqueUsernameEdit('username', 'edit_obj'), self.inputs)
 
 
 class CheckUniqueEmailTestCaseEdit(CheckUniqueBaseEdit):
-    input = {
+    inputs = {
         'email': "foo",
         'edit_obj': "1"
     }
 
     def test_success(self):
-        self.success_tester(CheckUniqueEmailEdit('email', 'edit_obj'), self.input)
+        self.success_tester(CheckUniqueEmailEdit('email', 'edit_obj'), self.inputs)
 
     def test_failure(self):
-        self.failure_tester(CheckUniqueEmailEdit('email', 'edit_obj'), self.input)
+        self.failure_tester(CheckUniqueEmailEdit('email', 'edit_obj'), self.inputs)
 
 
 class CheckUniqueReferenceTestCasEdit(CheckUniqueBaseEdit):
-    input = {
+    inputs = {
         'reference': "foo",
         'edit_obj': "1"
     }
 
     def test_success(self):
-        self.success_tester(CheckUniqueReferenceEdit('reference', 'edit_obj'), self.input)
+        self.success_tester(CheckUniqueReferenceEdit('reference', 'edit_obj'), self.inputs)
 
     def test_failure(self):
-        self.failure_tester(CheckUniqueReferenceEdit('reference', 'edit_obj'), self.input)
+        self.failure_tester(CheckUniqueReferenceEdit('reference', 'edit_obj'), self.inputs)
 
 
 class RequiredFieldEvidenceTestCase(ValidatorTestCaseBase):
@@ -264,19 +264,19 @@ class RequiredFieldEvidenceTestCase(ValidatorTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = RequiredFieldEvidence('evi_ret','evi_ret_months').to_python(input, self.state)
-        self.assertEqual(result, input)
+        inputs = self.make_input()
+        result = RequiredFieldEvidence('evi_ret','evi_ret_months').to_python(inputs, self.state)
+        self.assertEqual(result, inputs)
 
     def test_alternatives(self):
-        input = self.make_input(evi_ret="False", evi_ret_months="")
-        result = RequiredFieldEvidence('evi_ret','evi_ret_months').to_python(input, self.state)
-        self.assertEqual(result, input)
+        inputs = self.make_input(evi_ret="False", evi_ret_months="")
+        result = RequiredFieldEvidence('evi_ret','evi_ret_months').to_python(inputs, self.state)
+        self.assertEqual(result, inputs)
 
     def test_failure(self):
-        input = self.make_input(evi_ret_months="")
+        inputs = self.make_input(evi_ret_months="")
         with self.assertRaises(Invalid) as cm:
-            result = RequiredFieldEvidence('evi_ret','evi_ret_months').to_python(input, self.state)
+            result = RequiredFieldEvidence('evi_ret','evi_ret_months').to_python(inputs, self.state)
         invalid = cm.exception
         self.assertIn('evi_ret_months', invalid.error_dict)
 
@@ -291,18 +291,18 @@ class MatchTestCase(ValidatorTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = Match('password','password2').to_python(input, self.state)
-        self.assertEqual(result, input)
+        inputs = self.make_input()
+        result = Match('password','password2').to_python(inputs, self.state)
+        self.assertEqual(result, inputs)
 
-        input = self.make_input(extra="foo")
-        result = Match('password', 'password2').to_python(input, self.state)
-        self.assertEqual(result, input)
+        inputs = self.make_input(extra="foo")
+        result = Match('password', 'password2').to_python(inputs, self.state)
+        self.assertEqual(result, inputs)
 
     def test_failure(self):
-        input = self.make_input(password2="foo")
+        inputs = self.make_input(password2="foo")
         with self.assertRaises(Invalid) as cm:
-            result = Match('password','password2').to_python(input, self.state)
+            result = Match('password','password2').to_python(inputs, self.state)
         invalid = cm.exception
         self.assertIn('password', invalid.error_dict)
         self.assertIn('password2', invalid.error_dict)
@@ -319,19 +319,19 @@ class NotEmptyUploadTestCase(ValidatorTestCaseBase):
         return d
 
     def test_success(self):
-        input = self.make_input()
-        result = NotEmptyUpload('case_names','case_upload').to_python(input, self.state)
-        self.assertEqual(result, input)
+        inputs = self.make_input()
+        result = NotEmptyUpload('case_names','case_upload').to_python(inputs, self.state)
+        self.assertEqual(result, inputs)
 
     def test_alternatives(self):
-        input = self.make_input(case_names="NumericIncrement", case_upload=None)
-        result = NotEmptyUpload('case_names','case_upload').to_python(input, self.state)
-        self.assertEqual(result, input)
+        inputs = self.make_input(case_names="NumericIncrement", case_upload=None)
+        result = NotEmptyUpload('case_names','case_upload').to_python(inputs, self.state)
+        self.assertEqual(result, inputs)
 
     def test_failure(self):
-        input = self.make_input(case_upload="")
+        inputs = self.make_input(case_upload="")
         with self.assertRaises(Invalid) as cm:
-            result = NotEmptyUpload('case_names','case_upload').to_python(input, self.state)
+            result = NotEmptyUpload('case_names','case_upload').to_python(inputs, self.state)
         invalid = cm.exception
         self.assertIn('case_names', invalid.error_dict)
         self.assertIn('case_upload', invalid.error_dict)
@@ -911,27 +911,27 @@ class PasswordCheckTestCase(ValidatorTestCaseBase):
         return username == "user" and password == "pass"
 
     def test_success(self):
-        input = self.make_input()
+        inputs = self.make_input()
         with patch('foreman.forms.validators.User') as mockUser:
             mockUser.get_filter_by.first.return_value = self.mock_user("user")
-            mockUser.check_password.return_value = self.mock_password_check(**input)
-            result = PasswordCheck('username','password').to_python(input, self.state)
-            self.assertEqual(result, input)
+            mockUser.check_password.return_value = self.mock_password_check(**inputs)
+            result = PasswordCheck('username','password').to_python(inputs, self.state)
+            self.assertEqual(result, inputs)
             mockUser.get_filter_by.assert_called_once_with(username="user")
             mockUser.check_password.assert_called_once_with("user", "pass")
 
-            input = self.make_input(extra="foo")
-            result = PasswordCheck('username', 'password').to_python(input, self.state)
-            self.assertEqual(result, input)
+            inputs = self.make_input(extra="foo")
+            result = PasswordCheck('username', 'password').to_python(inputs, self.state)
+            self.assertEqual(result, inputs)
 
     def failure_tester(self, **input_changes):
-        input = self.make_input(**input_changes)
+        inputs = self.make_input(**input_changes)
         with patch('foreman.forms.validators.User') as mockUser:
             mockUser.get_filter_by.first.return_value = self.mock_user("user")
-            mockUser.check_password.return_value = self.mock_password_check(**input)
+            mockUser.check_password.return_value = self.mock_password_check(**inputs)
 
             with self.assertRaises(Invalid) as cm:
-                result = PasswordCheck('username', 'password').to_python(input, self.state)
+                result = PasswordCheck('username', 'password').to_python(inputs, self.state)
             invalid = cm.exception
             self.assertIn('username', invalid.error_dict)
             self.assertIn('password', invalid.error_dict)
@@ -965,25 +965,25 @@ class ManagerCheckTestCase(ValidatorTestCaseBase):
 
     def test_success(self):
         user = self.mock_user(1)
-        input = self.make_input(user)
-        result = ManagerCheck('user','manager').to_python(input, self.state)
-        self.assertEqual(result, input)
+        inputs = self.make_input(user)
+        result = ManagerCheck('user','manager').to_python(inputs, self.state)
+        self.assertEqual(result, inputs)
 
         user = self.mock_user(1)
-        input = self.make_input(user, manager=self.mock_user(2))
-        result = ManagerCheck('user','manager').to_python(input, self.state)
-        self.assertEqual(result, input)
+        inputs = self.make_input(user, manager=self.mock_user(2))
+        result = ManagerCheck('user','manager').to_python(inputs, self.state)
+        self.assertEqual(result, inputs)
 
         user = self.mock_user(1, report_chain=[self.mock_report])
-        input = self.make_input(user, manager=self.mock_user(2))
-        result = ManagerCheck('user','manager').to_python(input, self.state)
-        self.assertEqual(result, input)
+        inputs = self.make_input(user, manager=self.mock_user(2))
+        result = ManagerCheck('user','manager').to_python(inputs, self.state)
+        self.assertEqual(result, inputs)
 
     def test_failure(self):
         user = self.mock_user(42, report_chain=[self.mock_report])
-        input = self.make_input(user, manager=self.mock_user(42))
+        inputs = self.make_input(user, manager=self.mock_user(42))
         with self.assertRaises(Invalid) as cm:
-            result = ManagerCheck('user', 'manager').to_python(input, self.state)
+            result = ManagerCheck('user', 'manager').to_python(inputs, self.state)
         invalid = cm.exception
         self.assertIn('manager', invalid.error_dict)
 

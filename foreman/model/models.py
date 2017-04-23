@@ -11,8 +11,8 @@ class Model(object):
         return session.query(cls).get(id)
 
     @classmethod
-    def get_filter_by(cls, **vars):
-        return session.query(cls).filter_by(**vars)
+    def get_filter_by(cls, **variables):
+        return session.query(cls).filter_by(**variables)
 
     @classmethod
     def get_all(cls, descending=False):

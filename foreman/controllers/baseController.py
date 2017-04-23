@@ -43,10 +43,10 @@ class BaseController():
     def _create_breadcrumbs(self):
         self.breadcrumbs = [{'title': 'Home', 'path': self.urls.build('general.index')}]
 
-    def return_404(self, **vars):
-        vars.update(**self._get_base_variables())
+    def return_404(self, **variables):
+        variables.update(**self._get_base_variables())
         template = lookup.get_template(path.join('base', '404.html'))
-        html = template.render(urls=self.urls, **vars)
+        html = template.render(urls=self.urls, **variables)
         return Response(html, mimetype='text/html', status=404)
 
     def return_500(self):
@@ -59,12 +59,12 @@ class BaseController():
         html = template.render(urls=self.urls, **self._get_base_variables())
         return Response(html, mimetype='text/html', status=403)
 
-    def return_response(self, *location, **vars):
+    def return_response(self, *location, **variables):
         """ Return the rendered template with variables """
-        vars.update(**self._get_base_variables())
+        variables.update(**self._get_base_variables())
         template = lookup.get_template(path.join(*location))
-        html = template.render(urls=self.urls, breadcrumbs=self.breadcrumbs, **vars)
-        return Response(html, mimetype='text/html', status=vars.get('_status', 200))
+        html = template.render(urls=self.urls, breadcrumbs=self.breadcrumbs, **variables)
+        return Response(html, mimetype='text/html', status=variables.get('_status', 200))
 
     def validate_form(self, schema):
         """ Validates a form post against schema. If no form was posted, return False.
@@ -240,6 +240,10 @@ Foreman
 
     @staticmethod
     def _validate_task(case_id, task_id):
+        try:
+            int(case_id)
+        except ValueError:
+            return None
         case = Case.get(case_id)
         if case is not None:
             try:
