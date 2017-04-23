@@ -525,7 +525,7 @@ Foreman
         return Response(stringio.getvalue(), direct_passthrough=True, mimetype='text/csv', status=200)
 
 
-def create_timesheets(self, user_list, start, end):
+def create_timesheets(user_list, start, end):
     entries = []
     for user in user_list:
         user_entry = [user.fullname]
@@ -537,7 +537,7 @@ def create_timesheets(self, user_list, start, end):
     return entries
 
 
-def create_metrics(self, user_list, statuses, categories, start, end, case_or_task):
+def create_metrics(user_list, statuses, categories, start, end, case_or_task):
     entries = []
     for status in statuses:
         for category in categories:
