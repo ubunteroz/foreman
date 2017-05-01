@@ -429,9 +429,9 @@ Link to new task: {}{}""".format(self.current_user.fullname, case.case_name, sel
                             if task.deadline is None or task.deadline > case.deadline:
                                 task.deadline = datetime.combine(case.deadline, datetime.min.time())
 
-                    if (case.requester is not None and self.current_user.id == case.requester.id \
-                            and case.authorised.case_authorised == "NOAUTH") or (case.requester is None and \
-                            self.current_user.id == case.principle_case_manager.id and \
+                    if (case.requester is not None and self.current_user.id == case.requester.id
+                            and case.authorised.case_authorised == "NOAUTH") or (case.requester is None and
+                            self.current_user.id == case.principle_case_manager.id and
                             case.authorised.case_authorised == "NOAUTH"):
                         case.authorise(self.form_result['authoriser'], "Case has been Edited", "PENDING")
                         case.set_status(CaseStatus.PENDING, self.current_user)

@@ -388,9 +388,9 @@ class GetForemanCaseNameOptions(GetObject):
     allow_new = False
     allow_null = False
 
-    def getObject(self, str):
-        if str in ForemanOptions.CASE_NAME_OPTIONS:
-            return str
+    def getObject(self, string):
+        if string in ForemanOptions.CASE_NAME_OPTIONS:
+            return string
         else:
             return None
 
@@ -404,9 +404,9 @@ class GetForemanTaskNameOptions(GetObject):
     allow_new = False
     allow_null = False
 
-    def getObject(self, str):
-        if str in ForemanOptions.TASK_NAME_OPTIONS:
-            return str
+    def getObject(self, string):
+        if string in ForemanOptions.TASK_NAME_OPTIONS:
+            return string
         else:
             return None
 
@@ -806,9 +806,9 @@ class Upload(v.FancyValidator):
             raise Invalid(self.message('invalid', state), value, state)
         return uploaded_file.filename
 
-    def file_name(self, file):
+    def file_name(self, fileobj):
         # make sure filename is just [name].[extension]
-        return file.filename.split(path.sep)[-1]
+        return fileobj.filename.split(path.sep)[-1]
 
 
 class UploadWithoutStorage(v.FancyValidator):

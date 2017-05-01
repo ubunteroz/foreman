@@ -949,11 +949,11 @@ class ManagerCheckTestCase(ValidatorTestCaseBase):
     def setUp(self):
         self.mock_report = Mock(id=42)
 
-    def mock_user(self, id, report_chain=None):
+    def mock_user(self, uid, report_chain=None):
         if report_chain is None:
             report_chain = []
 
-        mock = Mock(id=id)
+        mock = Mock(id=uid)
         mock._manager_loop_checker.return_value = report_chain
         return mock
 

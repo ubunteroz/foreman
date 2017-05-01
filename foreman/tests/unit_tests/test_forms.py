@@ -41,8 +41,8 @@ class FormTestCaseBase(base_tester.UnitTestCase):
             mock = patcher.start()
 
             # Set up the mock so it returns None when it gets an invalid object ID as an argument.
-            def side_effect(id, _original_return_value=mock.return_value):
-                if not id.isdigit() or id == INVALID_OBJECT_ID:
+            def side_effect(oid, _original_return_value=mock.return_value):
+                if not oid.isdigit() or oid == INVALID_OBJECT_ID:
                     return None
                 else:
                     return _original_return_value
@@ -91,10 +91,10 @@ class AddCaseFormTestCase(FormTestCaseBase):
     def test_success(self):
         primary_case_manager_mock = MagicMock()
         secondary_case_manager_mock = MagicMock()
-        def mock_case_manager_getobject(id):
-            if id == '17':
+        def mock_case_manager_getobject(oid):
+            if oid == '17':
                 return primary_case_manager_mock
-            if id == '18':
+            if oid == '18':
                 return secondary_case_manager_mock
             return None
 
@@ -404,20 +404,20 @@ class AddTaskFormTestCase(FormTestCaseBase):
     def test_success(self):
         primary_investigator_mock = MagicMock()
         secondary_investigator_mock = MagicMock()
-        def mock_investigator_getobject(id):
-            if id == '2':
+        def mock_investigator_getobject(oid):
+            if oid == '2':
                 return primary_investigator_mock
-            if id == '3':
+            if oid == '3':
                 return secondary_investigator_mock
             return None
 
         primary_qa_mock = MagicMock()
         secondary_qa_mock = MagicMock()
 
-        def mock_qa_getobject(id):
-            if id == '4':
+        def mock_qa_getobject(oid):
+            if oid == '4':
                 return primary_qa_mock
-            if id == '5':
+            if oid == '5':
                 return secondary_qa_mock
             return None
 
@@ -1148,20 +1148,20 @@ class EditTaskUsersFormTestCase(FormTestCaseBase):
     def test_success(self):
         primary_investigator_mock = MagicMock()
         secondary_investigator_mock = MagicMock()
-        def mock_investigator_getobject(id):
-            if id == '2':
+        def mock_investigator_getobject(oid):
+            if oid == '2':
                 return primary_investigator_mock
-            if id == '3':
+            if oid == '3':
                 return secondary_investigator_mock
             return None
 
         primary_qa_mock = MagicMock()
         secondary_qa_mock = MagicMock()
 
-        def mock_qa_getobject(id):
-            if id == '4':
+        def mock_qa_getobject(oid):
+            if oid == '4':
                 return primary_qa_mock
-            if id == '5':
+            if oid == '5':
                 return secondary_qa_mock
             return None
 
@@ -1333,10 +1333,10 @@ class EditCaseManagersFormTestCase(FormTestCaseBase):
     def test_success(self):
         primary_case_manager_mock = MagicMock()
         secondary_case_manager_mock = MagicMock()
-        def mock_case_manager_getobject(id):
-            if id == '17':
+        def mock_case_manager_getobject(oid):
+            if oid == '17':
                 return primary_case_manager_mock
-            if id == '18':
+            if oid == '18':
                 return secondary_case_manager_mock
             return None
 
@@ -1409,10 +1409,10 @@ class EditUserFormTestCase(FormTestCaseBase):
         user_mock = MagicMock()
         manager_mock = MagicMock()
 
-        def mock_user_getobject(id):
-            if id == '2':
+        def mock_user_getobject(oid):
+            if oid == '2':
                 return user_mock
-            if id == '1':
+            if oid == '1':
                 return manager_mock
             return None
 

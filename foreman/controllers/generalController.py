@@ -23,7 +23,7 @@ from ..utils.scheduled_tasks import retention_notifier
 
 
 class GeneralController(BaseController):
-    def index(self, **vars):
+    def index(self):
         tasks = len(Task.get_active_tasks(user=self.current_user))
         qas = len(Task.get_active_QAs(user=self.current_user))
         opts = ForemanOptions.get_options()

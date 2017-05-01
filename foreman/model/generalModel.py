@@ -304,14 +304,6 @@ class TaskType(Base, Model):
         return session.query(TaskCategory).filter_by(category=cat).first()
 
     @staticmethod
-    def get_type_from_list(ttype):
-        ttypes = session.query(TaskType).all()
-        for task_type in ttypes:
-            if ttype == task_type.task_type.replace(" ", "").lower():
-                return task_type
-        return None
-
-    @staticmethod
     def undefined():
         return "Undefined"
 

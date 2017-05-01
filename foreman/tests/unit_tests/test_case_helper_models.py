@@ -362,8 +362,8 @@ class CaseUploadTestCase(ModelTestCaseBase):
     def test_file_deletion(self):
         self.new_case_upload.delete(self.delete_user)
         self.assertEqual(self.new_case_upload.deleted, True)
-        self.now = datetime.now()
-        self.assertGreaterEqual(self.now, self.new_case_upload.date_deleted)
+        now = datetime.now()
+        self.assertGreaterEqual(now, self.new_case_upload.date_deleted)
         self.assertEqual(self.new_case_upload.deleter, self.delete_user)
 
     def test_changes(self):

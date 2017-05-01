@@ -7,8 +7,8 @@ from ..utils.utils import session
 
 class Model(object):
     @classmethod
-    def get(cls, id):
-        return session.query(cls).get(id)
+    def get(cls, cid):
+        return session.query(cls).get(cid)
 
     @classmethod
     def get_filter_by(cls, **variables):

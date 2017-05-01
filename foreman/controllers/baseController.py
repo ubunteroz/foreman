@@ -31,7 +31,7 @@ def jsonify(func):
     return _wrapper
 
 
-class BaseController():
+class BaseController:
     def __init__(self, request, urls):
         self.request = request
         self.urls = urls

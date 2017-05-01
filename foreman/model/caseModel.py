@@ -1186,9 +1186,13 @@ class TaskUpload(UploadModel, Base):
     deleter = relation('User', backref=backref('files_deleted_from_tasks'), foreign_keys='TaskUpload.deleter_id')
     DEFAULT_FOLDER = path.join('files', 'task_uploads')
 
-    def __init__(self, uploader_id, task_id, case_id, file_name, file_note, title):
+    def __init__(self, uploader_id, task_id, case_id, file_name, file_note, title, upload_location=None):
         self.task_id = task_id
-        self.upload_location = path.join(TaskUpload.DEFAULT_FOLDER, str(case_id) + "_" + str(task_id))
+        if upload_location is None:
+            self.upload_location = path.join(TaskUpload.DEFAULT_FOLDER, str(case_id) + "_" + str(task_id))
+        else:
+            self.upload_location = upload_location
+
         UploadModel.__init__(self, uploader_id, file_name, file_note, title)
 
     @staticmethod

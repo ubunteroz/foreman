@@ -21,7 +21,7 @@ class MockSessionStore(object):
         sid = 'testsid'
         self.session = MockSession(sid)
 
-    def get(self, id):
+    def get(self, uid):
         return self.session
 
     def new(self):
