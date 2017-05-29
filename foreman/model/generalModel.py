@@ -435,7 +435,7 @@ class EvidenceType(Base, Model):
             icon_path = self.evidence_type.replace(" ", "").lower() + ".png"
             new_icon = path.abspath(path.join(ROOT_DIR, 'static', 'images' ,'siteimages', 'evidence_icons', icon_path))
 
-            if icon is None:
+            if icon is None or not path.exists(icon):
                 default_icon = path.abspath(path.join(ROOT_DIR, 'static', 'images', 'siteimages',
                                                       'evidence_icons', 'other.png'))
                 if path.exists(default_icon) and not path.exists(new_icon):

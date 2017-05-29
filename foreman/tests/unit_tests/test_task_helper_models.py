@@ -112,7 +112,7 @@ class TaskUploadTestCase(ModelTestTaskBase):
         session.add(hash_upload)
         session.commit()
 
-        hashed = "8d88d048b3930f1c9d2989221b7dde62393d42ed8e746ddae5cf706c4c392f60"
+        hashed = "7d3d80572d847fd029309585f3ec57a20ccdc820358bac6a8f8a9246968a3c66"
         self.assertEqual(hash_upload.file_hash, hashed)
         session.delete(hash_upload)
 

@@ -630,10 +630,12 @@ class ChainOfCustody(Base, Model):
         self.comment = comment
         self.custodian = custodian
 
-    def upload_custody_receipt(self, custody_receipt, label):
-
+    def upload_custody_receipt(self, custody_receipt, label, directory=None):
         if custody_receipt is not None:
-            new_directory = path.join(ROOT_DIR, 'files', 'evidence_custody_receipts')
+            if directory is None:
+                new_directory = path.join(ROOT_DIR, 'files', 'evidence_custody_receipts')
+            else:
+                new_directory = directory
             file_name = upload_file(custody_receipt, new_directory)
             self.custody_receipt = file_name
             self.custody_receipt_label = label
@@ -930,13 +932,16 @@ class Evidence(Base, Model):
         session.add(change)
         session.flush()
 
-    def create_qr_code(self):
+    def create_qr_code(self, location=None):
         qr = QRCode(error_correction=ERROR_CORRECT_L)
         qr.add_data(self.qr_code_text)
         qr.make()
         img = qr.make_image()
 
-        qr_image_location = path.abspath(path.join(ROOT_DIR, 'files', 'evidence_QR_codes', str(self.id) + '.png'))
+        if location is None:
+            qr_image_location = path.abspath(path.join(ROOT_DIR, 'files', 'evidence_QR_codes', str(self.id) + '.png'))
+        else:
+            qr_image_location = location
         img.save(qr_image_location, "PNG")
 
     def disassociate(self):
@@ -1105,11 +1110,14 @@ class UploadModel(Model):
         return self.file_hash == self.compute_hash()
 
     def compute_hash(self):
-        f = open(path.join(self.ROOT, self.upload_location, self.file_name), "rb")
-        d = hash_library()
-        for buf in f.read(128):
-            d.update(buf)
-        return d.hexdigest()
+        blocksize = 65536
+        hasher = hash_library()
+        with open(path.join(self.ROOT, self.upload_location, self.file_name), "rb") as f:
+            buf = f.read(blocksize)
+            while len(buf) > 0:
+                hasher.update(buf)
+                buf = f.read(blocksize)
+        return hasher.hexdigest()
 
     def delete(self, user):
         if path.exists(path.join(self.ROOT, self.upload_location, self.file_name)):
@@ -1130,9 +1138,12 @@ class EvidencePhotoUpload(UploadModel, Base):
                        foreign_keys='EvidencePhotoUpload.deleter_id')
     DEFAULT_FOLDER = path.join('files', 'evidence_photos')
 
-    def __init__(self, uploader_id, evidence_id, file_name, file_note, title):
+    def __init__(self, uploader_id, evidence_id, file_name, file_note, title, upload_location=None):
         self.evidence_id = evidence_id
-        self.upload_location = path.join(EvidencePhotoUpload.DEFAULT_FOLDER, str(evidence_id))
+        if upload_location is None:
+            self.upload_location = path.join(EvidencePhotoUpload.DEFAULT_FOLDER, str(evidence_id))
+        else:
+            self.upload_location = upload_location
         UploadModel.__init__(self, uploader_id, file_name, file_note, title)
 
     @staticmethod
